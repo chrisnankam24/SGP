@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://www.kapsch.hr/cadb/schemas/ProvisionNotificationService"
+		xmlns="http://www.w3.org/2001/XMLSchema"
+		xmlns:common="http://www.kapsch.hr/cadb/schemas/common">
+
+	<import namespace="http://www.kapsch.hr/cadb/schemas/common" schemaLocation="common.xsd"/>
+
+	<element name="notifyRoutingDataRequest">
+		<complexType>
+			<sequence>
+				<element name="numberRanges" type="common:numberRangesType" minOccurs="1" maxOccurs="1" nillable="false"/>
+				<element name="routingData" type="common:routingDataType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="notifyRoutingDataResponse">
+		<complexType/>
+	</element>
+
+</schema>

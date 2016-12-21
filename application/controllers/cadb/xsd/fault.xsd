@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://www.kapsch.hr/cadb/schemas/fault"
+		xmlns:tns="http://www.kapsch.hr/cadb/schemas/fault"
+		xmlns="http://www.w3.org/2001/XMLSchema">
+
+	<complexType name="faultMessageType">
+		<annotation>
+			<documentation>Generic fault message.</documentation>
+		</annotation>
+		<sequence>
+			<element type="string" name="message"/>
+		</sequence>
+	</complexType>
+
+	<!-- notification Fault -->
+	<element name="ldbAdministrationServiceFault" type="tns:ldbAdministrationServiceFaultMessageType"/>
+	<complexType name="ldbAdministrationServiceFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<!-- Common Fault -->
+	<element name="invalidOperatorFault" type="tns:invalidOperatorFaultMessageType"/>
+	<complexType name="invalidOperatorFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<element name="actionNotAuthorizedFault" type="tns:actionNotAuthorizedFaultMessageType"/>
+	<complexType name="actionNotAuthorizedFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<element name="invalidRequestFormatFault" type="tns:invalidRequestFormatFaultMessageType"/>
+	<complexType name="invalidRequestFormatFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<element name="unknownNumberFault" type="tns:unknownNumberFaultMessageType"/>
+	<complexType name="unknownNumberFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<element name="causeMissingFault" type="tns:causeMissingFaultMessageType"/>
+	<complexType name="causeMissingFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<element name="countOverMaxCountLimitFault" type="tns:countOverMaxCountLimitFaultMessageType"/>
+	<complexType name="countOverMaxCountLimitFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<!-- Porting Fault -->
+	<element name="invalidPortingIdFault" type="tns:invalidPortingIdFaultMessageType"/>
+	<complexType name="invalidPortingIdFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<element name="invalidPortingDateAndTimeFault" type="tns:invalidPortingDateAndTimeFaultMessageType"/>
+	<complexType name="invalidPortingDateAndTimeFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<element name="numberRangesOverlapFault" type="tns:numberRangesOverlapFaultMessageType"/>
+	<complexType name="numberRangesOverlapFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<element name="numberReservedByProcessFault" type="tns:numberReservedByProcessFaultMessageType"/>
+	<complexType name="numberReservedByProcessFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<element name="numberNotOwnedByOperatorFault" type="tns:numberNotOwnedByOperatorFaultMessageType"/>
+	<complexType name="numberNotOwnedByOperatorFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<element name="numberRangeQuantityLimitExceededFault" type="tns:numberRangeQuantityLimitExceededFaultMessageType"/>
+	<complexType name="numberRangeQuantityLimitExceededFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<element name="tooNearPortedPeriodFault" type="tns:tooNearPortedPeriodFaultMessageType"/>
+	<complexType name="tooNearPortedPeriodFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<element name="portingNotAllowedRequestsFault" type="tns:portingNotAllowedRequestsFaultMessageType"/>
+	<complexType name="portingNotAllowedRequestsFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<element name="subscriberDataMissingFault" type="tns:subscriberDataMissingFaultMessageType"/>
+	<complexType name="subscriberDataMissingFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<element name="rioNotValidFault" type="tns:rioNotValidFaultMessageType"/>
+	<complexType name="rioNotValidFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<element name="portingActionNotAvailableFault" type="tns:portingActionNotAvailableFaultMessageType"/>
+	<complexType name="portingActionNotAvailableFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<!-- Rollback Fault -->
+	<element name="rollbackNotAllowedFault" type="tns:rollbackNotAllowedFaultMessageType"/>
+	<complexType name="rollbackNotAllowedFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<element name="unknownPortingIdFault" type="tns:unknownPortingIdFaultMessageType"/>
+	<complexType name="unknownPortingIdFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<element name="rollbackActionNotAvailableFault" type="tns:rollbackActionNotAvailableFaultMessageType"/>
+	<complexType name="rollbackActionNotAvailableFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<element name="invalidRollbackIdFault" type="tns:invalidRollbackIdFaultMessageType"/>
+	<complexType name="invalidRollbackIdFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<!-- Returning Fault -->
+	<element name="unknownManagedNumberFault" type="tns:unknownManagedNumberFaultMessageType"/>
+	<complexType name="unknownManagedNumberFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<element name="numberQuantityLimitExceededFault" type="tns:numberQuantityLimitExceededFaultMessageType"/>
+	<complexType name="numberQuantityLimitExceededFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<element name="numberNotPortedFault" type="tns:numberNotPortedFaultMessageType"/>
+	<complexType name="numberNotPortedFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<element name="multiplePrimaryOwnersFault" type="tns:multiplePrimaryOwnersFaultMessageType"/>
+	<complexType name="multiplePrimaryOwnersFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<element name="returnActionNotAvailableFault" type="tns:returnActionNotAvailableFaultMessageType"/>
+	<complexType name="returnActionNotAvailableFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<element name="invalidReturnIdFault" type="tns:invalidReturnIdFaultMessageType"/>
+	<complexType name="invalidReturnIdFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<!-- Provisioning Fault -->
+	<element name="invalidCadbIdFault" type="tns:invalidCadbIdFaultMessageType"/>
+	<complexType name="invalidCadbIdFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+	<element name="actionNotAvailableFault" type="tns:actionNotAvailableFaultMessageType"/>
+	<complexType name="actionNotAvailableFaultMessageType">
+		<complexContent>
+			<extension base="tns:faultMessageType"/>
+		</complexContent>
+	</complexType>
+
+</schema>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://www.kapsch.hr/cadb/schemas/RollbackNotificationService"
+		xmlns="http://www.w3.org/2001/XMLSchema"
+		xmlns:operations="http://www.kapsch.hr/cadb/schemas/RollbackOperationService">
+
+	<import namespace="http://www.kapsch.hr/cadb/schemas/RollbackOperationService" schemaLocation="rollback.xsd"/>
+
+	<element name="notifyOpenedRequest">
+		<complexType>
+			<sequence>
+				<element name="rollbackTransaction" type="operations:rollbackTransactionType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="notifyOpenedResponse">
+		<complexType/>
+	</element>
+
+	<element name="notifyAcceptedRequest">
+		<complexType>
+			<sequence>
+				<element name="rollbackTransaction" type="operations:rollbackTransactionType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="notifyAcceptedResponse">
+		<complexType/>
+	</element>
+
+	<element name="notifyAutoAcceptRequest">
+		<complexType>
+			<sequence>
+				<element name="rollbackTransaction" type="operations:rollbackTransactionType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="notifyAutoAcceptResponse">
+		<complexType/>
+	</element>
+
+	<element name="notifyAutoConfirmRequest">
+		<complexType>
+			<sequence>
+				<element name="rollbackTransaction" type="operations:rollbackTransactionType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="notifyAutoConfirmResponse">
+		<complexType/>
+	</element>
+
+	<element name="notifyRejectedRequest">
+		<complexType>
+			<sequence>
+				<element name="rollbackTransaction" type="operations:rollbackTransactionType" minOccurs="1" maxOccurs="1" nillable="false"/>
+				<element name="rejectionReason" type="operations:rejectionReasonType" minOccurs="1" maxOccurs="1" nillable="false"/>
+				<element name="cause" type="string" minOccurs="0" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="notifyRejectedResponse">
+		<complexType/>
+	</element>
+
+</schema>

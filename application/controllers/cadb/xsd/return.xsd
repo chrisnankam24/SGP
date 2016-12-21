@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://www.kapsch.hr/cadb/schemas/ReturnOperationService"
+		xmlns="http://www.w3.org/2001/XMLSchema"
+		xmlns:tns="http://www.kapsch.hr/cadb/schemas/ReturnOperationService"
+		xmlns:common="http://www.kapsch.hr/cadb/schemas/common">
+
+	<import namespace="http://www.kapsch.hr/cadb/schemas/common" schemaLocation="common.xsd"/>
+
+	<simpleType name="returnStateType">
+		<restriction base="string">
+			<enumeration value="OPENED"/>
+			<enumeration value="ACCEPTED"/>
+			<enumeration value="COMPLETED"/>
+			<enumeration value="REJECTED"/>
+		</restriction>
+	</simpleType>
+
+	<complexType name="baseReturnTransactionType" abstract="true">
+		<sequence>
+			<element name="ownerNrn" type="common:nrnType" minOccurs="1" maxOccurs="1"/>
+			<element name="primaryOwnerNrn" type="common:nrnType" minOccurs="1" maxOccurs="1"/>
+			<element name="numberRanges" type="common:numberRangesType" minOccurs="1" maxOccurs="1"/>
+		</sequence>
+	</complexType>
+
+	<complexType name="returnTransactionType">
+		<complexContent>
+			<extension base="tns:baseReturnTransactionType">
+				<sequence>
+					<element name="returnId" type="string" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<element name="returnNumberState" type="tns:returnStateType" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<element name="openDateTime" type="dateTime" minOccurs="1" maxOccurs="1" nillable="false"/>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<element name="openRequest">
+		<complexType>
+			<complexContent>
+				<extension base="tns:baseReturnTransactionType"/>
+			</complexContent>
+		</complexType>
+	</element>
+
+	<element name="openResponse">
+		<complexType>
+			<sequence>
+				<element name="returnTransaction" type="tns:returnTransactionType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="acceptRequest">
+		<complexType>
+			<sequence>
+				<element name="returnId" type="string" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="acceptResponse">
+		<complexType>
+			<sequence>
+				<element name="returnTransaction" type="tns:returnTransactionType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="rejectRequest">
+		<complexType>
+			<sequence>
+				<element name="returnId" type="string" minOccurs="1" maxOccurs="1" nillable="false"/>
+				<element name="cause" type="string" minOccurs="0" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="rejectResponse">
+		<complexType>
+			<sequence>
+				<element name="returnTransaction" type="tns:returnTransactionType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="getReturningTransactionRequest">
+		<complexType>
+			<sequence>
+				<element name="returnId" type="string" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="getReturningTransactionResponse">
+		<complexType>
+			<sequence>
+				<element name="returnTransaction" type="tns:returnTransactionType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="getCurrentReturningTransactionsRequest">
+		<complexType>
+			<sequence>
+				<element name="networkId" type="common:networkIdType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="getCurrentReturningTransactionsResponse">
+		<complexType>
+			<sequence>
+				<element name="returnTransaction" type="tns:returnTransactionType" minOccurs="0" maxOccurs="unbounded" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+</schema>

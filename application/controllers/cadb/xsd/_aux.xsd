@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://www.kapsch.hr/cadb/schemas/AuxService"
+		xmlns="http://www.w3.org/2001/XMLSchema"
+		xmlns:tns="http://www.kapsch.hr/cadb/schemas/AuxService"
+		xmlns:common="http://www.kapsch.hr/cadb/schemas/common">
+
+	<import namespace="http://www.kapsch.hr/cadb/schemas/common" schemaLocation="common.xsd"/>
+
+	<complexType name="operatorType">
+		<sequence>
+			<element name="networkId" type="common:networkIdType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			<element name="operatorName" type="string" minOccurs="1" maxOccurs="1" nillable="false"/>
+			<element name="routingNumber" type="common:routingNumberType" minOccurs="1" maxOccurs="unbounded" nillable="false"/>
+		</sequence>
+	</complexType>
+
+	<element name="getOperatorRequest">
+		<complexType>
+			<sequence>
+				<element name="networkId" type="common:networkIdType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="getOperatorResponse">
+		<complexType>
+			<sequence>
+				<element name="cadbOperator" type="tns:operatorType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="getOperatorsRequest">
+		<complexType/>
+	</element>
+
+	<element name="getOperatorsResponse">
+		<complexType>
+			<sequence>
+				<element name="cadbOperator" type="tns:operatorType" minOccurs="0" maxOccurs="unbounded" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+</schema>

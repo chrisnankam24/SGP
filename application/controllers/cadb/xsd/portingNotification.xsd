@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://www.kapsch.hr/cadb/schemas/PortingNotificationService"
+		xmlns="http://www.w3.org/2001/XMLSchema"
+		xmlns:operations="http://www.kapsch.hr/cadb/schemas/PortingOperationService">
+
+	<import namespace="http://www.kapsch.hr/cadb/schemas/PortingOperationService" schemaLocation="porting.xsd"/>
+
+	<element name="notifyOrderedRequest">
+		<complexType>
+			<sequence>
+				<element name="portingTransaction" type="operations:portingTransactionType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="notifyOrderedResponse">
+		<complexType/>
+	</element>
+
+	<element name="notifyApprovedRequest">
+		<complexType>
+			<sequence>
+				<element name="portingTransaction" type="operations:portingTransactionType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="notifyApprovedResponse">
+		<complexType/>
+	</element>
+
+	<element name="notifyAutoApproveRequest">
+		<complexType>
+			<sequence>
+				<element name="portingTransaction" type="operations:portingTransactionType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="notifyAutoApproveResponse">
+		<complexType/>
+	</element>
+
+	<element name="notifyAcceptedRequest">
+		<complexType>
+			<sequence>
+				<element name="portingTransaction" type="operations:portingTransactionType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="notifyAcceptedResponse">
+		<complexType/>
+	</element>
+
+	<element name="notifyAutoAcceptRequest">
+		<complexType>
+			<sequence>
+				<element name="portingTransaction" type="operations:portingTransactionType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="notifyAutoAcceptResponse">
+		<complexType/>
+	</element>
+
+	<element name="notifyAutoConfirmRequest">
+		<complexType>
+			<sequence>
+				<element name="portingTransaction" type="operations:portingTransactionType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="notifyAutoConfirmResponse">
+		<complexType/>
+	</element>
+
+	<element name="notifyDeniedRequest">
+		<complexType>
+			<sequence>
+				<element name="portingTransaction" type="operations:portingTransactionType" minOccurs="1" maxOccurs="1" nillable="false"/>
+				<element name="denialReason" type="operations:denialReasonType" minOccurs="1" maxOccurs="1" nillable="false"/>
+				<element name="cause" type="string" minOccurs="0" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="notifyDeniedResponse">
+		<complexType/>
+	</element>
+
+	<element name="notifyRejectedRequest">
+		<complexType>
+			<sequence>
+				<element name="portingTransaction" type="operations:portingTransactionType" minOccurs="1" maxOccurs="1" nillable="false"/>
+				<element name="rejectionReason" type="operations:rejectionReasonType" minOccurs="1" maxOccurs="1" nillable="false"/>
+				<element name="cause" type="string" minOccurs="0" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="notifyRejectedResponse">
+		<complexType/>
+	</element>
+
+	<element name="notifyAbandonedRequest">
+		<complexType>
+			<sequence>
+				<element name="portingTransaction" type="operations:portingTransactionType" minOccurs="1" maxOccurs="1" nillable="false"/>
+				<element name="cause" type="string" minOccurs="0" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="notifyAbandonedResponse">
+		<complexType/>
+	</element>
+
+</schema>

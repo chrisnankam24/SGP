@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://www.kapsch.hr/cadb/schemas/RollbackOperationService"
+		xmlns="http://www.w3.org/2001/XMLSchema"
+		xmlns:tns="http://www.kapsch.hr/cadb/schemas/RollbackOperationService"
+		xmlns:common="http://www.kapsch.hr/cadb/schemas/common"
+		xmlns:porting="http://www.kapsch.hr/cadb/schemas/PortingOperationService">
+
+	<import namespace="http://www.kapsch.hr/cadb/schemas/common" schemaLocation="common.xsd"/>
+
+	<import namespace="http://www.kapsch.hr/cadb/schemas/PortingOperationService" schemaLocation="porting.xsd"/>
+
+	<simpleType name="rollbackStateType">
+		<restriction base="string">
+			<enumeration value="OPENED"/>
+			<enumeration value="ACCEPTED"/>
+			<enumeration value="CONFIRMED"/>
+			<enumeration value="COMPLETED"/>
+			<enumeration value="REJECTED"/>
+			<enumeration value="ABANDONED"/>
+		</restriction>
+	</simpleType>
+
+	<simpleType name="rejectionReasonType">
+		<restriction base="string">
+			<enumeration value="OTHER_REASONS"/>
+		</restriction>
+	</simpleType>
+
+	<complexType name="baseRollbackTransactionType" abstract="true">
+		<sequence>
+			<element name="originalPortingId" type="string" minOccurs="1" maxOccurs="1"/>
+			<element name="donorSubmissionDateTime" type="dateTime" minOccurs="1" maxOccurs="1"/>
+			<element name="preferredRollbackDateTime" type="dateTime" minOccurs="1" maxOccurs="1"/>
+		</sequence>
+	</complexType>
+
+	<complexType name="rollbackTransactionType">
+		<complexContent>
+			<extension base="tns:baseRollbackTransactionType">
+				<sequence>
+					<element name="rollbackId" type="string" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<element name="recipientNrn" type="common:nrnType" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<element name="donorNrn" type="common:nrnType" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<element name="numberRanges" type="common:numberRangesType" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<element name="subscriberInfo" type="porting:subscriberInfoType" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<element name="cadbOpenDateTime" type="dateTime" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<element name="lastChangeDateTime" type="dateTime" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<element name="rollbackState" type="tns:rollbackStateType" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<element name="rollbackDateTime" type="dateTime" minOccurs="1" maxOccurs="1" nillable="false"/>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<element name="openRequest">
+		<complexType>
+			<complexContent>
+				<extension base="tns:baseRollbackTransactionType"/>
+			</complexContent>
+		</complexType>
+	</element>
+
+	<element name="openResponse">
+		<complexType>
+			<sequence>
+				<element name="rollbackTransaction" type="tns:rollbackTransactionType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="acceptRequest">
+		<complexType>
+			<sequence>
+				<element name="rollbackId" type="string" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="acceptResponse">
+		<complexType>
+			<sequence>
+				<element name="rollbackTransaction" type="tns:rollbackTransactionType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="confirmRequest">
+		<complexType>
+			<sequence>
+				<element name="rollbackId" type="string" minOccurs="1" maxOccurs="1" nillable="false"/>
+				<element name="rollbackDateAndTime" type="dateTime" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="confirmResponse">
+		<complexType>
+			<sequence>
+				<element name="rollbackTransaction" type="tns:rollbackTransactionType" minOccurs="1" maxOccurs="1" nillable="false"/>
+				<element name="rollbackDateTime" type="dateTime" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="rejectRequest">
+		<complexType>
+			<sequence>
+				<element name="rollbackId" type="string" minOccurs="1" maxOccurs="1" nillable="false"/>
+				<element name="rejectionReason" type="tns:rejectionReasonType" minOccurs="1" maxOccurs="1" nillable="false"/>
+				<element name="cause" type="string" minOccurs="0" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="rejectResponse">
+		<complexType>
+			<sequence>
+				<element name="rollbackTransaction" type="tns:rollbackTransactionType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="getRollbackRequest">
+		<complexType>
+			<sequence>
+				<element name="rollbackId" type="string" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="getRollbackResponse">
+		<complexType>
+			<sequence>
+				<element name="rollbackTransaction" type="tns:rollbackTransactionType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="getOpenedRollbacksRequest">
+		<complexType>
+			<sequence>
+				<element name="networkId" type="common:networkIdType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="getOpenedRollbacksResponse">
+		<complexType>
+			<sequence>
+				<element name="rollbackTransaction" type="tns:rollbackTransactionType" minOccurs="0" maxOccurs="unbounded" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="getAcceptedRollbacksRequest">
+		<complexType>
+			<sequence>
+				<element name="networkId" type="common:networkIdType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="getAcceptedRollbacksResponse">
+		<complexType>
+			<sequence>
+				<element name="rollbackTransaction" type="tns:rollbackTransactionType" minOccurs="0" maxOccurs="unbounded" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="getConfirmedRollbacksRequest">
+		<complexType>
+			<sequence>
+				<element name="networkId" type="common:networkIdType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="getConfirmedRollbacksResponse">
+		<complexType>
+			<sequence>
+				<element name="rollbackTransaction" type="tns:rollbackTransactionType" minOccurs="0" maxOccurs="unbounded" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="getRejectedRollbacksRequest">
+		<complexType>
+			<sequence>
+				<element name="networkId" type="common:networkIdType" minOccurs="1" maxOccurs="1" nillable="false"/>
+				<element name="count" type="integer" minOccurs="0" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="getRejectedRollbacksResponse">
+		<complexType>
+			<sequence>
+				<element name="rollbackTransaction" type="tns:rollbackTransactionType" minOccurs="0" maxOccurs="unbounded" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+</schema>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://www.kapsch.hr/cadb/schemas/ProblemReportNotificationService"
+		xmlns="http://www.w3.org/2001/XMLSchema"
+		xmlns:operations="http://www.kapsch.hr/cadb/schemas/ProblemReportOperationService"
+		xmlns:common="http://www.kapsch.hr/cadb/schemas/common">
+
+	<import namespace="http://www.kapsch.hr/cadb/schemas/common" schemaLocation="common.xsd"/>
+
+	<import namespace="http://www.kapsch.hr/cadb/schemas/ProblemReportOperationService" schemaLocation="problem.xsd"/>
+
+	<element name="notifyProblemReportedRequest">
+		<complexType>
+			<sequence>
+				<element name="problemReport" type="operations:problemReportType" minOccurs="1" maxOccurs="1" nillable="false"/>
+				<element name="nrn" type="common:nrnType" minOccurs="1" maxOccurs="1" nillable="false"/>
+				<element name="routingChangeDateTime" type="dateTime" minOccurs="1" maxOccurs="1" nillable="false"/>
+				<element name="processType" type="common:processType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="notifyProblemReportedResponse">
+		<complexType/>
+	</element>
+
+</schema>

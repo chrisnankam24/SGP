@@ -1,0 +1,855 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="http://businessapi.webservices.commonapi.orangecaraibe.com/" xmlns:apachesoap="http://xml.apache.org/xml-soap" xmlns:impl="http://businessapi.webservices.commonapi.orangecaraibe.com/" xmlns:intf="http://businessapi.webservices.commonapi.orangecaraibe.com/" xmlns:tns1="http://webservices.commonapi.orangecaraibe.com" xmlns:tns2="http://util.java" xmlns:tns3="http://cms.corba.commonapi.orangecaraibe.com" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<!--WSDL created by Apache Axis version: 1.4
+Built on Apr 22, 2006 (06:55:48 PDT)-->
+ <wsdl:types>
+  <schema elementFormDefault="qualified" targetNamespace="http://businessapi.webservices.commonapi.orangecaraibe.com/" xmlns="http://www.w3.org/2001/XMLSchema">
+   <import namespace="http://util.java"/>
+   <import namespace="http://webservices.commonapi.orangecaraibe.com"/>
+   <import namespace="http://cms.corba.commonapi.orangecaraibe.com"/>
+   <element name="createContract">
+    <complexType>
+     <sequence>
+      <element name="autoCommit" type="xsd:boolean"/>
+      <element name="endUserName" type="xsd:string"/>
+      <element name="customerId" type="xsd:long"/>
+      <element name="valid_from" type="xsd:string"/>
+      <element name="dealerId" type="xsd:long"/>
+      <element name="serialNumber" type="xsd:string"/>
+      <element name="i_tmcode" type="xsd:long"/>
+      <element name="i_sn_string" type="xsd:string"/>
+      <element name="i_owner_birthdate" type="xsd:string"/>
+      <element name="imei" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="createContractResponse">
+    <complexType>
+     <sequence>
+      <element name="createContractReturn" type="xsd:long"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="fault" type="tns1:SignatureMismatchException"/>
+   <element name="fault1" type="tns1:ParameterListException"/>
+   <element name="fault2" type="tns1:UnknownCommandFault"/>
+   <element name="fault3" type="tns1:ServiceBreakDownFault"/>
+   <element name="fault4" type="tns1:CMSExecutionFault"/>
+   <element name="fault5" type="tns1:InvalidParameterTypeException"/>
+   <element name="fault6" type="tns1:DeniedAccessFault"/>
+   <element name="updateContractStatus">
+    <complexType>
+     <sequence>
+      <element name="autoCommit" type="xsd:boolean"/>
+      <element name="endUserName" type="xsd:string"/>
+      <element name="i_co_id" type="xsd:long"/>
+      <element name="i_new_status" type="xsd:int"/>
+      <element name="i_reason" type="xsd:long"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="updateContractStatusResponse">
+    <complexType/>
+   </element>
+   <element name="transfertContract">
+    <complexType>
+     <sequence>
+      <element name="autoCommit" type="xsd:boolean"/>
+      <element name="endUserName" type="xsd:string"/>
+      <element name="contractId" type="xsd:long"/>
+      <element name="i_customer_id" type="xsd:long"/>
+      <element name="reason_code" type="xsd:long"/>
+      <element name="tmcode" type="xsd:long"/>
+      <element name="imei" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="transfertContractResponse">
+    <complexType>
+     <sequence>
+      <element name="transfertContractReturn" type="xsd:long"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="consultContract">
+    <complexType>
+     <sequence>
+      <element name="autoCommit" type="xsd:boolean"/>
+      <element name="endUserName" type="xsd:string"/>
+      <element name="i_msisdn" type="xsd:string"/>
+      <element name="i_custcode" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="consultContractResponse">
+    <complexType>
+     <sequence>
+      <element name="consultContractReturn" type="xsd:anyType"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="deleteContract">
+    <complexType>
+     <sequence>
+      <element name="autoCommit" type="xsd:boolean"/>
+      <element name="endUserName" type="xsd:string"/>
+      <element name="contractId" type="xsd:long"/>
+      <element name="coDevRetention" type="xsd:int"/>
+      <element name="coDnRetention" type="xsd:int"/>
+      <element name="coPortRetention" type="xsd:int"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="deleteContractResponse">
+    <complexType/>
+   </element>
+   <element name="logon">
+    <complexType>
+     <sequence>
+      <element name="cmsUserName" type="xsd:string"/>
+      <element name="cmsPassword" type="xsd:string"/>
+      <element name="endUserName" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="logonResponse">
+    <complexType/>
+   </element>
+   <element name="fault7" type="tns3:ServerNotFoundFault"/>
+   <element name="fault8" type="tns3:PostConnectInitializationFault"/>
+   <element name="logout">
+    <complexType/>
+   </element>
+   <element name="logoutResponse">
+    <complexType/>
+   </element>
+  </schema>
+  <schema elementFormDefault="qualified" targetNamespace="http://webservices.commonapi.orangecaraibe.com" xmlns="http://www.w3.org/2001/XMLSchema">
+   <import namespace="http://util.java"/>
+   <import namespace="http://cms.corba.commonapi.orangecaraibe.com"/>
+   <complexType name="SignatureMismatchException">
+    <sequence>
+     <element name="message" nillable="true" type="xsd:string"/>
+     <element name="parameterName" nillable="true" type="xsd:string"/>
+     <element name="problemCode" type="xsd:int"/>
+    </sequence>
+   </complexType>
+   <complexType name="ParameterListException">
+    <sequence>
+     <element name="info" nillable="true" type="xsd:string"/>
+     <element name="message" nillable="true" type="xsd:string"/>
+     <element name="problemCode" type="xsd:int"/>
+    </sequence>
+   </complexType>
+   <complexType name="UnknownCommandFault">
+    <sequence>
+     <element name="reason" nillable="true" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <complexType name="ServiceBreakDownFault">
+    <sequence>
+     <element name="reason" nillable="true" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <complexType name="CMSExecutionFault">
+    <sequence>
+     <element name="reason" nillable="true" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <complexType name="InvalidParameterTypeException">
+    <sequence>
+     <element name="accessMethodName" nillable="true" type="xsd:string"/>
+     <element name="parameterName" nillable="true" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <complexType name="DeniedAccessFault">
+    <sequence>
+     <element name="reason" nillable="true" type="xsd:string"/>
+    </sequence>
+   </complexType>
+  </schema>
+  <schema elementFormDefault="qualified" targetNamespace="http://cms.corba.commonapi.orangecaraibe.com" xmlns="http://www.w3.org/2001/XMLSchema">
+   <import namespace="http://util.java"/>
+   <import namespace="http://webservices.commonapi.orangecaraibe.com"/>
+   <complexType name="ServerNotFoundFault">
+    <sequence>
+     <element name="serverName" nillable="true" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <complexType name="PostConnectInitializationFault">
+    <sequence>
+     <element name="reason" nillable="true" type="xsd:string"/>
+    </sequence>
+   </complexType>
+  </schema>
+ </wsdl:types>
+
+   <wsdl:message name="deleteContractRequest">
+
+      <wsdl:part element="impl:deleteContract" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="PostConnectInitializationFault">
+
+      <wsdl:part element="impl:fault8" name="fault"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="ParameterListException">
+
+      <wsdl:part element="impl:fault1" name="fault"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="ServerNotFoundFault">
+
+      <wsdl:part element="impl:fault7" name="fault"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="UnknownCommandFault">
+
+      <wsdl:part element="impl:fault2" name="fault"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="updateContractStatusResponse">
+
+      <wsdl:part element="impl:updateContractStatusResponse" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="logoutRequest">
+
+      <wsdl:part element="impl:logout" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="InvalidParameterTypeException">
+
+      <wsdl:part element="impl:fault5" name="fault"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="logoutResponse">
+
+      <wsdl:part element="impl:logoutResponse" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="deleteContractResponse">
+
+      <wsdl:part element="impl:deleteContractResponse" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="transfertContractResponse">
+
+      <wsdl:part element="impl:transfertContractResponse" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="updateContractStatusRequest">
+
+      <wsdl:part element="impl:updateContractStatus" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="logonRequest">
+
+      <wsdl:part element="impl:logon" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="consultContractRequest">
+
+      <wsdl:part element="impl:consultContract" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="logonResponse">
+
+      <wsdl:part element="impl:logonResponse" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="createContractResponse">
+
+      <wsdl:part element="impl:createContractResponse" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="SignatureMismatchException">
+
+      <wsdl:part element="impl:fault" name="fault"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="ServiceBreakDownFault">
+
+      <wsdl:part element="impl:fault3" name="fault"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="consultContractResponse">
+
+      <wsdl:part element="impl:consultContractResponse" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="transfertContractRequest">
+
+      <wsdl:part element="impl:transfertContract" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="DeniedAccessFault">
+
+      <wsdl:part element="impl:fault6" name="fault"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="createContractRequest">
+
+      <wsdl:part element="impl:createContract" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="CMSExecutionFault">
+
+      <wsdl:part element="impl:fault4" name="fault"/>
+
+   </wsdl:message>
+
+   <wsdl:portType name="ContractManagementEndPoint">
+
+      <wsdl:operation name="createContract">
+
+         <wsdl:input message="impl:createContractRequest" name="createContractRequest"/>
+
+         <wsdl:output message="impl:createContractResponse" name="createContractResponse"/>
+
+         <wsdl:fault message="impl:ServiceBreakDownFault" name="ServiceBreakDownFault"/>
+
+         <wsdl:fault message="impl:SignatureMismatchException" name="SignatureMismatchException"/>
+
+         <wsdl:fault message="impl:DeniedAccessFault" name="DeniedAccessFault"/>
+
+         <wsdl:fault message="impl:UnknownCommandFault" name="UnknownCommandFault"/>
+
+         <wsdl:fault message="impl:InvalidParameterTypeException" name="InvalidParameterTypeException"/>
+
+         <wsdl:fault message="impl:ParameterListException" name="ParameterListException"/>
+
+         <wsdl:fault message="impl:CMSExecutionFault" name="CMSExecutionFault"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="updateContractStatus">
+
+         <wsdl:input message="impl:updateContractStatusRequest" name="updateContractStatusRequest"/>
+
+         <wsdl:output message="impl:updateContractStatusResponse" name="updateContractStatusResponse"/>
+
+         <wsdl:fault message="impl:ServiceBreakDownFault" name="ServiceBreakDownFault"/>
+
+         <wsdl:fault message="impl:SignatureMismatchException" name="SignatureMismatchException"/>
+
+         <wsdl:fault message="impl:DeniedAccessFault" name="DeniedAccessFault"/>
+
+         <wsdl:fault message="impl:UnknownCommandFault" name="UnknownCommandFault"/>
+
+         <wsdl:fault message="impl:InvalidParameterTypeException" name="InvalidParameterTypeException"/>
+
+         <wsdl:fault message="impl:ParameterListException" name="ParameterListException"/>
+
+         <wsdl:fault message="impl:CMSExecutionFault" name="CMSExecutionFault"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="transfertContract">
+
+         <wsdl:input message="impl:transfertContractRequest" name="transfertContractRequest"/>
+
+         <wsdl:output message="impl:transfertContractResponse" name="transfertContractResponse"/>
+
+         <wsdl:fault message="impl:ServiceBreakDownFault" name="ServiceBreakDownFault"/>
+
+         <wsdl:fault message="impl:SignatureMismatchException" name="SignatureMismatchException"/>
+
+         <wsdl:fault message="impl:DeniedAccessFault" name="DeniedAccessFault"/>
+
+         <wsdl:fault message="impl:UnknownCommandFault" name="UnknownCommandFault"/>
+
+         <wsdl:fault message="impl:InvalidParameterTypeException" name="InvalidParameterTypeException"/>
+
+         <wsdl:fault message="impl:ParameterListException" name="ParameterListException"/>
+
+         <wsdl:fault message="impl:CMSExecutionFault" name="CMSExecutionFault"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="consultContract">
+
+         <wsdl:input message="impl:consultContractRequest" name="consultContractRequest"/>
+
+         <wsdl:output message="impl:consultContractResponse" name="consultContractResponse"/>
+
+         <wsdl:fault message="impl:ServiceBreakDownFault" name="ServiceBreakDownFault"/>
+
+         <wsdl:fault message="impl:SignatureMismatchException" name="SignatureMismatchException"/>
+
+         <wsdl:fault message="impl:DeniedAccessFault" name="DeniedAccessFault"/>
+
+         <wsdl:fault message="impl:UnknownCommandFault" name="UnknownCommandFault"/>
+
+         <wsdl:fault message="impl:InvalidParameterTypeException" name="InvalidParameterTypeException"/>
+
+         <wsdl:fault message="impl:ParameterListException" name="ParameterListException"/>
+
+         <wsdl:fault message="impl:CMSExecutionFault" name="CMSExecutionFault"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="deleteContract">
+
+         <wsdl:input message="impl:deleteContractRequest" name="deleteContractRequest"/>
+
+         <wsdl:output message="impl:deleteContractResponse" name="deleteContractResponse"/>
+
+         <wsdl:fault message="impl:ServiceBreakDownFault" name="ServiceBreakDownFault"/>
+
+         <wsdl:fault message="impl:SignatureMismatchException" name="SignatureMismatchException"/>
+
+         <wsdl:fault message="impl:DeniedAccessFault" name="DeniedAccessFault"/>
+
+         <wsdl:fault message="impl:UnknownCommandFault" name="UnknownCommandFault"/>
+
+         <wsdl:fault message="impl:InvalidParameterTypeException" name="InvalidParameterTypeException"/>
+
+         <wsdl:fault message="impl:ParameterListException" name="ParameterListException"/>
+
+         <wsdl:fault message="impl:CMSExecutionFault" name="CMSExecutionFault"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="logon">
+
+         <wsdl:input message="impl:logonRequest" name="logonRequest"/>
+
+         <wsdl:output message="impl:logonResponse" name="logonResponse"/>
+
+         <wsdl:fault message="impl:ServiceBreakDownFault" name="ServiceBreakDownFault"/>
+
+         <wsdl:fault message="impl:PostConnectInitializationFault" name="PostConnectInitializationFault"/>
+
+         <wsdl:fault message="impl:DeniedAccessFault" name="DeniedAccessFault"/>
+
+         <wsdl:fault message="impl:ServerNotFoundFault" name="ServerNotFoundFault"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="logout">
+
+         <wsdl:input message="impl:logoutRequest" name="logoutRequest"/>
+
+         <wsdl:output message="impl:logoutResponse" name="logoutResponse"/>
+
+         <wsdl:fault message="impl:ServiceBreakDownFault" name="ServiceBreakDownFault"/>
+
+         <wsdl:fault message="impl:DeniedAccessFault" name="DeniedAccessFault"/>
+
+      </wsdl:operation>
+
+   </wsdl:portType>
+
+   <wsdl:binding name="ContractManagementEndPointSoapBinding" type="impl:ContractManagementEndPoint">
+
+      <wsdlsoap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+      <wsdl:operation name="createContract">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="createContractRequest">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="createContractResponse">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="ServiceBreakDownFault">
+
+            <wsdlsoap:fault name="ServiceBreakDownFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="SignatureMismatchException">
+
+            <wsdlsoap:fault name="SignatureMismatchException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="DeniedAccessFault">
+
+            <wsdlsoap:fault name="DeniedAccessFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="UnknownCommandFault">
+
+            <wsdlsoap:fault name="UnknownCommandFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="InvalidParameterTypeException">
+
+            <wsdlsoap:fault name="InvalidParameterTypeException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="ParameterListException">
+
+            <wsdlsoap:fault name="ParameterListException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="CMSExecutionFault">
+
+            <wsdlsoap:fault name="CMSExecutionFault" use="literal"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="updateContractStatus">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="updateContractStatusRequest">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="updateContractStatusResponse">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="ServiceBreakDownFault">
+
+            <wsdlsoap:fault name="ServiceBreakDownFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="SignatureMismatchException">
+
+            <wsdlsoap:fault name="SignatureMismatchException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="DeniedAccessFault">
+
+            <wsdlsoap:fault name="DeniedAccessFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="UnknownCommandFault">
+
+            <wsdlsoap:fault name="UnknownCommandFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="InvalidParameterTypeException">
+
+            <wsdlsoap:fault name="InvalidParameterTypeException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="ParameterListException">
+
+            <wsdlsoap:fault name="ParameterListException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="CMSExecutionFault">
+
+            <wsdlsoap:fault name="CMSExecutionFault" use="literal"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="transfertContract">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="transfertContractRequest">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="transfertContractResponse">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="ServiceBreakDownFault">
+
+            <wsdlsoap:fault name="ServiceBreakDownFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="SignatureMismatchException">
+
+            <wsdlsoap:fault name="SignatureMismatchException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="DeniedAccessFault">
+
+            <wsdlsoap:fault name="DeniedAccessFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="UnknownCommandFault">
+
+            <wsdlsoap:fault name="UnknownCommandFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="InvalidParameterTypeException">
+
+            <wsdlsoap:fault name="InvalidParameterTypeException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="ParameterListException">
+
+            <wsdlsoap:fault name="ParameterListException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="CMSExecutionFault">
+
+            <wsdlsoap:fault name="CMSExecutionFault" use="literal"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="consultContract">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="consultContractRequest">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="consultContractResponse">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="ServiceBreakDownFault">
+
+            <wsdlsoap:fault name="ServiceBreakDownFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="SignatureMismatchException">
+
+            <wsdlsoap:fault name="SignatureMismatchException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="DeniedAccessFault">
+
+            <wsdlsoap:fault name="DeniedAccessFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="UnknownCommandFault">
+
+            <wsdlsoap:fault name="UnknownCommandFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="InvalidParameterTypeException">
+
+            <wsdlsoap:fault name="InvalidParameterTypeException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="ParameterListException">
+
+            <wsdlsoap:fault name="ParameterListException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="CMSExecutionFault">
+
+            <wsdlsoap:fault name="CMSExecutionFault" use="literal"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="deleteContract">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="deleteContractRequest">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="deleteContractResponse">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="ServiceBreakDownFault">
+
+            <wsdlsoap:fault name="ServiceBreakDownFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="SignatureMismatchException">
+
+            <wsdlsoap:fault name="SignatureMismatchException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="DeniedAccessFault">
+
+            <wsdlsoap:fault name="DeniedAccessFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="UnknownCommandFault">
+
+            <wsdlsoap:fault name="UnknownCommandFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="InvalidParameterTypeException">
+
+            <wsdlsoap:fault name="InvalidParameterTypeException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="ParameterListException">
+
+            <wsdlsoap:fault name="ParameterListException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="CMSExecutionFault">
+
+            <wsdlsoap:fault name="CMSExecutionFault" use="literal"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="logon">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="logonRequest">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="logonResponse">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="ServiceBreakDownFault">
+
+            <wsdlsoap:fault name="ServiceBreakDownFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="PostConnectInitializationFault">
+
+            <wsdlsoap:fault name="PostConnectInitializationFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="DeniedAccessFault">
+
+            <wsdlsoap:fault name="DeniedAccessFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="ServerNotFoundFault">
+
+            <wsdlsoap:fault name="ServerNotFoundFault" use="literal"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="logout">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="logoutRequest">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="logoutResponse">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="ServiceBreakDownFault">
+
+            <wsdlsoap:fault name="ServiceBreakDownFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="DeniedAccessFault">
+
+            <wsdlsoap:fault name="DeniedAccessFault" use="literal"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+   </wsdl:binding>
+
+   <wsdl:service name="ContractManagementEndPointService">
+
+      <wsdl:port binding="impl:ContractManagementEndPointSoapBinding" name="ContractManagementEndPoint">
+
+         <wsdlsoap:address location="http://localhost/SGP/index.php/bscs/BscsOperationService"/>
+
+      </wsdl:port>
+
+   </wsdl:service>
+
+</wsdl:definitions>

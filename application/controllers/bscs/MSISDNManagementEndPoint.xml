@@ -1,0 +1,725 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="http://businessapi.webservices.commonapi.orangecaraibe.com/" xmlns:apachesoap="http://xml.apache.org/xml-soap" xmlns:impl="http://businessapi.webservices.commonapi.orangecaraibe.com/" xmlns:intf="http://businessapi.webservices.commonapi.orangecaraibe.com/" xmlns:tns1="http://webservices.commonapi.orangecaraibe.com" xmlns:tns2="http://cms.corba.commonapi.orangecaraibe.com" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<!--WSDL created by Apache Axis version: 1.4
+Built on Apr 22, 2006 (06:55:48 PDT)-->
+ <wsdl:types>
+  <schema elementFormDefault="qualified" targetNamespace="http://businessapi.webservices.commonapi.orangecaraibe.com/" xmlns="http://www.w3.org/2001/XMLSchema">
+   <import namespace="http://webservices.commonapi.orangecaraibe.com"/>
+   <import namespace="http://cms.corba.commonapi.orangecaraibe.com"/>
+   <element name="ImportMSISDN">
+    <complexType>
+     <sequence>
+      <element name="autoCommit" type="xsd:boolean"/>
+      <element name="endUserName" type="xsd:string"/>
+      <element name="MSISDN" type="xsd:string"/>
+      <element name="NPCODE" type="xsd:long"/>
+      <element name="SRC_PLCODE" type="xsd:long"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="ImportMSISDNResponse">
+    <complexType/>
+   </element>
+   <element name="fault" type="tns1:SignatureMismatchException"/>
+   <element name="fault1" type="tns1:ParameterListException"/>
+   <element name="fault2" type="tns1:UnknownCommandFault"/>
+   <element name="fault3" type="tns1:ServiceBreakDownFault"/>
+   <element name="fault4" type="tns1:CMSExecutionFault"/>
+   <element name="fault5" type="tns1:InvalidParameterTypeException"/>
+   <element name="fault6" type="tns1:DeniedAccessFault"/>
+   <element name="ChangeImportMSISDN">
+    <complexType>
+     <sequence>
+      <element name="autoCommit" type="xsd:boolean"/>
+      <element name="endUserName" type="xsd:string"/>
+      <element name="CO_ID" type="xsd:long"/>
+      <element name="MSISDN" type="xsd:string"/>
+      <element name="MSISDN_TMP" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="ChangeImportMSISDNResponse">
+    <complexType/>
+   </element>
+   <element name="ReturnMSISDN">
+    <complexType>
+     <sequence>
+      <element name="autoCommit" type="xsd:boolean"/>
+      <element name="endUserName" type="xsd:string"/>
+      <element name="PHONE_NUMBER" type="xsd:string"/>
+      <element name="NPCODE" type="xsd:long"/>
+      <element name="SRC_PLCODE" type="xsd:long"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="ReturnMSISDNResponse">
+    <complexType/>
+   </element>
+   <element name="ExportMSISDN">
+    <complexType>
+     <sequence>
+      <element name="autoCommit" type="xsd:boolean"/>
+      <element name="endUserName" type="xsd:string"/>
+      <element name="MSISDN" type="xsd:string"/>
+      <element name="NPCODE" type="xsd:long"/>
+      <element name="DEST_PLCODE" type="xsd:long"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="ExportMSISDNResponse">
+    <complexType/>
+   </element>
+   <element name="logon">
+    <complexType>
+     <sequence>
+      <element name="cmsUserName" type="xsd:string"/>
+      <element name="cmsPassword" type="xsd:string"/>
+      <element name="endUserName" type="xsd:string"/>
+     </sequence>
+    </complexType>
+   </element>
+   <element name="logonResponse">
+    <complexType/>
+   </element>
+   <element name="fault7" type="tns2:ServerNotFoundFault"/>
+   <element name="fault8" type="tns2:PostConnectInitializationFault"/>
+   <element name="logout">
+    <complexType/>
+   </element>
+   <element name="logoutResponse">
+    <complexType/>
+   </element>
+  </schema>
+  <schema elementFormDefault="qualified" targetNamespace="http://webservices.commonapi.orangecaraibe.com" xmlns="http://www.w3.org/2001/XMLSchema">
+   <import namespace="http://cms.corba.commonapi.orangecaraibe.com"/>
+   <complexType name="SignatureMismatchException">
+    <sequence>
+     <element name="message" nillable="true" type="xsd:string"/>
+     <element name="parameterName" nillable="true" type="xsd:string"/>
+     <element name="problemCode" type="xsd:int"/>
+    </sequence>
+   </complexType>
+   <complexType name="ParameterListException">
+    <sequence>
+     <element name="info" nillable="true" type="xsd:string"/>
+     <element name="message" nillable="true" type="xsd:string"/>
+     <element name="problemCode" type="xsd:int"/>
+    </sequence>
+   </complexType>
+   <complexType name="UnknownCommandFault">
+    <sequence>
+     <element name="reason" nillable="true" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <complexType name="ServiceBreakDownFault">
+    <sequence>
+     <element name="reason" nillable="true" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <complexType name="CMSExecutionFault">
+    <sequence>
+     <element name="reason" nillable="true" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <complexType name="InvalidParameterTypeException">
+    <sequence>
+     <element name="accessMethodName" nillable="true" type="xsd:string"/>
+     <element name="parameterName" nillable="true" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <complexType name="DeniedAccessFault">
+    <sequence>
+     <element name="reason" nillable="true" type="xsd:string"/>
+    </sequence>
+   </complexType>
+  </schema>
+  <schema elementFormDefault="qualified" targetNamespace="http://cms.corba.commonapi.orangecaraibe.com" xmlns="http://www.w3.org/2001/XMLSchema">
+   <import namespace="http://webservices.commonapi.orangecaraibe.com"/>
+   <complexType name="ServerNotFoundFault">
+    <sequence>
+     <element name="serverName" nillable="true" type="xsd:string"/>
+    </sequence>
+   </complexType>
+   <complexType name="PostConnectInitializationFault">
+    <sequence>
+     <element name="reason" nillable="true" type="xsd:string"/>
+    </sequence>
+   </complexType>
+  </schema>
+ </wsdl:types>
+
+   <wsdl:message name="ReturnMSISDNRequest">
+
+      <wsdl:part element="impl:ReturnMSISDN" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="PostConnectInitializationFault">
+
+      <wsdl:part element="impl:fault8" name="fault"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="ImportMSISDNResponse">
+
+      <wsdl:part element="impl:ImportMSISDNResponse" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="ImportMSISDNRequest">
+
+      <wsdl:part element="impl:ImportMSISDN" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="ParameterListException">
+
+      <wsdl:part element="impl:fault1" name="fault"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="ServerNotFoundFault">
+
+      <wsdl:part element="impl:fault7" name="fault"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="UnknownCommandFault">
+
+      <wsdl:part element="impl:fault2" name="fault"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="logoutRequest">
+
+      <wsdl:part element="impl:logout" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="InvalidParameterTypeException">
+
+      <wsdl:part element="impl:fault5" name="fault"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="logoutResponse">
+
+      <wsdl:part element="impl:logoutResponse" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="ExportMSISDNResponse">
+
+      <wsdl:part element="impl:ExportMSISDNResponse" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="ExportMSISDNRequest">
+
+      <wsdl:part element="impl:ExportMSISDN" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="ChangeImportMSISDNRequest">
+
+      <wsdl:part element="impl:ChangeImportMSISDN" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="logonRequest">
+
+      <wsdl:part element="impl:logon" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="logonResponse">
+
+      <wsdl:part element="impl:logonResponse" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="SignatureMismatchException">
+
+      <wsdl:part element="impl:fault" name="fault"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="ChangeImportMSISDNResponse">
+
+      <wsdl:part element="impl:ChangeImportMSISDNResponse" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="ServiceBreakDownFault">
+
+      <wsdl:part element="impl:fault3" name="fault"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="DeniedAccessFault">
+
+      <wsdl:part element="impl:fault6" name="fault"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="ReturnMSISDNResponse">
+
+      <wsdl:part element="impl:ReturnMSISDNResponse" name="parameters"/>
+
+   </wsdl:message>
+
+   <wsdl:message name="CMSExecutionFault">
+
+      <wsdl:part element="impl:fault4" name="fault"/>
+
+   </wsdl:message>
+
+   <wsdl:portType name="MSISDNManagementEndPoint">
+
+      <wsdl:operation name="ImportMSISDN">
+
+         <wsdl:input message="impl:ImportMSISDNRequest" name="ImportMSISDNRequest"/>
+
+         <wsdl:output message="impl:ImportMSISDNResponse" name="ImportMSISDNResponse"/>
+
+         <wsdl:fault message="impl:ServiceBreakDownFault" name="ServiceBreakDownFault"/>
+
+         <wsdl:fault message="impl:SignatureMismatchException" name="SignatureMismatchException"/>
+
+         <wsdl:fault message="impl:DeniedAccessFault" name="DeniedAccessFault"/>
+
+         <wsdl:fault message="impl:UnknownCommandFault" name="UnknownCommandFault"/>
+
+         <wsdl:fault message="impl:InvalidParameterTypeException" name="InvalidParameterTypeException"/>
+
+         <wsdl:fault message="impl:ParameterListException" name="ParameterListException"/>
+
+         <wsdl:fault message="impl:CMSExecutionFault" name="CMSExecutionFault"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="ChangeImportMSISDN">
+
+         <wsdl:input message="impl:ChangeImportMSISDNRequest" name="ChangeImportMSISDNRequest"/>
+
+         <wsdl:output message="impl:ChangeImportMSISDNResponse" name="ChangeImportMSISDNResponse"/>
+
+         <wsdl:fault message="impl:ServiceBreakDownFault" name="ServiceBreakDownFault"/>
+
+         <wsdl:fault message="impl:SignatureMismatchException" name="SignatureMismatchException"/>
+
+         <wsdl:fault message="impl:DeniedAccessFault" name="DeniedAccessFault"/>
+
+         <wsdl:fault message="impl:UnknownCommandFault" name="UnknownCommandFault"/>
+
+         <wsdl:fault message="impl:InvalidParameterTypeException" name="InvalidParameterTypeException"/>
+
+         <wsdl:fault message="impl:ParameterListException" name="ParameterListException"/>
+
+         <wsdl:fault message="impl:CMSExecutionFault" name="CMSExecutionFault"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="ReturnMSISDN">
+
+         <wsdl:input message="impl:ReturnMSISDNRequest" name="ReturnMSISDNRequest"/>
+
+         <wsdl:output message="impl:ReturnMSISDNResponse" name="ReturnMSISDNResponse"/>
+
+         <wsdl:fault message="impl:ServiceBreakDownFault" name="ServiceBreakDownFault"/>
+
+         <wsdl:fault message="impl:SignatureMismatchException" name="SignatureMismatchException"/>
+
+         <wsdl:fault message="impl:DeniedAccessFault" name="DeniedAccessFault"/>
+
+         <wsdl:fault message="impl:UnknownCommandFault" name="UnknownCommandFault"/>
+
+         <wsdl:fault message="impl:InvalidParameterTypeException" name="InvalidParameterTypeException"/>
+
+         <wsdl:fault message="impl:ParameterListException" name="ParameterListException"/>
+
+         <wsdl:fault message="impl:CMSExecutionFault" name="CMSExecutionFault"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="ExportMSISDN">
+
+         <wsdl:input message="impl:ExportMSISDNRequest" name="ExportMSISDNRequest"/>
+
+         <wsdl:output message="impl:ExportMSISDNResponse" name="ExportMSISDNResponse"/>
+
+         <wsdl:fault message="impl:ServiceBreakDownFault" name="ServiceBreakDownFault"/>
+
+         <wsdl:fault message="impl:SignatureMismatchException" name="SignatureMismatchException"/>
+
+         <wsdl:fault message="impl:DeniedAccessFault" name="DeniedAccessFault"/>
+
+         <wsdl:fault message="impl:UnknownCommandFault" name="UnknownCommandFault"/>
+
+         <wsdl:fault message="impl:InvalidParameterTypeException" name="InvalidParameterTypeException"/>
+
+         <wsdl:fault message="impl:ParameterListException" name="ParameterListException"/>
+
+         <wsdl:fault message="impl:CMSExecutionFault" name="CMSExecutionFault"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="logon">
+
+         <wsdl:input message="impl:logonRequest" name="logonRequest"/>
+
+         <wsdl:output message="impl:logonResponse" name="logonResponse"/>
+
+         <wsdl:fault message="impl:ServiceBreakDownFault" name="ServiceBreakDownFault"/>
+
+         <wsdl:fault message="impl:PostConnectInitializationFault" name="PostConnectInitializationFault"/>
+
+         <wsdl:fault message="impl:DeniedAccessFault" name="DeniedAccessFault"/>
+
+         <wsdl:fault message="impl:ServerNotFoundFault" name="ServerNotFoundFault"/>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="logout">
+
+         <wsdl:input message="impl:logoutRequest" name="logoutRequest"/>
+
+         <wsdl:output message="impl:logoutResponse" name="logoutResponse"/>
+
+         <wsdl:fault message="impl:ServiceBreakDownFault" name="ServiceBreakDownFault"/>
+
+         <wsdl:fault message="impl:DeniedAccessFault" name="DeniedAccessFault"/>
+
+      </wsdl:operation>
+
+   </wsdl:portType>
+
+   <wsdl:binding name="MSISDNManagementEndPointSoapBinding" type="impl:MSISDNManagementEndPoint">
+
+      <wsdlsoap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+      <wsdl:operation name="ImportMSISDN">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="ImportMSISDNRequest">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="ImportMSISDNResponse">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="ServiceBreakDownFault">
+
+            <wsdlsoap:fault name="ServiceBreakDownFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="SignatureMismatchException">
+
+            <wsdlsoap:fault name="SignatureMismatchException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="DeniedAccessFault">
+
+            <wsdlsoap:fault name="DeniedAccessFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="UnknownCommandFault">
+
+            <wsdlsoap:fault name="UnknownCommandFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="InvalidParameterTypeException">
+
+            <wsdlsoap:fault name="InvalidParameterTypeException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="ParameterListException">
+
+            <wsdlsoap:fault name="ParameterListException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="CMSExecutionFault">
+
+            <wsdlsoap:fault name="CMSExecutionFault" use="literal"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="ChangeImportMSISDN">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="ChangeImportMSISDNRequest">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="ChangeImportMSISDNResponse">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="ServiceBreakDownFault">
+
+            <wsdlsoap:fault name="ServiceBreakDownFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="SignatureMismatchException">
+
+            <wsdlsoap:fault name="SignatureMismatchException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="DeniedAccessFault">
+
+            <wsdlsoap:fault name="DeniedAccessFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="UnknownCommandFault">
+
+            <wsdlsoap:fault name="UnknownCommandFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="InvalidParameterTypeException">
+
+            <wsdlsoap:fault name="InvalidParameterTypeException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="ParameterListException">
+
+            <wsdlsoap:fault name="ParameterListException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="CMSExecutionFault">
+
+            <wsdlsoap:fault name="CMSExecutionFault" use="literal"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="ReturnMSISDN">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="ReturnMSISDNRequest">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="ReturnMSISDNResponse">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="ServiceBreakDownFault">
+
+            <wsdlsoap:fault name="ServiceBreakDownFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="SignatureMismatchException">
+
+            <wsdlsoap:fault name="SignatureMismatchException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="DeniedAccessFault">
+
+            <wsdlsoap:fault name="DeniedAccessFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="UnknownCommandFault">
+
+            <wsdlsoap:fault name="UnknownCommandFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="InvalidParameterTypeException">
+
+            <wsdlsoap:fault name="InvalidParameterTypeException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="ParameterListException">
+
+            <wsdlsoap:fault name="ParameterListException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="CMSExecutionFault">
+
+            <wsdlsoap:fault name="CMSExecutionFault" use="literal"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="ExportMSISDN">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="ExportMSISDNRequest">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="ExportMSISDNResponse">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="ServiceBreakDownFault">
+
+            <wsdlsoap:fault name="ServiceBreakDownFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="SignatureMismatchException">
+
+            <wsdlsoap:fault name="SignatureMismatchException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="DeniedAccessFault">
+
+            <wsdlsoap:fault name="DeniedAccessFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="UnknownCommandFault">
+
+            <wsdlsoap:fault name="UnknownCommandFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="InvalidParameterTypeException">
+
+            <wsdlsoap:fault name="InvalidParameterTypeException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="ParameterListException">
+
+            <wsdlsoap:fault name="ParameterListException" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="CMSExecutionFault">
+
+            <wsdlsoap:fault name="CMSExecutionFault" use="literal"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="logon">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="logonRequest">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="logonResponse">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="ServiceBreakDownFault">
+
+            <wsdlsoap:fault name="ServiceBreakDownFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="PostConnectInitializationFault">
+
+            <wsdlsoap:fault name="PostConnectInitializationFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="DeniedAccessFault">
+
+            <wsdlsoap:fault name="DeniedAccessFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="ServerNotFoundFault">
+
+            <wsdlsoap:fault name="ServerNotFoundFault" use="literal"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="logout">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="logoutRequest">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="logoutResponse">
+
+            <wsdlsoap:body use="literal"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="ServiceBreakDownFault">
+
+            <wsdlsoap:fault name="ServiceBreakDownFault" use="literal"/>
+
+         </wsdl:fault>
+
+         <wsdl:fault name="DeniedAccessFault">
+
+            <wsdlsoap:fault name="DeniedAccessFault" use="literal"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+   </wsdl:binding>
+
+   <wsdl:service name="MSISDNManagementEndPointService">
+
+      <wsdl:port binding="impl:MSISDNManagementEndPointSoapBinding" name="MSISDNManagementEndPoint">
+
+         <wsdlsoap:address location="http://localhost/SGP/index.php/bscs/BscsOperationService"/>
+
+      </wsdl:port>
+
+   </wsdl:service>
+
+</wsdl:definitions>

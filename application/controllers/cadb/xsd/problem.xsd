@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://www.kapsch.hr/cadb/schemas/ProblemReportOperationService"
+		xmlns="http://www.w3.org/2001/XMLSchema"
+		xmlns:tns="http://www.kapsch.hr/cadb/schemas/ProblemReportOperationService"
+		xmlns:common="http://www.kapsch.hr/cadb/schemas/common">
+
+	<import namespace="http://www.kapsch.hr/cadb/schemas/common" schemaLocation="common.xsd"/>
+
+	<complexType name="baseProblemReportType" abstract="true">
+		<sequence>
+			<element name="reporterNetworkId" type="common:networkIdType" minOccurs="1" maxOccurs="1"/>
+			<element name="cadbNumber" type="common:numberType" minOccurs="1" maxOccurs="1"/>
+			<element name="problem" type="string" minOccurs="1" maxOccurs="1"/>
+		</sequence>
+	</complexType>
+
+	<complexType name="problemReportType">
+		<complexContent>
+			<extension base="tns:baseProblemReportType">
+				<sequence>
+					<element name="errorReportId" type="string" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<element name="submissionDateTime" type="dateTime" minOccurs="1" maxOccurs="1" nillable="false"/>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<element name="reportProblemRequest">
+		<complexType>
+			<complexContent>
+				<extension base="tns:baseProblemReportType"/>
+			</complexContent>
+		</complexType>
+	</element>
+
+	<element name="reportProblemResponse">
+		<complexType>
+			<sequence>
+				<element name="returnTransaction" type="tns:problemReportType" minOccurs="1" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+</schema>
