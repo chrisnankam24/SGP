@@ -99,6 +99,18 @@ class BscsOperationService extends CI_Controller  {
     }
 
     /**
+     * Returns contractId linked with given MSISDN
+     * @param $msisdn
+     */
+    public function getContractId($msisdn){
+
+        $contractId = '';
+
+        return $contractId;
+
+    }
+
+    /**
      * Activates MSISDN in BSCS
      * @param $msisdn
      * @return bool
@@ -312,6 +324,214 @@ class BscsOperationService extends CI_Controller  {
         }
 
     }
+
+    /*public function createContract(){
+
+        if($this->contractClient) {
+
+            // Make createContract request
+            $request = new BscsTypes\createContract();
+
+            try {
+
+                $response = $this->contractClient->createContract($request);
+
+                $response->success = true;
+
+                return $response;
+
+            }catch (SoapFault $e){
+
+                $response = new errorResponse();
+
+                $fault = key($e->detail);
+
+                $response->error = $fault;
+
+                return $response;
+
+            }
+
+        }else{
+            // Client null
+
+            $response = new errorResponse();
+
+            $response->error = Fault::CLIENT_INIT_FAULT;
+
+            return $response;
+
+        }
+
+    }
+
+    public function updateContractStatus(){
+
+        if($this->contractClient) {
+
+            // Make updateContractStatus request
+            $request = new BscsTypes\updateContractStatus();
+
+            try {
+
+                $response = $this->contractClient->updateContractStatus($request);
+
+                $response->success = true;
+
+                return $response;
+
+            }catch (SoapFault $e){
+
+                $response = new errorResponse();
+
+                $fault = key($e->detail);
+
+                $response->error = $fault;
+
+                return $response;
+
+            }
+
+        }else{
+            // Client null
+
+            $response = new errorResponse();
+
+            $response->error = Fault::CLIENT_INIT_FAULT;
+
+            return $response;
+
+        }
+
+    }
+
+    public function transfertContract(){
+
+        if($this->contractClient) {
+
+            // Make transfertContract request
+            $request = new BscsTypes\transfertContract();
+
+            try {
+
+                $response = $this->contractClient->transfertContract($request);
+
+                $response->success = true;
+
+                return $response;
+
+            }catch (SoapFault $e){
+
+                $response = new errorResponse();
+
+                $fault = key($e->detail);
+
+                $response->error = $fault;
+
+                return $response;
+
+            }
+
+        }else{
+            // Client null
+
+            $response = new errorResponse();
+
+            $response->error = Fault::CLIENT_INIT_FAULT;
+
+            return $response;
+
+        }
+
+    }
+
+    public function consultContract(){
+
+        if($this->contractClient) {
+
+            // Make consultContract request
+            $request = new BscsTypes\consultContract();
+
+            try {
+
+                $response = $this->contractClient->consultContract($request);
+
+                $response->success = true;
+
+                return $response;
+
+            }catch (SoapFault $e){
+
+                $response = new errorResponse();
+
+                $fault = key($e->detail);
+
+                $response->error = $fault;
+
+                return $response;
+
+            }
+
+        }else{
+            // Client null
+
+            $response = new errorResponse();
+
+            $response->error = Fault::CLIENT_INIT_FAULT;
+
+            return $response;
+
+        }
+
+    }*/
+
+    /**
+     * Deletes contract from BSCS
+     * @param $contractId
+     * @return errorResponse
+     */
+    public function deleteContract($contractId){
+
+        if($this->contractClient) {
+
+            // Make deleteContract request
+            $request = new BscsTypes\deleteContract();
+
+            $request->contractId = $contractId;
+
+            try {
+
+                $response = $this->contractClient->deleteContract($request);
+
+                $response->success = true;
+
+                return $response;
+
+            }catch (SoapFault $e){
+
+                $response = new errorResponse();
+
+                $fault = key($e->detail);
+
+                $response->error = $fault;
+
+                return $response;
+
+            }
+
+        }else{
+            // Client null
+
+            $response = new errorResponse();
+
+            $response->error = Fault::CLIENT_INIT_FAULT;
+
+            return $response;
+
+        }
+
+    }
+
 }
 
 class ServerFunctionalities {

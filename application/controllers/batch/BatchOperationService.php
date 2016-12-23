@@ -533,8 +533,9 @@ class BatchOperationService extends CI_Controller {
 
     /**
      * Executed as OPD
-     * BATCH_004_{A, B}
-     * Checks for all ports in ACCEPTED state, if any performs porting to MSISDN_EXPORT_CONFIRMED state
+     * BATCH_004_{A, B, C}
+     * Checks for all ports in ACCEPTED state, if any performs porting to CONTRACT_DELETED_CONFIRMED state
+     * Checks for all ports in CONTRACT_DELETED_CONFIRMED state, if any performs porting to MSISDN_EXPORT_CONFIRMED, state
      * Checks for all ports in MSISDN_EXPORT_CONFIRMED state, if any perform porting to CONFIRMED state updating Porting/Provision table
      */
     public function portingOPD(){
@@ -543,9 +544,13 @@ class BatchOperationService extends CI_Controller {
 
         $acceptedPorts = $this->Porting_model->get_porting_by_state_and_donor(\PortingService\Porting\portingStateType::ACCEPTED, Operator::ORANGE_NETWORK_ID);
 
+        // Load ports in Porting table in CONTRACT_DELETED_CONFIRMED state in which we are OPD
+
+        $msisdnContractDeletedPorts = $this->Porting_model->get_porting_by_state_and_donor(\PortingService\Porting\portingStateType::CONTRACT_DELETED_CONFIRMED, Operator::ORANGE_NETWORK_ID);
+
         // Load ports in Porting table in MSISDN_EXPORT_CONFIRMED state in which we are OPD
 
-        $msisdnConfirmedPorts = $this->Porting_model->get_porting_by_state_and_donor(\PortingService\Porting\portingStateType::MSISDN_EXPORT_CONFIRMED, Operator::ORANGE_NETWORK_ID);
+        $msisdnExportedPorts = $this->Porting_model->get_porting_by_state_and_donor(\PortingService\Porting\portingStateType::MSISDN_EXPORT_CONFIRMED, Operator::ORANGE_NETWORK_ID);
 
         $bscsOperationService = new BscsOperationService();
 
@@ -564,12 +569,14 @@ class BatchOperationService extends CI_Controller {
 
             if($provisionPort){
 
-                // Porting already provisioned. Start porting moving to MSISDN_EXPORT_CONFIRMED state
+                // Porting already provisioned. Start porting moving to CONTRACT_DELETED_CONFIRMED state
                 $subscriberMSISDN = $acceptedPort['subscriberMSISDN'];
 
-                $exportResponse = $bscsOperationService->exportMSISDN($subscriberMSISDN);
+                $contractId = $bscsOperationService->getContractId($subscriberMSISDN);
 
-                if($exportResponse->success){
+                $deleteResponse = $bscsOperationService->deleteContract($contractId);
+
+                if($deleteResponse->success){
 
                     $this->db->trans_start();
 
@@ -577,7 +584,7 @@ class BatchOperationService extends CI_Controller {
 
                     $portingEvolutionParams = array(
                         'lastChangeDateTime' => date('c'),
-                        'portingState' => \PortingService\Porting\portingStateType::MSISDN_EXPORT_CONFIRMED,
+                        'portingState' => \PortingService\Porting\portingStateType::CONTRACT_DELETED_CONFIRMED,
                         'isAutoReached' => false,
                         'portingId' => $portingId,
                     );
@@ -589,7 +596,7 @@ class BatchOperationService extends CI_Controller {
 
                     $portingParams = array(
                         'lastChangeDateTime' => date('c'),
-                        'portingState' => \PortingService\Porting\portingStateType::MSISDN_EXPORT_CONFIRMED
+                        'portingState' => \PortingService\Porting\portingStateType::CONTRACT_DELETED_CONFIRMED
                     );
 
                     $this->Porting_model->update_porting($portingId, $portingParams);
@@ -600,7 +607,7 @@ class BatchOperationService extends CI_Controller {
 
                     if ($this->db->trans_status() === FALSE) {
                         $emailService = new EmailService();
-                        $emailService->adminErrorReport('PORTING_MSISDN_EXPORTED_BUT_DB_FILLED_INCOMPLETE', []);
+                        $emailService->adminErrorReport('PORTING_MSISDN_CONTRACT_DELETED_BUT_DB_FILLED_INCOMPLETE', []);
                     }else{
 
                     }
@@ -609,15 +616,12 @@ class BatchOperationService extends CI_Controller {
                 else{
 
                     // Notify Admin on failed Export
-                    $faultCode = $exportResponse->error;
+                    $faultCode = $deleteResponse->error;
 
                     $fault = '';
 
                     switch ($faultCode) {
                         // Terminal Processes
-                        case Fault::SERVICE_BREAK_DOWN_CODE:
-                            $fault = Fault::SERVICE_BREAK_DOWN;
-                            break;
                         case Fault::SIGNATURE_MISMATCH_CODE:
                             $fault = Fault::SIGNATURE_MISMATCH;
                             break;
@@ -654,17 +658,107 @@ class BatchOperationService extends CI_Controller {
             }
         }
 
-        foreach ($msisdnConfirmedPorts as $msisdnConfirmedPort){
+        foreach ($msisdnContractDeletedPorts as $msisdnContractDeletedPort){
 
-            $portingId = $msisdnConfirmedPort['portingId'];
+            // TODO: Verify that porting process already provisioned
 
-            $fromOperator = $msisdnConfirmedPort['donorNetworkId'];
+            $portingId = $msisdnContractDeletedPort['portingId'];
 
-            $toOperator = $msisdnConfirmedPort['recipientNetworkId'];
+            // Porting already provisioned. Start porting moving to MSISDN_EXPORT_CONFIRMED state
+            $subscriberMSISDN = $acceptedPort['subscriberMSISDN'];
 
-            $fromRoutingNumber = $msisdnConfirmedPort['donorRoutingNumber'];
+            $exportResponse = $bscsOperationService->exportMSISDN($subscriberMSISDN);
 
-            $toRoutingNumber = $msisdnConfirmedPort['recipientRoutingNumber'];
+            if($exportResponse->success){
+
+                $this->db->trans_start();
+
+                // Insert into porting Evolution state table
+
+                $portingEvolutionParams = array(
+                    'lastChangeDateTime' => date('c'),
+                    'portingState' => \PortingService\Porting\portingStateType::MSISDN_EXPORT_CONFIRMED,
+                    'isAutoReached' => false,
+                    'portingId' => $portingId,
+                );
+
+
+                $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
+
+                // Update Porting table
+
+                $portingParams = array(
+                    'lastChangeDateTime' => date('c'),
+                    'portingState' => \PortingService\Porting\portingStateType::MSISDN_EXPORT_CONFIRMED
+                );
+
+                $this->Porting_model->update_porting($portingId, $portingParams);
+
+                // Notify Agents/Admin
+
+                $this->db->trans_complete();
+
+                if ($this->db->trans_status() === FALSE) {
+                    $emailService = new EmailService();
+                    $emailService->adminErrorReport('PORTING_MSISDN_EXPORTED_BUT_DB_FILLED_INCOMPLETE', []);
+                }else{
+
+                }
+
+            }
+            else{
+
+                // Notify Admin on failed Export
+                $faultCode = $exportResponse->error;
+
+                $fault = '';
+
+                switch ($faultCode) {
+                    // Terminal Processes
+                    case Fault::SERVICE_BREAK_DOWN_CODE:
+                        $fault = Fault::SERVICE_BREAK_DOWN;
+                        break;
+                    case Fault::SIGNATURE_MISMATCH_CODE:
+                        $fault = Fault::SIGNATURE_MISMATCH;
+                        break;
+                    case Fault::DENIED_ACCESS_CODE:
+                        $fault = Fault::DENIED_ACCESS;
+                        break;
+                    case Fault::UNKNOWN_COMMAND_CODE:
+                        $fault = Fault::UNKNOWN_COMMAND;
+                        break;
+                    case Fault::INVALID_PARAMETER_TYPE_CODE:
+                        $fault = Fault::INVALID_PARAMETER_TYPE;
+                        break;
+
+                    case Fault::PARAMETER_LIST_CODE:
+                        $fault = Fault::PARAMETER_LIST;
+                        break;
+
+                    case Fault::CMS_EXECUTION_CODE:
+                        $fault = Fault::CMS_EXECUTION;
+                        break;
+
+                    default:
+                        $fault = $faultCode;
+                }
+
+                $emailService->adminErrorReport($fault, []);
+
+            }
+        }
+
+        foreach ($msisdnExportedPorts as $msisdnExportedPort){
+
+            $portingId = $msisdnExportedPort['portingId'];
+
+            $fromOperator = $msisdnExportedPort['donorNetworkId'];
+
+            $toOperator = $msisdnExportedPort['recipientNetworkId'];
+
+            $fromRoutingNumber = $msisdnExportedPort['donorRoutingNumber'];
+
+            $toRoutingNumber = $msisdnExportedPort['recipientRoutingNumber'];
 
             // Perform KPSA Operation
             $kpsaResponse = $kpsaOperationService->performKPSAOperation($fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
@@ -720,6 +814,7 @@ class BatchOperationService extends CI_Controller {
 
             }
 
+
         }
 
     }
@@ -728,8 +823,8 @@ class BatchOperationService extends CI_Controller {
      * Executed as OPR
      * BATCH_004_{C, D, E}
      * Checks for all ports in ACCEPTED state, if any performs porting to MSISDN_IMPORT_CONFIRMED state
-     * Checks for all ports in MSISDN_IMPORT_CONFIRMED state, if any and MSISDN active in BSCS, perform porting to CONFIRMED state, sending confirm request and updating Porting table else perform porting to MSISDN_ACTIVATE_CONFIRMED state
-     * Checks for all ports in MSISDN_ACTIVATE_CONFIRMED state, if any, perform porting to CONFIRMED state, sending confirm request and updating Porting table
+     * Checks for all ports in MSISDN_IMPORT_CONFIRMED state, if any, move to MSISDN_CHANGE_IMPORT_CONFIRMED state
+     * Checks for all ports in MSISDN_CHANGE_IMPORT_CONFIRMED state, if any, perform porting to CONFIRMED state, sending confirm request and updating Porting table
      */
     public function portingOPR(){
 
@@ -741,9 +836,9 @@ class BatchOperationService extends CI_Controller {
 
         $msisdnConfirmedPorts = $this->Porting_model->get_porting_by_state_and_recipient(\PortingService\Porting\portingStateType::MSISDN_IMPORT_CONFIRMED, Operator::ORANGE_NETWORK_ID);
 
-        // Load ports in Porting table in MSISDN_ACTIVATE_CONFIRMED state in which we are
+        // Load ports in Porting table in MSISDN_CHANGE_IMPORT_CONFIRMED state in which we are
 
-        $msisdnActivatedPorts = $this->Porting_model->get_porting_by_state_and_recipient(\PortingService\Porting\portingStateType::MSISDN_ACTIVATE_CONFIRMED, Operator::ORANGE_NETWORK_ID);
+        $msisdnChangePorts = $this->Porting_model->get_porting_by_state_and_recipient(\PortingService\Porting\portingStateType::MSISDN_CHANGE_IMPORT_CONFIRMED, Operator::ORANGE_NETWORK_ID);
 
         $bscsOperationService = new BscsOperationService();
 
@@ -868,135 +963,63 @@ class BatchOperationService extends CI_Controller {
 
             $portingId = $msisdnConfirmedPort['portingId'];
 
-            // Verify if temporal MSISDN is ACTIVE
             $subscriberInfo = $this->Portingsubmission_model->get_submissionByPortingId($portingId);
 
-            $isActive = $bscsOperationService->verifyActive($subscriberInfo['temporalMSISDN']);
+            $subscriberMSISDN = $acceptedPort['subscriberMSISDN'];
 
-            if($isActive){
-                // MSISDN already active. Move porting to CONFIRMED state
-                $fromOperator = $msisdnConfirmedPort['donorNetworkId'];
+            $changeResponse = $bscsOperationService->changeImportMSISDN($subscriberInfo['temporalMSISDN'], $subscriberMSISDN);
 
-                $toOperator = $msisdnConfirmedPort['recipientNetworkId'];
+            if($changeResponse->success){
 
-                $fromRoutingNumber = $msisdnConfirmedPort['donorRoutingNumber'];
+                $this->db->trans_start();
 
-                $toRoutingNumber = $msisdnConfirmedPort['recipientRoutingNumber'];
+                // Insert into porting Evolution state table
 
-                // Perform KPSA Operation
-                $kpsaResponse = $kpsaOperationService->performKPSAOperation($fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
+                $portingEvolutionParams = array(
+                    'lastChangeDateTime' => date('c'),
+                    'portingState' => \PortingService\Porting\portingStateType::MSISDN_CHANGE_IMPORT_CONFIRMED,
+                    'isAutoReached' => false,
+                    'portingId' => $portingId,
+                );
 
-                if($kpsaResponse->success){
+                $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
 
-                    $this->db->trans_start();
+                // Update Porting table
 
-                    // Insert into porting Evolution state table
+                $portingParams = array(
+                    'lastChangeDateTime' => date('c'),
+                    'portingState' => \PortingService\Porting\portingStateType::MSISDN_CHANGE_IMPORT_CONFIRMED
+                );
 
-                    $portingEvolutionParams = array(
-                        'lastChangeDateTime' => date('c'),
-                        'portingState' => \PortingService\Porting\portingStateType::CONFIRMED,
-                        'isAutoReached' => false,
-                        'portingId' => $portingId,
-                    );
+                $this->Porting_model->update_porting($portingId, $portingParams);
 
-                    $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
+                // Notify Agents/Admin
 
-                    // Update Porting table
+                $this->db->trans_complete();
 
-                    $portingParams = array(
-                        'lastChangeDateTime' => date('c'),
-                        'portingState' => \PortingService\Porting\portingStateType::CONFIRMED
-                    );
-
-                    $this->Porting_model->update_porting($portingId, $portingParams);
-
-                    // Update Provisioning table
-
-                    $prParams = array(
-                        'provisionState' => \ProvisionService\ProvisionNotification\provisionStateType::COMPLETED,
-                    );
-
-                    $this->Provisioning_model->update_provisioning($portingId, $prParams);
-
-                    // Notify Agents/Admin
-
-                    $this->db->trans_complete();
-
-                    if ($this->db->trans_status() === FALSE) {
-                        $emailService = new EmailService();
-                        $emailService->adminErrorReport('PORTING_COMPLETED_BUT_DB_FILLED_INCOMPLETE', []);
-                    }else{
-
-                    }
-
-                }
-
-                else{
-
-                    $emailService->adminKPSAError($kpsaResponse->message, []);
+                if ($this->db->trans_status() === FALSE) {
+                    $emailService = new EmailService();
+                    $emailService->adminErrorReport('PORTING_MSISDN_CHANGED_BUT_DB_FILLED_INCOMPLETE', []);
+                }else{
 
                 }
 
             }else{
-                // MSISDN not active yet. Move porting to MSISDN_ACTIVATE_CONFIRMED
 
-                // Activate temporal MSISDN in BSCS and Update tables
-                $activateResponse = $bscsOperationService->activeMSISDN($subscriberInfo['temporalMSISDN']);
-
-                if($activateResponse){
-
-                    // Successful Activation. Insert into porting Evolution state table
-
-                    $portingEvolutionParams = array(
-                        'lastChangeDateTime' => date('c'),
-                        'portingState' => \PortingService\Porting\portingStateType::MSISDN_ACTIVATE_CONFIRMED,
-                        'isAutoReached' => false,
-                        'portingId' => $portingId,
-                    );
-
-                    $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
-
-                    // Update Porting table
-
-                    $portingParams = array(
-                        'lastChangeDateTime' => date('c'),
-                        'portingState' => \PortingService\Porting\portingStateType::MSISDN_ACTIVATE_CONFIRMED
-                    );
-
-                    $this->Porting_model->update_porting($portingId, $portingParams);
-
-                    // Notify Agents/Admin
-
-                    $this->db->trans_complete();
-
-                    if ($this->db->trans_status() === FALSE) {
-                        $emailService = new EmailService();
-                        $emailService->adminErrorReport('MSISDN_ACTIVATED_BUT_DB_FILLED_INCOMPLETE', []);
-                    }else{
-
-                    }
-
-
-                }
-                else{
-
-                    $emailService->adminErrorReport('FAILED_ACTIVATING_MSISDN_IN_BSCS', []);
-
-                }
             }
 
         }
 
-        foreach ($msisdnActivatedPorts as $msisdnActivatedPort){
+        foreach ($msisdnChangePorts as $msisdnChangePort){
 
             // Move porting to CONFIRMED state
-            $fromOperator = $msisdnActivatedPort['donorNetworkId'];
+            $fromOperator = $msisdnChangePort['donorNetworkId'];
 
-            $toOperator = $msisdnActivatedPort['recipientNetworkId'];
+            $toOperator = $msisdnChangePort['recipientNetworkId'];
 
-            $fromRoutingNumber = $msisdnActivatedPort['donorRoutingNumber'];
+            $fromRoutingNumber = $msisdnChangePort['donorRoutingNumber'];
 
-            $toRoutingNumber = $msisdnActivatedPort['recipientRoutingNumber'];
+            $toRoutingNumber = $msisdnChangePort['recipientRoutingNumber'];
 
             // Perform KPSA Operation
             $kpsaResponse = $kpsaOperationService->performKPSAOperation($fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
@@ -1005,7 +1028,7 @@ class BatchOperationService extends CI_Controller {
 
                 // Send confirm request
 
-                $portingId = $msisdnActivatedPort['portingId'];
+                $portingId = $msisdnChangePort['portingId'];
 
                 $portingDateAndTime = date('c', strtotime('+5 minutes', strtotime(date('c'))));
 

@@ -27,13 +27,15 @@ class RIO extends CI_Controller {
 
     /**
      * Returns RIO of given subscriber
-     * @param $msisdn
+     * @param $msisdn string|false
      */
     public static function get_rio($msisdn){
         $contractId = '8800092';
         $msisdn = '237694975166';
 
         // TODO: Load ContractId from BSCS
+
+        // TODO: If enterprise number return false. What about enterprise RIO
 
         // RIO == OOQRRRRRRCCC
 
