@@ -23,6 +23,7 @@ class BSCS_model extends CI_Model{
      */
     function get_msisdn_info($msisdn)
     {
+
         $sql = "SELECT a.dn_num MSISDN, c.co_id CONTRACT_ID, cos.ch_status STATUT, CASE cu.billcycle WHEN '05' THEN 
                 'PREPAID' ELSE 'POSTPAID' END AS CUST_TYPE, cc.ccsex SEXE, cc.cctitle, cc.ccname STE, cc.cclname NOM, 
                 cc.ccfname PRENOM, cc.birthdate, cc.id_type, cc.passportno ID_PIECE, cc.ccjobdesc METIER, cc.cczip BP, 

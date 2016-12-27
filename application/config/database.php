@@ -76,7 +76,7 @@ $query_builder = TRUE;
 $db['default'] = array(
 	'dsn'	=> '',
 	'hostname' => 'localhost',
-	'username' => 'root',
+	'username' => 'sgp_user',
 	'password' => '',
 	'database' => 'sgp_db',
 	'dbdriver' => 'mysqli',
@@ -98,10 +98,10 @@ $db['default'] = array(
 $db['BSCS'] = array(
     'dsn'	=> '',
     'hostname' =>  '(DESCRIPTION = (ADDRESS = (PROTOCOL = TCP)(HOST = 172.21.5.60)(PORT = 1521))(CONNECT_DATA =(SERVICE_NAME = OCMBP)(instance_name=OCMBP3)))',
-    'username' => 'root',
-    'password' => '',
+    'username' => 'sysadm',
+    'password' => 'ocmbp',
     'database' => 'OCMBP',
-    'dbdriver' => 'pdo_oci',
+    'dbdriver' => 'oci8',
     'dbprefix' => '',
     'pconnect' => FALSE,
     'db_debug' => (ENVIRONMENT !== 'production'),
