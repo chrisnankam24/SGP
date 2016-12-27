@@ -30,11 +30,14 @@ class EmailService {
 
         $mail->isSMTP();                                      // Set mailer to use SMTP
         $mail->Host = '172.21.55.12';  // Specify main and backup SMTP servers
+        $mail->SMTPAuth = true;                               // Enable SMTP authentication
+        $mail->Username = 'alpha@orange.com';                 // SMTP username
+        $mail->Password = 'Azerty16';                           // SMTP password
         $mail->Port = 25;                                    // TCP port to connect to
 
-        $mail->setFrom('DTI_SIT@orange.com', 'DTI OSS');
+        //$mail->setFrom('DTI_SIT@orange.com', 'DTI OSS');
+        $mail->setFrom('DTI_SIT@orange.com');
         $mail->addAddress('christian.nankam@orange.com');     // Add a recipient
-        $mail->addAddress('christian.nankam@orange.com');               // Name is optional
         $mail->isHTML(true);                                  // Set email format to HTML
 
         $mail->Subject = 'Here is the subject';
