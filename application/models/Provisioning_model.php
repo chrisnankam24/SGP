@@ -61,9 +61,9 @@ class Provisioning_model extends CI_Model
     /*
      * Get provisioning by state and Type
      */
-    function get_provisioning_by_process_state($proccessType, $provisionState)
+    function get_provisioning_by_process_state($processId, $proccessType, $provisionState)
     {
-        return $this->db->get_where('Provisioning',array('proccessType'=>$proccessType, 'provisionState' => $provisionState))->result_array();
+        return $this->db->get_where('Provisioning',array('processId' => $processId, 'proccessType'=>$proccessType, 'provisionState' => $provisionState))->result_array();
     }
     
     /*

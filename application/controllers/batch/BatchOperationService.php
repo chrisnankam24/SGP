@@ -560,12 +560,10 @@ class BatchOperationService extends CI_Controller {
 
         foreach ($acceptedPorts as $acceptedPort){
 
-            // TODO: Verify that porting process already provisioned
-
             $portingId = $acceptedPort['portingId'];
 
             // Check if port in provision table in state STARTED
-            $provisionPort = $this->Provision_model->get_provisioning_by_process_state(processType::PORTING, \ProvisionService\ProvisionNotification\provisionStateType::STARTED);
+            $provisionPort = $this->Provision_model->get_provisioning_by_process_state($portingId, processType::PORTING, \ProvisionService\ProvisionNotification\provisionStateType::STARTED);
 
             if($provisionPort){
 
@@ -660,12 +658,10 @@ class BatchOperationService extends CI_Controller {
 
         foreach ($msisdnContractDeletedPorts as $msisdnContractDeletedPort){
 
-            // TODO: Verify that porting process already provisioned
-
             $portingId = $msisdnContractDeletedPort['portingId'];
 
             // Porting already provisioned. Start porting moving to MSISDN_EXPORT_CONFIRMED state
-            $subscriberMSISDN = $acceptedPort['subscriberMSISDN'];
+            $subscriberMSISDN = $msisdnContractDeletedPort['subscriberMSISDN'];
 
             $exportResponse = $bscsOperationService->exportMSISDN($subscriberMSISDN);
 
@@ -832,11 +828,11 @@ class BatchOperationService extends CI_Controller {
 
         $acceptedPorts = $this->Porting_model->get_porting_by_state_and_recipient(\PortingService\Porting\portingStateType::ACCEPTED, Operator::ORANGE_NETWORK_ID);
 
-        // Load ports in Porting table in MSISDN_IMPORT_CONFIRMED state in which we are
+        // Load ports in Porting table in MSISDN_IMPORT_CONFIRMED state in which we are OPR
 
         $msisdnConfirmedPorts = $this->Porting_model->get_porting_by_state_and_recipient(\PortingService\Porting\portingStateType::MSISDN_IMPORT_CONFIRMED, Operator::ORANGE_NETWORK_ID);
 
-        // Load ports in Porting table in MSISDN_CHANGE_IMPORT_CONFIRMED state in which we are
+        // Load ports in Porting table in MSISDN_CHANGE_IMPORT_CONFIRMED state in which we are OPR
 
         $msisdnChangePorts = $this->Porting_model->get_porting_by_state_and_recipient(\PortingService\Porting\portingStateType::MSISDN_CHANGE_IMPORT_CONFIRMED, Operator::ORANGE_NETWORK_ID);
 
@@ -1263,8 +1259,9 @@ class BatchOperationService extends CI_Controller {
     /**
      * Executed as OPR
      * BATCH_008_{A, B}
-     * Checks for all rollbacks in ACCEPTED state, if any perform rollback to MSISDN_EXPORT_CONFIRMED state
-     * Checks for all rollbakcs in MSISDN_EXPORT_CONFIRMED state, if any perform rollbacks to CONFIRMED state updating Rollback/Provision table
+     * Checks for all rollbacks in ACCEPTED state, if any performs rollbacks to CONTRACT_DELETED_CONFIRMED state
+     * Checks for all rollbacks in CONTRACT_DELETED_CONFIRMED state, if any performs rollbacks to MSISDN_EXPORT_CONFIRMED, state
+     * Checks for all rollbacks in MSISDN_EXPORT_CONFIRMED state, if any perform rollbacks to CONFIRMED state updating Porting/Provision table
      */
     public function rollbackOPR(){
 
@@ -1272,9 +1269,13 @@ class BatchOperationService extends CI_Controller {
 
         $acceptedRollbacks = $this->Rollback_model->get_rollback_by_state_and_recipient(\RollbackService\Rollback\rollbackStateType::ACCEPTED, Operator::ORANGE_NETWORK_ID);
 
+        // Load rollbacks in Rollback table in CONTRACT_DELETED_CONFIRMED state in which we are OPR
+
+        $msisdnContractDeletecRollbacks = $this->Rollback_model->get_rollbacks_by_state_and_recipient(\RollbackService\Rollback\rollbackStateType::CONTRACT_DELETED_CONFIRMED, Operator::ORANGE_NETWORK_ID);
+
         // Load rollbacks in Rollback table in MSISDN_EXPORT_CONFIRMED state in which we are OPR
 
-        $msisdnConfirmedRollbacks = $this->Rollback_model->get_rollbacks_by_state_and_recipient(\RollbackService\Rollback\rollbackStateType::MSISDN_EXPORT_CONFIRMED, Operator::ORANGE_NETWORK_ID);
+        $msisdnExportedRollbacks = $this->Rollback_model->get_rollbacks_by_state_and_recipient(\RollbackService\Rollback\rollbackStateType::MSISDN_EXPORT_CONFIRMED, Operator::ORANGE_NETWORK_ID);
 
         $bscsOperationService = new BscsOperationService();
 
@@ -1284,21 +1285,21 @@ class BatchOperationService extends CI_Controller {
 
         foreach ($acceptedRollbacks as $acceptedRollback){
 
-            // TODO: Verify that rollback process already provisioned
-
             $rollbackId = $acceptedRollback['rollbackId'];
 
             // Check if rollback in provision table in state STARTED
-            $provisionRollback = $this->Provision_model->get_provisioning_by_process_state(processType::ROLLBACK, \ProvisionService\ProvisionNotification\provisionStateType::STARTED);
+            $provisionRollback = $this->Provision_model->get_provisioning_by_process_state($rollbackId, processType::ROLLBACK, \ProvisionService\ProvisionNotification\provisionStateType::STARTED);
 
             if($provisionRollback){
 
-                // Rollback already provisioned. Start rollback moving to MSISDN_EXPORT_CONFIRMED state
+                // Rollback already provisioned. Start rollback moving to CONTRACT_DELETED_CONFIRMED state
                 $subscriberMSISDN = $acceptedRollback['subscriberMSISDN'];
 
-                $exportResponse = $bscsOperationService->exportMSISDN($subscriberMSISDN);
+                $contractId = $bscsOperationService->getContractId($subscriberMSISDN);
 
-                if($exportResponse->success){
+                $deleteResponse = $bscsOperationService->deleteContract($contractId);
+
+                if($deleteResponse->success){
 
                     $this->db->trans_start();
 
@@ -1306,7 +1307,7 @@ class BatchOperationService extends CI_Controller {
 
                     $rollbackEvolutionParams = array(
                         'lastChangeDateTime' => date('c'),
-                        'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_EXPORT_CONFIRMED,
+                        'rollbackState' => \RollbackService\Rollback\rollbackStateType::CONTRACT_DELETED_CONFIRMED,
                         'isAutoReached' => false,
                         'rollbackId' => $rollbackId,
                     );
@@ -1318,7 +1319,7 @@ class BatchOperationService extends CI_Controller {
 
                     $rollbackParams = array(
                         'lastChangeDateTime' => date('c'),
-                        'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_EXPORT_CONFIRMED
+                        'rollbackState' => \RollbackService\Rollback\rollbackStateType::CONTRACT_DELETED_CONFIRMED
                     );
 
                     $this->Rollback_model->update_rollback($rollbackId, $rollbackParams);
@@ -1329,7 +1330,7 @@ class BatchOperationService extends CI_Controller {
 
                     if ($this->db->trans_status() === FALSE) {
                         $emailService = new EmailService();
-                        $emailService->adminErrorReport('ROLLBACK_MSISDN_EXPORTED_BUT_DB_FILLED_INCOMPLETE', []);
+                        $emailService->adminErrorReport('ROLLBACK_CONTRACT_DELETED_BUT_DB_FILLED_INCOMPLETE', []);
                     }else{
 
                     }
@@ -1338,15 +1339,12 @@ class BatchOperationService extends CI_Controller {
                 else{
 
                     // Notify Admin on failed Export
-                    $faultCode = $exportResponse->error;
+                    $faultCode = $deleteResponse->error;
 
                     $fault = '';
 
                     switch ($faultCode) {
                         // Terminal Processes
-                        case Fault::SERVICE_BREAK_DOWN_CODE:
-                            $fault = Fault::SERVICE_BREAK_DOWN;
-                            break;
                         case Fault::SIGNATURE_MISMATCH_CODE:
                             $fault = Fault::SIGNATURE_MISMATCH;
                             break;
@@ -1378,22 +1376,109 @@ class BatchOperationService extends CI_Controller {
 
             }else{
 
-                //Port not yet Provisioned. Do nothing, wait till provision
+                //Rollback not yet Provisioned. Do nothing, wait till provision
 
             }
         }
 
-        foreach ($msisdnConfirmedRollbacks as $msisdnConfirmedRollback){
+        foreach ($msisdnContractDeletecRollbacks as $msisdnContractDeletecRollback){
 
-            $rollbackId = $msisdnConfirmedRollback['rollbackId'];
+            $rollbackId = $msisdnContractDeletecRollback['rollbackId'];
 
-            $toOperator = $msisdnConfirmedRollback['donorNetworkId'];
+            $subscriberMSISDN = $msisdnContractDeletecRollback['subscriberMSISDN'];
 
-            $fromOperator = $msisdnConfirmedRollback['recipientNetworkId'];
+            $exportResponse = $bscsOperationService->exportMSISDN($subscriberMSISDN);
 
-            $toRoutingNumber = $msisdnConfirmedRollback['donorRoutingNumber'];
+            if($exportResponse->success){
 
-            $fromRoutingNumber = $msisdnConfirmedRollback['recipientRoutingNumber'];
+                $this->db->trans_start();
+
+                // Insert into Rollback Evolution state table
+
+                $rollbackEvolutionParams = array(
+                    'lastChangeDateTime' => date('c'),
+                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_EXPORT_CONFIRMED,
+                    'isAutoReached' => false,
+                    'rollbackId' => $rollbackId,
+                );
+
+
+                $this->Rollbackstateevolution_model->add_rollbackstateevolution($rollbackEvolutionParams);
+
+                // Update Rollback table
+
+                $rollbackParams = array(
+                    'lastChangeDateTime' => date('c'),
+                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_EXPORT_CONFIRMED
+                );
+
+                $this->Rollback_model->update_rollback($rollbackId, $rollbackParams);
+
+                // Notify Agents/Admin
+
+                $this->db->trans_complete();
+
+                if ($this->db->trans_status() === FALSE) {
+                    $emailService = new EmailService();
+                    $emailService->adminErrorReport('ROLLBACK_MSISDN_EXPORTED_BUT_DB_FILLED_INCOMPLETE', []);
+                }else{
+
+                }
+
+            }
+            else{
+
+                // Notify Admin on failed Export
+                $faultCode = $exportResponse->error;
+
+                $fault = '';
+
+                switch ($faultCode) {
+                    // Terminal Processes
+                    case Fault::SERVICE_BREAK_DOWN_CODE:
+                        $fault = Fault::SERVICE_BREAK_DOWN;
+                        break;
+                    case Fault::SIGNATURE_MISMATCH_CODE:
+                        $fault = Fault::SIGNATURE_MISMATCH;
+                        break;
+                    case Fault::DENIED_ACCESS_CODE:
+                        $fault = Fault::DENIED_ACCESS;
+                        break;
+                    case Fault::UNKNOWN_COMMAND_CODE:
+                        $fault = Fault::UNKNOWN_COMMAND;
+                        break;
+                    case Fault::INVALID_PARAMETER_TYPE_CODE:
+                        $fault = Fault::INVALID_PARAMETER_TYPE;
+                        break;
+
+                    case Fault::PARAMETER_LIST_CODE:
+                        $fault = Fault::PARAMETER_LIST;
+                        break;
+
+                    case Fault::CMS_EXECUTION_CODE:
+                        $fault = Fault::CMS_EXECUTION;
+                        break;
+
+                    default:
+                        $fault = $faultCode;
+                }
+
+                $emailService->adminErrorReport($fault, []);
+
+            }
+        }
+
+        foreach ($msisdnExportedRollbacks as $msisdnExportedRollback){
+
+            $rollbackId = $msisdnExportedRollback['rollbackId'];
+
+            $fromOperator = $msisdnExportedRollback['donorNetworkId'];
+
+            $toOperator = $msisdnExportedRollback['recipientNetworkId'];
+
+            $fromRoutingNumber = $msisdnExportedRollback['donorRoutingNumber'];
+
+            $toRoutingNumber = $msisdnExportedRollback['recipientRoutingNumber'];
 
             // Perform KPSA Operation
             $kpsaResponse = $kpsaOperationService->performKPSAOperation($fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
@@ -1402,22 +1487,22 @@ class BatchOperationService extends CI_Controller {
 
                 $this->db->trans_start();
 
-                // Insert into rollback Evolution state table
+                // Insert into Rollback Evolution state table
 
                 $rollbackEvolutionParams = array(
                     'lastChangeDateTime' => date('c'),
-                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::CONFIRMED,
+                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_EXPORT_CONFIRMED,
                     'isAutoReached' => false,
                     'rollbackId' => $rollbackId,
                 );
 
                 $this->Rollbackstateevolution_model->add_rollbackstateevolution($rollbackEvolutionParams);
 
-                // Update Rollbaack table
+                // Update Rollback table
 
                 $rollbackParams = array(
                     'lastChangeDateTime' => date('c'),
-                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::CONFIRMED
+                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_EXPORT_CONFIRMED
                 );
 
                 $this->Rollback_model->update_rollback($rollbackId, $rollbackParams);
@@ -1425,7 +1510,7 @@ class BatchOperationService extends CI_Controller {
                 // Update Provisioning table
 
                 $prParams = array(
-                    'provisionState' => \ProvisionService\ProvisionNotification\provisionStateType::COMPLETED
+                    'provisionState' => \ProvisionService\ProvisionNotification\provisionStateType::COMPLETED,
                 );
 
                 $this->Provisioning_model->update_provisioning($rollbackId, $prParams);
@@ -1451,9 +1536,9 @@ class BatchOperationService extends CI_Controller {
 
         }
 
-
     }
 
+    // TODO : Implement Rollback OPD
     /**
      * Executed as OPD
      * BATCH_008_{C, D, E}
