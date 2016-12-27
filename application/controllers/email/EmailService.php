@@ -7,6 +7,9 @@
  * Time: 9:31 AM
  */
 
+require_once APPPATH . "third_party/PHPMailer/PHPMailerAutoload.php";
+
+
 /**
  * Class Email
  * Base class for all email related functionalities
@@ -22,15 +25,29 @@ class EmailService {
     }
 
     public function test(){
-        $this->CI->load->library('email');
 
-        $this->CI->email->from('chp.testbed@gmail.com', 'Nankam Happi C.');
-        $this->CI->email->to('christian.nankam@orange.com');
+        $mail = new PHPMailer;
 
-        $this->CI->email->subject('Test Mail');
-        $this->CI->email->message('Testing email service');
+        $mail->isSMTP();                                      // Set mailer to use SMTP
+        $mail->Host = '172.21.55.12';  // Specify main and backup SMTP servers
+        $mail->Port = 25;                                    // TCP port to connect to
 
-        $this->CI->email->send();
+        $mail->setFrom('DTI_SIT@orange.com', 'DTI OSS');
+        $mail->addAddress('christian.nankam@orange.com');     // Add a recipient
+        $mail->addAddress('christian.nankam@orange.com');               // Name is optional
+        $mail->isHTML(true);                                  // Set email format to HTML
+
+        $mail->Subject = 'Here is the subject';
+        $mail->Body    = 'This is the HTML message body <b>in bold!</b>';
+        $mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
+
+        if(!$mail->send()) {
+            echo 'Message could not be sent.';
+            echo 'Mailer Error: ' . $mail->ErrorInfo;
+        } else {
+            echo 'Message has been sent';
+        }
+
     }
 
     /**
