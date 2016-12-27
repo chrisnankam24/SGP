@@ -31,7 +31,7 @@ class SMS extends CI_Controller {
 
     public function index(){
 
-        //SMS::OPD_Inform_Subcriber('237694975166',SMS::$DENOMINATION_COMMERCIALE_NEXTTEL, '2343454564567567');
+        SMS::OPD_Inform_Subcriber('237694975166',SMS::$DENOMINATION_COMMERCIALE_NEXTTEL, '2343454564567567');
 
         //SMS::OPR_Subscriber_OK('237694975166', '21/11/2016', '12:00:00', '15:00:00');
 
@@ -298,17 +298,17 @@ class SMS extends CI_Controller {
     private static function send_response($msisdn, $message)
     {
 
-        $sendResponse = [];
-        $sendResponse->success = true;
+        $sendResponse = array();
+        $sendResponse['success'] = true;
 
         $response = file_get_contents('http://' . SMSParams::HOST . ':' . SMSParams::PORT . '/cgi-bin/sendsms?&username='
-            . SMSParams::USERNAME . '&password=' . SMSParams::PASSWORD . '&from=' . SMSParams::FROM . '&to=' . $msisdn . '&text=' . $message
+            . SMSParams::USERNAME . '&password=' . SMSParams::PASSWORD . '&from=' . SMSParams::FROM . '&to=' . $msisdn . '&text=' . urlencode($message)
             . '&charset=' . SMSParams::CHARSET . '&coding=' . SMSParams::CODING . '&priority=' . SMSParams::PRIORITY);
 
         if($response){
 
         }else{
-            $sendResponse->success = false;
+            $sendResponse['success'] = false;
         }
 
         return $sendResponse;
