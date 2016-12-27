@@ -36,6 +36,11 @@ class Porting extends CI_Controller
         $this->load->view('porting/index',$data);
     }
 
+    function test(){
+        $emailService = new EmailService();
+        $emailService->test();
+    }
+
     /**
      * API for retrieving BSCS info linked to temporal number
      */

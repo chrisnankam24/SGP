@@ -21,6 +21,18 @@ class EmailService {
         $this->CI =& get_instance();
     }
 
+    public function test(){
+        $this->CI->load->library('email');
+
+        $this->CI->email->from('chp.testbed@gmail.com', 'Nankam Happi C.');
+        $this->CI->email->to('christian.nankam@orange.com');
+
+        $this->CI->email->subject('Test Mail');
+        $this->CI->email->message('Testing email service');
+
+        $this->CI->email->send();
+    }
+
     /**
      * Reports Error to Admin via mail
      * @param $faultCode
