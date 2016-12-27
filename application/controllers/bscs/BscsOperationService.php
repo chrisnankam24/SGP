@@ -65,11 +65,12 @@ class BscsOperationService extends CI_Controller  {
     }
 
     public function test() {
-        $temporalMSISDN = '234234234';
-        $portingMSISDN = '345464556';
-        $operationService = new BscsOperationService();
-        $response = $operationService->ChangeImportMSISDN($temporalMSISDN, $portingMSISDN);
-        var_dump($response);
+        $temporalMSISDN = '237694975166';
+//        $portingMSISDN = '345464556';
+//        $operationService = new BscsOperationService();
+//        $response = $operationService->ChangeImportMSISDN($temporalMSISDN, $portingMSISDN);
+//        var_dump($response);
+        $this->loadNumberInfo($temporalMSISDN);
     }
 
     /**
