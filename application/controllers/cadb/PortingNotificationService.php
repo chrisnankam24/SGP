@@ -9,6 +9,7 @@ require_once "Fault.php";
 require_once APPPATH . "controllers/sms/SMS.php";
 require_once APPPATH . "controllers/email/EmailService.php";
 require_once APPPATH . "controllers/bscs/BscsOperationService.php";
+require_once APPPATH . "controllers/kpsa/KpsaOperationService.php";
 
 
 use PortingService\PortingNotification as PortingNotification;
@@ -52,6 +53,12 @@ class PortingNotificationService extends CI_Controller
         // Handle soap operations
         $server->handle();
 
+    }
+
+    function test(){
+        $kpsaOperationService = new KpsaOperationService();
+        $response = $kpsaOperationService->viewSubscriberTEKELEC('694975166');
+        print_r($response);
     }
 
     /**

@@ -174,7 +174,7 @@ class KpsaOperationService extends CI_Controller {
      * @param $msisdn
      * @return array
      */
-    private function viewSubscriberTEKELEC($msisdn){
+    public function viewSubscriberTEKELEC($msisdn){
 
         $viewResponse = [];
         $viewResponse->success = true;
