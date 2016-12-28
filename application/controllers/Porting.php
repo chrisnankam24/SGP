@@ -592,6 +592,243 @@ class Porting extends CI_Controller
     }
 
     /**
+     * API to retrieve detail on porting
+     */
+    public function getCADBPorting(){
+        $response = [];
+
+        if(isset($_POST) && count($_POST) > 0) {
+
+            $portingId = $this->input->post('portingId');
+
+            $portingOperationService = new PortingOperationService();
+            $getResponse = $portingOperationService->getPorting($portingId);
+
+            // Verify response
+
+            if($getResponse->success){
+
+                $response['success'] = true;
+
+                $response['data'] = $getResponse->portingTransaction;
+
+            }
+
+            else{
+
+                $fault = $getResponse->error;
+
+                $response['success'] = false;
+
+                switch ($fault) {
+                    // Terminal Processes
+                    case Fault::INVALID_OPERATOR_FAULT:
+                    case Fault::PORTING_ACTION_NOT_AVAILABLE:
+                    case Fault::INVALID_PORTING_ID:
+                    case Fault::INVALID_REQUEST_FORMAT:
+                    default:
+                        $response['message'] = 'Error from CADB';
+
+                }
+
+
+            }
+
+        }else{
+
+            $response['success'] = false;
+            $response['message'] = 'No porting id found';
+
+        }
+
+        $this->send_response($response);
+    }
+
+    /**
+     * API to retieve all portings from LDB
+     */
+    public function getLDBPortings(){
+
+        $response = [];
+
+        $response['data'] = $this->Porting_model->get_all_porting();
+
+        $this->send_response($response);
+    }
+
+    /**
+     * API to retrieve all portings from CADB
+     */
+    public function getCADBPortings(){
+
+        $response = [];
+
+        $response['data'] = [];
+
+        $portingOperationService = new PortingOperationService();
+
+        // Load ORDERED Portings
+
+        $orderedResponse = $portingOperationService->getOrderedPortings(Operator::ORANGE_NETWORK_ID);
+
+        if($orderedResponse->success){
+
+            $response['data'] = array_merge($response['data'], $orderedResponse->portingTransactions);
+
+        }
+        else{
+
+            $fault = $orderedResponse->error;
+
+            $emailService = new EmailService();
+
+            switch ($fault) {
+
+                case Fault::INVALID_OPERATOR_FAULT:
+                case Fault::ACTION_NOT_AUTHORIZED:
+                case Fault::INVALID_REQUEST_FORMAT:
+                default:
+                    //$emailService->adminErrorReport("ERROR_RETRIEVING_ORDERED_PORTINGS_FROM_CADB", []);
+            }
+
+        }
+
+        // Load APPROVED Portings
+
+        $approvedResponse = $portingOperationService->getApprovedPortings(Operator::ORANGE_NETWORK_ID);
+
+        if($approvedResponse->success){
+
+            $response['data'] = array_merge($response['data'], $approvedResponse->portingTransactions);
+
+        }
+        else{
+
+            $fault = $approvedResponse->error;
+
+            $emailService = new EmailService();
+
+            switch ($fault) {
+
+                case Fault::INVALID_OPERATOR_FAULT:
+                case Fault::ACTION_NOT_AUTHORIZED:
+                case Fault::INVALID_REQUEST_FORMAT:
+                default:
+                    //$emailService->adminErrorReport("ERROR_RETRIEVING_APPROVED_PORTINGS_FROM_CADB", []);
+            }
+
+        }
+
+        // Load ACCEPTED Portings
+
+        $acceptedResponse = $portingOperationService->getAcceptedPortings(Operator::ORANGE_NETWORK_ID);
+
+        if($acceptedResponse->success){
+
+            $response['data'] = array_merge($response['data'], $acceptedResponse->portingTransactions);
+
+        }
+        else{
+
+            $fault = $acceptedResponse->error;
+
+            $emailService = new EmailService();
+
+            switch ($fault) {
+
+                case Fault::INVALID_OPERATOR_FAULT:
+                case Fault::ACTION_NOT_AUTHORIZED:
+                case Fault::INVALID_REQUEST_FORMAT:
+                default:
+                    //$emailService->adminErrorReport("ERROR_RETRIEVING_ACCEPTED_PORTINGS_FROM_CADB", []);
+            }
+
+        }
+
+        // Load CONFIRMED Portings
+
+        $confirmedResponse = $portingOperationService->getConfirmedPortings(Operator::ORANGE_NETWORK_ID);
+
+        if($confirmedResponse->success){
+
+            $response['data'] = array_merge($response['data'], $confirmedResponse->portingTransactions);
+
+        }
+        else{
+
+            $fault = $confirmedResponse->error;
+
+            $emailService = new EmailService();
+
+            switch ($fault) {
+
+                case Fault::INVALID_OPERATOR_FAULT:
+                case Fault::ACTION_NOT_AUTHORIZED:
+                case Fault::INVALID_REQUEST_FORMAT:
+                default:
+                    //$emailService->adminErrorReport("ERROR_RETRIEVING_CONFIRMED_PORTINGS_FROM_CADB", []);
+            }
+
+        }
+
+        // Load DENIED Portings
+
+        $deniedResponse = $portingOperationService->getDeniedPortings(Operator::ORANGE_NETWORK_ID, params::DENIED_REJECTED_MAX_COUNT);
+
+        if($deniedResponse->success){
+
+            $response['data'] = array_merge($response['data'], $deniedResponse->portingTransactions);
+
+        }
+        else{
+
+            $fault = $deniedResponse->error;
+
+            $emailService = new EmailService();
+
+            switch ($fault) {
+
+                case Fault::INVALID_OPERATOR_FAULT:
+                case Fault::ACTION_NOT_AUTHORIZED:
+                case Fault::INVALID_REQUEST_FORMAT:
+                case Fault::COUNT_OVER_MAX_COUNT_LIMIT:
+                default:
+                    //$emailService->adminErrorReport("ERROR_RETRIEVING_DENIED_PORTINGS_FROM_CADB", []);
+            }
+
+        }
+
+        // Load REJECTED Portings
+
+        $rejectedResponse = $portingOperationService->getRejectedPortings(Operator::ORANGE_NETWORK_ID, params::DENIED_REJECTED_MAX_COUNT);
+
+        if($rejectedResponse->success){
+
+            $response['data'] = array_merge($response['data'], $rejectedResponse->portingTransactions);
+
+        }
+        else{
+
+            $fault = $rejectedResponse->error;
+
+            $emailService = new EmailService();
+
+            switch ($fault) {
+
+                case Fault::INVALID_OPERATOR_FAULT:
+                case Fault::ACTION_NOT_AUTHORIZED:
+                case Fault::INVALID_REQUEST_FORMAT:
+                case Fault::COUNT_OVER_MAX_COUNT_LIMIT:
+                default:
+                    //$emailService->adminErrorReport("ERROR_RETRIEVING_REJECTED_PORTINGS_FROM_CADB", []);
+            }
+
+        }
+
+        $this->send_response($response);
+    }
+
+    /**
      *
      * @param $response
      */

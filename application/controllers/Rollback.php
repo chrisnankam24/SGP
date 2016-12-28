@@ -379,7 +379,189 @@ class Rollback extends CI_Controller
         $this->send_response($response);
 
     }
-    
+
+    /**
+     * API to retrieve detail on rollback
+     */
+    public function getCADBRollback(){
+        $response = [];
+
+        if(isset($_POST) && count($_POST) > 0) {
+
+            $rollbackId = $this->input->post('rollbackId');
+
+            $rollbackOperationService = new RollbackOperationService();
+            $getResponse = $rollbackOperationService->getRollback($rollbackId);
+
+            // Verify response
+
+            if($getResponse->success){
+
+                $response['success'] = true;
+
+                $response['data'] = $getResponse->rollbackTransaction;
+
+            }
+
+            else{
+
+                $fault = $getResponse->error;
+
+                $response['success'] = false;
+
+                switch ($fault) {
+                    // Terminal Processes
+                    case Fault::INVALID_OPERATOR_FAULT:
+                    case Fault::PORTING_ACTION_NOT_AVAILABLE:
+                    case Fault::INVALID_ROLLBACK_ID:
+                    case Fault::INVALID_REQUEST_FORMAT:
+                    default:
+                        $response['message'] = 'Error from CADB';
+
+                }
+
+            }
+
+        }else{
+
+            $response['success'] = false;
+            $response['message'] = 'No return id found';
+
+        }
+
+        $this->send_response($response);
+    }
+
+    /**
+     * API to retieve all rollbacks from LDB
+     */
+    public function getLDBRollbacks(){
+        $response = [];
+
+        $response['data'] = $this->Rollback_model->get_all_rollback();
+
+        $this->send_response($response);
+    }
+
+    /**
+     * API to retrieve all rollbacks from CADB
+     */
+    public function getCADBRollbacks(){
+
+        $response = [];
+
+        $response['data'] = [];
+
+        $rollbackOperationService = new RollbackOperationService();
+
+        // Load ORDERED Rollbacks
+
+        $openedResponse = $rollbackOperationService->getOpenedRollbacks(Operator::ORANGE_NETWORK_ID);
+
+        if($openedResponse->success){
+
+            $response['data'] = array_merge($response['data'], $openedResponse->rollbacks);
+
+        }
+        else{
+
+            $fault = $openedResponse->error;
+
+            $emailService = new EmailService();
+
+            switch ($fault) {
+
+                case Fault::INVALID_OPERATOR_FAULT:
+                case Fault::ACTION_NOT_AUTHORIZED:
+                case Fault::INVALID_REQUEST_FORMAT:
+                default:
+                    //$emailService->adminErrorReport("ERROR_RETRIEVING_OPENED_ROLLBACKS_FROM_CADB", []);
+            }
+
+        }
+
+        // Load ACCEPTED Rollbacks
+
+        $acceptedResponse = $rollbackOperationService->getAcceptedRollbacks(Operator::ORANGE_NETWORK_ID);
+
+        if($acceptedResponse->success){
+
+            $response['data'] = array_merge($response['data'], $acceptedResponse->rollbacks);
+
+        }
+        else{
+
+            $fault = $acceptedResponse->error;
+
+            $emailService = new EmailService();
+
+            switch ($fault) {
+
+                case Fault::INVALID_OPERATOR_FAULT:
+                case Fault::ACTION_NOT_AUTHORIZED:
+                case Fault::INVALID_REQUEST_FORMAT:
+                default:
+                    //$emailService->adminErrorReport("ERROR_RETRIEVING_ACCEPTED_ROLLBACKS_FROM_CADB", []);
+            }
+
+        }
+
+        // Load CONFIRMED Rollbacks
+
+        $confirmedResponse = $rollbackOperationService->getConfirmedRollbacks(Operator::ORANGE_NETWORK_ID);
+
+        if($confirmedResponse->success){
+
+            $response['data'] = array_merge($response['data'], $confirmedResponse->rollbacks);
+
+        }
+        else{
+
+            $fault = $confirmedResponse->error;
+
+            $emailService = new EmailService();
+
+            switch ($fault) {
+
+                case Fault::INVALID_OPERATOR_FAULT:
+                case Fault::ACTION_NOT_AUTHORIZED:
+                case Fault::INVALID_REQUEST_FORMAT:
+                default:
+                    //$emailService->adminErrorReport("ERROR_RETRIEVING_CONFIRMED_ROLLBACKS_FROM_CADB", []);
+            }
+
+        }
+
+        // Load REJECTED Rollbacks
+
+        $rejectedResponse = $rollbackOperationService->getRejectedRollbacks(Operator::ORANGE_NETWORK_ID, params::DENIED_REJECTED_MAX_COUNT);
+
+        if($rejectedResponse->success){
+
+            $response['data'] = array_merge($response['data'], $rejectedResponse->rollbacks);
+
+        }
+        else{
+
+            $fault = $rejectedResponse->error;
+
+            $emailService = new EmailService();
+
+            switch ($fault) {
+
+                case Fault::INVALID_OPERATOR_FAULT:
+                case Fault::ACTION_NOT_AUTHORIZED:
+                case Fault::INVALID_REQUEST_FORMAT:
+                case Fault::COUNT_OVER_MAX_COUNT_LIMIT:
+                default:
+                    //$emailService->adminErrorReport("ERROR_RETRIEVING_REJECTED_ROLLBACKS_FROM_CADB", []);
+            }
+
+        }
+
+        $this->send_response($response);
+    }
+
     /**
      *
      * @param $response
@@ -393,92 +575,8 @@ class Rollback extends CI_Controller
     /*
      * Listing of rollback
      */
-    function index()
-    {
-        $data['rollback'] = $this->Rollback_model->get_all_rollback();
+    function index(){
 
-        $this->load->view('rollback/index',$data);
     }
 
-    /*
-     * Adding a new rollback
-     */
-    function add()
-    {   
-        if(isset($_POST) && count($_POST) > 0)     
-        {   
-            $params = array(
-				'originalPortingId' => $this->input->post('originalPortingId'),
-				'donorSubmissionDateTime' => $this->input->post('donorSubmissionDateTime'),
-				'preferredRollbackDateTime' => $this->input->post('preferredRollbackDateTime'),
-				'rollbackDateAndTime' => $this->input->post('rollbackDateAndTime'),
-				'cadbOpenDateTime' => $this->input->post('cadbOpenDateTime'),
-				'lastChangeDateTime' => $this->input->post('lastChangeDateTime'),
-				'rollbackState' => $this->input->post('rollbackState'),
-				'rollbackSubmissionId' => $this->input->post('rollbackSubmissionId'),
-            );
-            
-            $rollback_id = $this->Rollback_model->add_rollback($params);
-            redirect('rollback/index');
-        }
-        else
-        {
-            $this->load->view('rollback/add');
-        }
-    }  
-
-    /*
-     * Editing a rollback
-     */
-    function edit($rollbackId)
-    {   
-        // check if the rollback exists before trying to edit it
-        $rollback = $this->Rollback_model->get_rollback($rollbackId);
-        
-        if(isset($rollback['rollbackId']))
-        {
-            if(isset($_POST) && count($_POST) > 0)     
-            {   
-                $params = array(
-					'originalPortingId' => $this->input->post('originalPortingId'),
-					'donorSubmissionDateTime' => $this->input->post('donorSubmissionDateTime'),
-					'preferredRollbackDateTime' => $this->input->post('preferredRollbackDateTime'),
-					'rollbackDateAndTime' => $this->input->post('rollbackDateAndTime'),
-					'cadbOpenDateTime' => $this->input->post('cadbOpenDateTime'),
-					'lastChangeDateTime' => $this->input->post('lastChangeDateTime'),
-					'rollbackState' => $this->input->post('rollbackState'),
-					'rollbackSubmissionId' => $this->input->post('rollbackSubmissionId'),
-                );
-
-                $this->Rollback_model->update_rollback($rollbackId,$params);            
-                redirect('rollback/index');
-            }
-            else
-            {   
-                $data['rollback'] = $this->Rollback_model->get_rollback($rollbackId);
-    
-                $this->load->view('rollback/edit',$data);
-            }
-        }
-        else
-            show_error('The rollback you are trying to edit does not exist.');
-    } 
-
-    /*
-     * Deleting rollback
-     */
-    function remove($rollbackId)
-    {
-        $rollback = $this->Rollback_model->get_rollback($rollbackId);
-
-        // check if the rollback exists before trying to delete it
-        if(isset($rollback['rollbackId']))
-        {
-            $this->Rollback_model->delete_rollback($rollbackId);
-            redirect('rollback/index');
-        }
-        else
-            show_error('The rollback you are trying to delete does not exist.');
-    }
-    
 }

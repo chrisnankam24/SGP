@@ -188,14 +188,16 @@ class ReturnOperationService extends CI_Controller {
     }
 
     /**
-     * @return mixed
+     * @param $returnId
+     * @return errorResponse
      */
-    public function getReturningTransaction() {
+    public function getReturningTransaction($returnId) {
 
         if($this->client) {
 
             // Make getReturningTransaction request
             $request = new _Return\getReturningTransactionRequest();
+            $request->returnId = $returnId;
 
             try {
 
@@ -222,14 +224,16 @@ class ReturnOperationService extends CI_Controller {
     }
 
     /**
-     * @return mixed
+     * @param $networkId
+     * @return errorResponse
      */
-    public function getCurrentReturningTransactions() {
+    public function getCurrentReturningTransactions($networkId) {
 
         if($this->client) {
 
             // Make getCurrentReturningTransactions request
             $request = new _Return\getCurrentReturningTransactionsRequest();
+            $request->networkId = $networkId;
 
             try {
 

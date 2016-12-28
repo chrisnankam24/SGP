@@ -226,14 +226,16 @@ class RollbackOperationService  extends CI_Controller {
     }
 
     /**
-     * @return mixed
+     * @param $rollbackId
+     * @return errorResponse
      */
-    public function getRollback() {
+    public function getRollback($rollbackId) {
 
         if($this->client) {
 
             // Make getRollback request
             $request = new rollback\getRollbackRequest();
+            $request->rollbackId = $rollbackId;
 
             try {
 
@@ -260,14 +262,16 @@ class RollbackOperationService  extends CI_Controller {
     }
 
     /**
-     * @return mixed
+     * @param $networkId
+     * @return errorResponse
      */
-    public function getOpenedRollbacks() {
+    public function getOpenedRollbacks($networkId) {
 
         if($this->client) {
 
             // Make getOpenedRollbacks request
             $request = new rollback\getOpenedRollbacksRequest();
+            $request->networkId = $networkId;
 
             try {
 
@@ -294,14 +298,16 @@ class RollbackOperationService  extends CI_Controller {
     }
 
     /**
-     * @return mixed
+     * @param $networkId
+     * @return errorResponse
      */
-    public function getAcceptedRollbacks() {
+    public function getAcceptedRollbacks($networkId) {
 
         if($this->client) {
 
             // Make getAcceptedRollbacks request
             $request = new rollback\getAcceptedRollbacksRequest();
+            $request->networkId = $networkId;
 
             try {
 
@@ -328,14 +334,16 @@ class RollbackOperationService  extends CI_Controller {
     }
 
     /**
-     * @return mixed
+     * @param $networkId
+     * @return errorResponse
      */
-    public function getConfirmedRollbacks() {
+    public function getConfirmedRollbacks($networkId) {
 
         if($this->client) {
 
             // Make getConfirmedRollbacks request
             $request = new rollback\getConfirmedRollbacksRequest();
+            $request->networkId = $networkId;
 
             try {
 
@@ -362,14 +370,18 @@ class RollbackOperationService  extends CI_Controller {
     }
 
     /**
-     * @return mixed
+     * @param $networkId
+     * @param $count
+     * @return errorResponse
      */
-    public function getRejectedRollbacks() {
+    public function getRejectedRollbacks($networkId, $count) {
 
         if($this->client) {
 
             // Make getRejectedRollbacks request
             $request = new rollback\getRejectedRollbacksRequest();
+            $request->networkId = $networkId;
+            $request->count = $count;
 
             try {
 

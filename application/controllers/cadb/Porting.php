@@ -78,6 +78,7 @@ class portingSubmissionStateType {
     const TERMINATED = 'TERMINATED';
 }
 
+
 //////////////////////// Validation functions
 
 /**

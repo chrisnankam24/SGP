@@ -89,7 +89,7 @@
 
 	<service name="AuxService">
 		<port name="AuxServicePort" binding="tns:AuxServiceBinding">
-			<soap:address location="http://localhost/SGP/index.php/cadb/AuxService"/>
+			<soap:address location="http://localhost/SGP/index.php/cadb/AuxServerFunctionalities"/>
 		</port>
 	</service>
 

@@ -390,6 +390,109 @@ class NReturn extends CI_Controller
     }
 
     /**
+     * API to retrieve detail on NR
+     */
+    public function getCADBNReturn(){
+        $response = [];
+
+        if(isset($_POST) && count($_POST) > 0) {
+
+            $returnId = $this->input->post('returnId');
+
+            $returnOperationService = new ReturnOperationService();
+            $getResponse = $returnOperationService->getReturningTransaction($returnId);
+
+            // Verify response
+
+            if($getResponse->success){
+
+                $response['success'] = true;
+
+                $response['data'] = $getResponse->returnTransaction;
+
+            }
+
+            else{
+
+                $fault = $getResponse->error;
+
+                $response['success'] = false;
+
+                switch ($fault) {
+                    // Terminal Processes
+                    case Fault::INVALID_OPERATOR_FAULT:
+                    case Fault::PORTING_ACTION_NOT_AVAILABLE:
+                    case Fault::INVALID_RETURN_ID:
+                    case Fault::INVALID_REQUEST_FORMAT:
+                    default:
+                        $response['message'] = 'Error from CADB';
+
+                }
+
+
+            }
+
+        }else{
+
+            $response['success'] = false;
+            $response['message'] = 'No return id found';
+
+        }
+
+        $this->send_response($response);
+    }
+
+    /**
+     * API to retieve all NRs from LDB
+     */
+    public function getLDBNumberReturns(){
+        $response = [];
+
+        $response['data'] = $this->Numberreturn_model->get_all_numberreturn();
+
+        $this->send_response($response);
+    }
+
+    /**
+     * API to retrieve all NRs from CADB
+     */
+    public function getCADBNumberReturns(){
+
+        $response = [];
+
+        $response['data'] = [];
+
+        $returnOperationService = new ReturnOperationService();
+
+        // Load ORDERED Rollbacks
+
+        $currentNRResponse = $returnOperationService->getCurrentReturningTransactions(Operator::ORANGE_NETWORK_ID);
+
+        if($currentNRResponse->success){
+
+            $response['data'] = array_merge($response['data'], $currentNRResponse->returnNumberTransactions);
+
+        }
+        else{
+
+            $fault = $currentNRResponse->error;
+
+            $emailService = new EmailService();
+
+            switch ($fault) {
+
+                case Fault::INVALID_REQUEST_FORMAT:
+                default:
+                    //$emailService->adminErrorReport("ERROR_RETRIEVING_CURRENT_NRS_FROM_CADB", []);
+            }
+
+        }
+
+        $this->send_response($response);
+    }
+
+
+    /**
      * @param $response
      */
     private function send_response($response)

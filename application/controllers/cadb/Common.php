@@ -75,6 +75,10 @@ class KPSAParams {
 
 }
 
+class params {
+    const DENIED_REJECTED_MAX_COUNT = 100;
+}
+
 /**
  * Process Types
  */

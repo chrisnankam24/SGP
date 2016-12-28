@@ -383,22 +383,34 @@ class PortingOperationService extends CI_Controller  {
     }
 
     /**
-     * @return mixed
+     * @param $portingId
+     * @return errorResponse
      */
-    public function getPorting() {
+    public function getPorting($portingId) {
 
         if($this->client) {
 
             // Make getPorting request
             $request = new Porting\getPortingRequest();
+            $request->portingId = $portingId;
 
             try {
 
                 $response = $this->client->getPorting($request);
 
+                $response->success = true;
+
                 return $response;
 
             }catch (SoapFault $e){
+
+                $response = new errorResponse();
+
+                $fault = key($e->detail);
+
+                $response->error = $fault;
+
+                return $response;
 
             }
 
@@ -416,22 +428,34 @@ class PortingOperationService extends CI_Controller  {
     }
 
     /**
-     * @return mixed
+     * @param $networkId
+     * @return errorResponse
      */
-    public function getOrderedPortings() {
+    public function getOrderedPortings($networkId) {
 
         if($this->client) {
 
             // Make getOrderedPortings request
             $request = new Porting\getOrderedPortingsRequest();
+            $request->networkId = $networkId;
 
             try {
 
                 $response = $this->client->getOrderedPortings($request);
 
+                $response->success = true;
+
                 return $response;
 
             }catch (SoapFault $e){
+
+                $response = new errorResponse();
+
+                $fault = key($e->detail);
+
+                $response->error = $fault;
+
+                return $response;
 
             }
 
@@ -449,22 +473,34 @@ class PortingOperationService extends CI_Controller  {
     }
 
     /**
-     * @return mixed
+     * @param $networkId
+     * @return errorResponse
      */
-    public function getApprovedPortings() {
+    public function getApprovedPortings($networkId) {
 
         if($this->client) {
 
             // Make getApprovedPortings request
             $request = new Porting\getApprovedPortingsRequest();
+            $request->networkId =$networkId;
 
             try {
 
                 $response = $this->client->getApprovedPortings($request);
 
+                $response->success = true;
+
                 return $response;
 
             }catch (SoapFault $e){
+
+                $response = new errorResponse();
+
+                $fault = key($e->detail);
+
+                $response->error = $fault;
+
+                return $response;
 
             }
 
@@ -482,22 +518,34 @@ class PortingOperationService extends CI_Controller  {
     }
 
     /**
-     * @return mixed
+     * @param $networkId
+     * @return errorResponse
      */
-    public function getAcceptedPortings() {
+    public function getAcceptedPortings($networkId) {
 
         if($this->client) {
 
             // Make getAcceptedPortings request
             $request = new Porting\getAcceptedPortingsRequest();
+            $request->networkId = $networkId;
 
             try {
 
                 $response = $this->client->getAcceptedPortings($request);
 
+                $response->success = true;
+
                 return $response;
 
             }catch (SoapFault $e){
+
+                $response = new errorResponse();
+
+                $fault = key($e->detail);
+
+                $response->error = $fault;
+
+                return $response;
 
             }
 
@@ -515,22 +563,34 @@ class PortingOperationService extends CI_Controller  {
     }
 
     /**
-     * @return mixed
+     * @param $networkId
+     * @return errorResponse
      */
-    public function getConfirmedPortings() {
+    public function getConfirmedPortings($networkId) {
 
         if($this->client) {
 
             // Make getConfirmedPortings request
             $request = new Porting\getConfirmedPortingsRequest();
+            $request->networkId = $networkId;
 
             try {
 
                 $response = $this->client->getConfirmedPortings($request);
 
+                $response->success = true;
+
                 return $response;
 
             }catch (SoapFault $e){
+
+                $response = new errorResponse();
+
+                $fault = key($e->detail);
+
+                $response->error = $fault;
+
+                return $response;
 
             }
 
@@ -548,22 +608,36 @@ class PortingOperationService extends CI_Controller  {
     }
 
     /**
-     * @return mixed
+     * @param $networkId
+     * @param $count
+     * @return errorResponse
      */
-    public function getDeniedPortings() {
+    public function getDeniedPortings($networkId, $count) {
 
         if($this->client) {
 
             // Make getDeniedPortings request
             $request = new Porting\getDeniedPortingsRequest();
+            $request->networkId = $networkId;
+            $request->count = $count;
 
             try {
 
                 $response = $this->client->getDeniedPortings($request);
 
+                $response->success = true;
+
                 return $response;
 
             }catch (SoapFault $e){
+
+                $response = new errorResponse();
+
+                $fault = key($e->detail);
+
+                $response->error = $fault;
+
+                return $response;
 
             }
 
@@ -581,22 +655,36 @@ class PortingOperationService extends CI_Controller  {
     }
 
     /**
-     * @return mixed
+     * @param $networkId
+     * @param $count
+     * @return errorResponse
      */
-    public function getRejectedPortings() {
+    public function getRejectedPortings($networkId, $count) {
 
         if($this->client) {
 
             // Make getRejectedPortings request
             $request = new Porting\getRejectedPortingsRequest();
+            $request->networkId = $networkId;
+            $request->count = $count;
 
             try {
 
                 $response = $this->client->getRejectedPortings($request);
 
+                $response->success = true;
+
                 return $response;
 
             }catch (SoapFault $e){
+
+                $response = new errorResponse();
+
+                $fault = key($e->detail);
+
+                $response->error = $fault;
+
+                return $response;
 
             }
 
