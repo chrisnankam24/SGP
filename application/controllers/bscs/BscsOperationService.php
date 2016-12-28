@@ -94,7 +94,15 @@ class BscsOperationService extends CI_Controller  {
      */
     public function loadNumberInfo($msisdn){
 
-        $subscriberInfo = $this->BSCS_model->get_msisdn_info($msisdn);
+        $subscriberInfo = false;
+
+        try {
+
+            $subscriberInfo = $this->BSCS_model->get_msisdn_info($msisdn);
+
+        }catch (Exception $ex){
+
+        }
 
         return $subscriberInfo;
 

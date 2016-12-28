@@ -30,27 +30,50 @@ class USSD extends CI_Controller {
 
         $headers = getallheaders();
 
-        $msisdn = $headers['User-MSISDN'];
+        $msisdn = substr($headers['User-MSISDN'], 3);;
 
         $language = $headers['User-Language'];
 
         $template = '';
 
-        if($language == 'fr'){
+        $rio = RIO::get_rio($msisdn);
 
-            // Load fr template
-            $template = file_get_contents(__DIR__ . '/fr_ussd_template_rio.txt');
+        if($rio){
+
+            if($language == 'fr'){
+
+                // Load fr template
+                $template = file_get_contents(__DIR__ . '/fr_ussd_template_rio.txt');
+
+            }else{
+
+                // Load en template
+                $template = file_get_contents(__DIR__ . '/en_ussd_template_rio.txt');
+            }
+
+            // Set Subscriber RIO
+            $message = str_replace('[rio]', $rio, $template);
+
 
         }else{
 
-            // Load en template
-            $template = file_get_contents(__DIR__ . '/en_ussd_template_rio.txt');
+
+            if($language == 'fr'){
+
+                // Load fr template
+                $template = file_get_contents(__DIR__ . '/fr_error_ussd_template_rio.txt.txt');
+
+            }else{
+
+                // Load en template
+                $template = file_get_contents(__DIR__ . '/en_error_ussd_template_rio.txt.txt');
+            }
+
+            // Set Subscriber RIO
+            $message = str_replace('[rio]', $rio, $template);
+
+
         }
-
-        $rio = RIO::get_rio($msisdn);
-
-        // Set Subscriber RIO
-        $message = str_replace('[rio]', $rio, $template);
 
         // Create USSD response using cellflash specs
         $dom = new DOMDocument('1.0', 'UTF-8');

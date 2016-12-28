@@ -1,6 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+require_once APPPATH . "controllers/bscs/BscsOperationService.php";
 require_once APPPATH . "controllers/cadb/Common.php";
 
 /**
@@ -30,29 +31,43 @@ class RIO extends CI_Controller {
      * @param $msisdn string|false
      */
     public static function get_rio($msisdn){
-        $contractId = '8800092';
-        $msisdn = '237694975166';
 
-        // TODO: Load ContractId from BSCS
+        $bscsOperationService = new BscsOperationService();
+        $subsInfo = $bscsOperationService->loadNumberInfo($msisdn);
 
-        // TODO: If enterprise number return false. What about enterprise RIO
+        if($subsInfo){
 
-        // RIO == OOQRRRRRRCCC
+            // TODO: If enterprise number return false. What about enterprise RIO
 
-        $OO = Operator::ORANGE_NETWORK_ID; // Operator ID
+            $contractId = $subsInfo['CONTRACT_ID'];
 
-        $Q = 'P'; // Subscriber Type :: P == Personal / E == Enterprise
+            if($subsInfo['TYPE_CLIENT'] == 'C'){
 
-        $Q_NC = $Q == 'E' ? '0' : '1';
+                // RIO == OOQRRRRRRCCC
 
-        //$RRRRRR = strtoupper(str_pad(base_convert($contractId, 10, 36), 6, '0', STR_PAD_LEFT)); // Generated
-        $RRRRRR = strtoupper(substr(str_pad(base_convert($contractId, 10, 36), 6, '0', STR_PAD_LEFT), 0, 6)); // Generated
+                $OO = Operator::ORANGE_NETWORK_ID; // Operator ID
 
-        $CCC = strtoupper(substr(base_convert(Operator::ORANCE_NETWORK_ID_NUMBER . $Q_NC . $msisdn, 10, 36), 0, 3)); // Encrypted Check sum
+                $Q = 'P'; // Subscriber Type :: P == Personal / E == Enterprise
 
-        $rio = $OO . $Q . $RRRRRR . $CCC;
+                $Q_NC = $Q == 'E' ? '0' : '1';
 
-        return $rio;
+                $RRRRRR = strtoupper(substr(str_pad(base_convert($contractId, 10, 36), 6, '0', STR_PAD_LEFT), 0, 6)); // Generated
+
+                $CCC = strtoupper(substr(base_convert(Operator::ORANCE_NETWORK_ID_NUMBER . $Q_NC . $msisdn, 10, 36), 0, 3)); // Encrypted Check sum
+
+                $rio = $OO . $Q . $RRRRRR . $CCC;
+
+                return $rio;
+
+            }else{
+
+                return false;
+
+            }
+
+        }else{
+            return false;
+        }
 
     }
 
