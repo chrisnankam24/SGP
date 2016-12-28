@@ -55,7 +55,7 @@ class KpsaOperationService extends CI_Controller {
     private function creationSubscriberTEKELEC($msisdn, $routingNumber){
 
         $creationResponse = [];
-        $creationResponse->success = true;
+        $creationResponse['success'] = true;
 
         //TODO: Verify if MSISDN is full or partial
 
@@ -75,12 +75,12 @@ class KpsaOperationService extends CI_Controller {
            }
 
            if($responses['STATUS'] == 'FAILED'){
-               $creationResponse->success = false;
-               $creationResponse->message = $responses['LIBELLE'];
+               $creationResponse['success'] = false;
+               $creationResponse['message'] = $responses['LIBELLE'];
            }
        }else{
-           $creationResponse->success = false;
-           $creationResponse->message = 'FAILED GETTING CONTENT FROM API';
+           $creationResponse['success'] = false;
+           $creationResponse['message'] = 'FAILED GETTING CONTENT FROM API';
        }
 
         return $creationResponse;
@@ -96,7 +96,7 @@ class KpsaOperationService extends CI_Controller {
     private function deleteSubscriberTEKELEC($msisdn, $routingNumber){
 
         $deleteResponse = [];
-        $deleteResponse->success = true;
+        $deleteResponse['success'] = true;
 
         //TODO: Verify if MSISDN is full or partial
 
@@ -116,12 +116,12 @@ class KpsaOperationService extends CI_Controller {
             }
 
             if($responses['STATUS'] == 'FAILED'){
-                $deleteResponse->success = false;
-                $deleteResponse->message = $responses['LIBELLE'];
+                $deleteResponse['success'] = false;
+                $deleteResponse['message'] = $responses['LIBELLE'];
             }
         }else{
-            $deleteResponse->success = false;
-            $deleteResponse->message = 'FAILED GETTING CONTENT FROM API';
+            $deleteResponse['success'] = false;
+            $deleteResponse['message'] = 'FAILED GETTING CONTENT FROM API';
         }
 
         return $deleteResponse;
@@ -137,7 +137,7 @@ class KpsaOperationService extends CI_Controller {
     private function updateSubscriberTEKELEC($msisdn, $routingNumber){
 
         $updateResponse = [];
-        $updateResponse->success = true;
+        $updateResponse['success'] = true;
 
         //TODO: Verify if MSISDN is full or partial
 
@@ -157,12 +157,12 @@ class KpsaOperationService extends CI_Controller {
             }
 
             if($responses['STATUS'] == 'FAILED'){
-                $updateResponse->success = false;
-                $updateResponse->message = $responses['LIBELLE'];
+                $updateResponse['success'] = false;
+                $updateResponse['message'] = $responses['LIBELLE'];
             }
         }else{
-            $updateResponse->success = false;
-            $updateResponse->message = 'FAILED GETTING CONTENT FROM API';
+            $updateResponse['success'] = false;
+            $updateResponse['message'] = 'FAILED GETTING CONTENT FROM API';
         }
 
         return $updateResponse;
@@ -177,7 +177,7 @@ class KpsaOperationService extends CI_Controller {
     public function viewSubscriberTEKELEC($msisdn){
 
         $viewResponse = [];
-        $viewResponse->success = true;
+        $viewResponse['success'] = true;
 
         //TODO: Verify if MSISDN is full or partial
 
@@ -197,14 +197,14 @@ class KpsaOperationService extends CI_Controller {
             }
 
             if($responses['STATUS'] == 'FAILED'){
-                $viewResponse->success = false;
-                $viewResponse->message = $responses['LIBELLE'];
+                $viewResponse['success'] = false;
+                $viewResponse['message'] = $responses['LIBELLE'];
             }else{
-                $viewResponse->routingNumber = $responses['MOBILE_NETWORK'];
+                $viewResponse['routingNumber'] = $responses['MOBILE_NETWORK'];
             }
         }else{
-            $viewResponse->success = false;
-            $viewResponse->message = 'FAILED GETTING CONTENT FROM API';
+            $viewResponse['success'] = false;
+            $viewResponse['message'] = 'FAILED GETTING CONTENT FROM API';
         }
 
         return $viewResponse;
