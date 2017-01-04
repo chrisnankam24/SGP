@@ -20,7 +20,7 @@ class Operator {
     const ORANGE_ROUTING_NUMBER = 'ABCDEF02';
     const NEXTTEL_ROUTING_NUMBER = 'ABCDEF03';
 
-    const ORANCE_NETWORK_ID_NUMBER = 2;
+    const ORANGE_NETWORK_ID_NUMBER = 2;
 }
 
 /**
@@ -45,6 +45,17 @@ class SMSType {
     const OPD_ROLLBACK_COMPLETED = 'OPD_ROLLBACK_COMPLETED';
     const OPD_ROLLBACK_ABANDONED = 'OPD_ROLLBACK_ABANDONED';
     const OPR_ROLLBACK_ABANDONED = 'OPR_ROLLBACK_ABANDONED';
+}
+
+/**
+ * Class smsState
+ */
+class smsState {
+
+    const PENDING = 'PENDING';
+    const SENT = 'SENT';
+    const TERMiNATED = 'TERMINATED';
+
 }
 
 /**
@@ -95,6 +106,7 @@ class sftpParams{
     const PASSWORD = 'password';
     const PATH = '/';
 }
+
 /////////////// Primitive Types Verification
 
 /**
@@ -236,7 +248,7 @@ class numberRangeType {
 class numberRangesType {
 
     /**
-     * @var \numberType
+     * @var \numberRangeType
      */
     public $numberRange;
 

@@ -29,7 +29,7 @@ class FileLog_Model extends CI_Model
 
         $data = $timestamp . '  ' . $level . '  ' . $class . ': ' . $message . "\r\n";
 
-        if ( ! write_file(APPPATH . 'logs/logs.txt', $data, 'ab'))
+        if ( ! write_file(APPPATH . 'logs/' . date('d-m-y') . '.txt', $data, 'ab'))
         {
 
         }

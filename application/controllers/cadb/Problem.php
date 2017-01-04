@@ -8,8 +8,6 @@
 
 namespace ProblemService\Problem;
 
-use Common;
-
 ////////////////////// Problem Types and Functions
 
 /**

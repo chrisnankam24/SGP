@@ -19,6 +19,7 @@ class Porting extends CI_Controller
         // Load required models
 
         $this->load->model('Porting_model');
+        $this->load->model('FileLog_model');
         $this->load->model('Portingsubmission_model');
         $this->load->model('Portingstateevolution_model');
         $this->load->model('Portingsmsnotification_model');
@@ -37,8 +38,7 @@ class Porting extends CI_Controller
     }
 
     function test(){
-        $emailService = new EmailService();
-        $emailService->test();
+        $this->FileLog_model->write_log('23', 'Porting', 'Message');
     }
 
     /**
@@ -398,14 +398,24 @@ class Porting extends CI_Controller
                     $smsNotificationparams = array(
                         'portingId' => $portingId,
                         'smsType' => SMSType::OPD_PORTING_REMINDER,
+                        'creationDateTime' => date('c'),
+                        'status' => smsState::SENT,
+                        'attemptCount' => 1,
                         'sendDateTime' => date('c')
                     );
 
-                    $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
-
                 }else{
-                    // TODO: Pending SMS.
+
+                    $smsNotificationparams = array(
+                        'portingId' => $portingId,
+                        'smsType' => SMSType::OPD_PORTING_REMINDER,
+                        'creationDateTime' => date('c'),
+                        'status' => smsState::PENDING,
+                        'attemptCount' => 1,
+                    );
                 }
+
+                $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
 
                 $this->db->trans_complete();
 

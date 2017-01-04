@@ -8,7 +8,6 @@
 
 namespace ProblemService\ProblemNotification;
 
-use Common;
 use ProblemService\Problem as Problem;
 
 

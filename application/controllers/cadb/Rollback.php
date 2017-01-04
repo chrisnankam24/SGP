@@ -8,7 +8,6 @@
 
 namespace RollbackService\Rollback;
 
-use Common;
 use PortingService\Porting as Porting;
 
 /////////////// Constants Definition
@@ -103,17 +102,17 @@ class rollbackTransactionType extends baseRollbackTransactionType {
     public $rollbackId;
 
     /**
-     * @var nrnType
+     * @var \nrnType
      */
     public $recipientNrn;
 
     /**
-     * @var nrnType
+     * @var \nrnType
      */
     public $donorNrn;
 
     /**
-     * @var numberRangesType
+     * @var \numberRangesType
      */
     public $numberRanges;
 

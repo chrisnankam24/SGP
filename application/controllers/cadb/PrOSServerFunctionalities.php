@@ -53,8 +53,6 @@ class PrOSServerFunctionalities extends CI_Controller  {
 
         $response = new Problem\reportProblemResponse();
 
-        //return $response;
-        return new unknownNumberFault();
-
+        return $response;
     }
 }

@@ -148,6 +148,7 @@ class POSServerFunctionalities extends CI_Controller  {
     /**
      * @param $rejectRequest
      * @return Porting\rejectResponse
+     * @throws invalidOperatorFault
      * @throws portingActionNotAvailableFault
      * @throws invalidPortingIdFault
      * @throws invalidRequestFormatFault

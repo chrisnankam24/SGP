@@ -399,7 +399,7 @@ class rejectResponse {
 
 /**
  * Class getPortingRequest
- * Supplementary operation provided by CADB for accessing porting information for some CADB ID. Not Operator must be
+ * Supplementary operation provided by CADB for accessing porting information for some CADB ID. Note Operator must be
  * recipient or donor of the transaction.
  */
 class getPortingRequest {

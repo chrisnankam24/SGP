@@ -103,25 +103,34 @@ class RollbackNotificationService extends CI_Controller {
             $emailService->adminErrorReport('OPENED_ROLLBACK_RECEIVED_BUT_DB_FILLING_ERROR', []);
         }
 
-        // Insert into Rollback Table
-
         // Send SMS
         // Send SMS to Subscriber
         $smsResponse = SMS::OPR_Inform_Subscriber($subscriberMSISDN, $denom_OPD, $rollbackId);
 
         if($smsResponse->success){
 
-            $params = array(
+            $smsNotificationparams = array(
                 'rollbackId' => $rollbackId,
                 'smsType' => SMSType::OPR_ROLLBACK_STARTED,
+                'creationDateTime' => date('c'),
+                'status' => smsState::SENT,
+                'attemptCount' => 1,
                 'sendDateTime' => date('c'),
             );
 
-            $this->Rollbacksmsnotification_model->add_rollbacksmsnotification($params);
-
         }else{
-            // TODO: Pending SMS.
+
+            $smsNotificationparams = array(
+                'rollbackId' => $rollbackId,
+                'smsType' => SMSType::OPR_ROLLBACK_STARTED,
+                'creationDateTime' => date('c'),
+                'status' => smsState::PENDING,
+                'attemptCount' => 1,
+            );
+
         }
+
+        $this->Rollbacksmsnotification_model->add_rollbacksmsnotification($smsNotificationparams);
 
         $response = new RollbackNotification\notifyOpenedResponse();
 
@@ -187,14 +196,25 @@ class RollbackNotificationService extends CI_Controller {
             $smsParams = array(
                 'rollbackId' => $rollbackId,
                 'smsType' => SMSType::OPD_ROLLBACK_ACCEPTED,
+                'creationDateTime' => date('c'),
+                'status' => smsState::SENT,
+                'attemptCount' => 1,
                 'sendDateTime' => date('c'),
             );
 
-            $this->Rollbacksmsnotification_model->add_rollbacksmsnotification($smsParams);
-
         }else{
-            // TODO: Pending SMS.
+
+            $smsParams = array(
+                'rollbackId' => $rollbackId,
+                'smsType' => SMSType::OPD_ROLLBACK_ACCEPTED,
+                'creationDateTime' => date('c'),
+                'status' => smsState::PENDING,
+                'attemptCount' => 1,
+            );
+
         }
+
+        $this->Rollbacksmsnotification_model->add_rollbacksmsnotification($smsParams);
 
         $response = new RollbackNotification\notifyAcceptedResponse();
 
@@ -416,13 +436,25 @@ class RollbackNotificationService extends CI_Controller {
             $smsParams = array(
                 'rollbackId' => $rollbackId,
                 'smsType' => SMSType::OPD_ROLLBACK_REJECTED,
+                'creationDateTime' => date('c'),
+                'status' => smsState::SENT,
+                'attemptCount' => 1,
                 'sendDateTime' => date('c'),
             );
 
-            $this->Rollbacksmsnotification_model->add_rollbacksmsnotification($smsParams);
         }else{
-            // TODO: Pending SMS.
+
+            $smsParams = array(
+                'rollbackId' => $rollbackId,
+                'smsType' => SMSType::OPD_ROLLBACK_REJECTED,
+                'creationDateTime' => date('c'),
+                'status' => smsState::PENDING,
+                'attemptCount' => 1,
+            );
+
         }
+
+        $this->Rollbacksmsnotification_model->add_rollbacksmsnotification($smsParams);
 
         $response = new RollbackNotification\notifyRejectedResponse();
 
@@ -480,19 +512,30 @@ class RollbackNotificationService extends CI_Controller {
 
         if($smsResponse->success){
 
-
             // Insert Porting SMS Notification
             $params = array(
                 'rollbackId' => $rollbackId,
                 'smsType' => SMSType::OPR_ROLLBACK_ABANDONED,
+                'creationDateTime' => date('c'),
+                'status' => smsState::SENT,
+                'attemptCount' => 1,
                 'sendDateTime' => date('c'),
             );
 
-            $this->Rollbacksmsnotification_model->add_rollbacksmsnotification($params);
-
         }else{
-            // TODO: Pending SMS.
+
+            $params = array(
+                'rollbackId' => $rollbackId,
+                'smsType' => SMSType::OPR_ROLLBACK_ABANDONED,
+                'creationDateTime' => date('c'),
+                'status' => smsState::PENDING,
+                'attemptCount' => 1,
+            );
+
         }
+
+        $this->Rollbacksmsnotification_model->add_rollbacksmsnotification($params);
+
 
         $this->db->trans_complete();
 

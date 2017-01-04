@@ -137,14 +137,24 @@ class PortingNotificationService extends CI_Controller
             $smsNotificationparams = array(
                 'portingId' => $portingId,
                 'smsType' => SMSType::OPD_PORTING_INIT,
+                'creationDateTime' => date('c'),
+                'status' => smsState::SENT,
+                'attemptCount' => 1,
                 'sendDateTime' => date('c')
             );
 
-            $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
-
         }else{
-            // TODO: Pending SMS.
+
+            $smsNotificationparams = array(
+                'portingId' => $portingId,
+                'smsType' => SMSType::OPD_PORTING_INIT,
+                'creationDateTime' => date('c'),
+                'status' => smsState::PENDING,
+                'attemptCount' => 1,
+            );
         }
+
+        $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
 
         $this->db->trans_complete();
 
@@ -311,14 +321,25 @@ class PortingNotificationService extends CI_Controller
             $smsNotificationparams = array(
                 'portingId' => $portingId,
                 'smsType' => SMSType::OPR_PORTING_OK,
+                'creationDateTime' => date('c'),
+                'status' => smsState::SENT,
+                'attemptCount' => 1,
                 'sendDateTime' => date('c')
             );
 
-            $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
-
         }else{
-            // TODO: Pending SMS.
+
+            $smsNotificationparams = array(
+                'portingId' => $portingId,
+                'smsType' => SMSType::OPR_PORTING_OK,
+                'creationDateTime' => date('c'),
+                'status' => smsState::PENDING,
+                'attemptCount' => 1,
+            );
+
         }
+
+        $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
 
         $this->db->trans_complete();
 
@@ -540,14 +561,24 @@ class PortingNotificationService extends CI_Controller
             $smsNotificationparams = array(
                 'portingId' => $portingId,
                 'smsType' => SMSType::OPR_PORTING_KO,
+                'creationDateTime' => date('c'),
+                'status' => smsState::SENT,
+                'attemptCount' => 1,
                 'sendDateTime' => date('c')
             );
 
-            $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
-
         }else{
-            // TODO: Pending SMS.
+
+            $smsNotificationparams = array(
+                'portingId' => $portingId,
+                'smsType' => SMSType::OPR_PORTING_KO,
+                'creationDateTime' => date('c'),
+                'status' => smsState::PENDING,
+                'attemptCount' => 1,
+            );
         }
+
+        $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
 
         $this->db->trans_complete();
 
@@ -619,14 +650,25 @@ class PortingNotificationService extends CI_Controller
             $smsNotificationparams = array(
                 'portingId' => $portingId,
                 'smsType' => SMSType::OPR_PORTING_KO,
+                'creationDateTime' => date('c'),
+                'status' => smsState::SENT,
+                'attemptCount' => 1,
                 'sendDateTime' => date('c')
             );
 
-            $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
-
         }else{
-            // TODO: Pending SMS.
+
+            $smsNotificationparams = array(
+                'portingId' => $portingId,
+                'smsType' => SMSType::OPR_PORTING_KO,
+                'creationDateTime' => date('c'),
+                'status' => smsState::PENDING,
+                'attemptCount' => 1,
+            );
+
         }
+
+        $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
 
         $this->db->trans_complete();
 
@@ -698,14 +740,25 @@ class PortingNotificationService extends CI_Controller
             $smsNotificationparams = array(
                 'portingId' => $portingId,
                 'smsType' => SMSType::OPR_PORTING_KO,
+                'creationDateTime' => date('c'),
+                'status' => smsState::SENT,
+                'attemptCount' => 1,
                 'sendDateTime' => date('c')
             );
 
-            $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
+        } else{
 
-        }else{
-            // TODO: Pending SMS.
+            $smsNotificationparams = array(
+                'portingId' => $portingId,
+                'smsType' => SMSType::OPR_PORTING_KO,
+                'creationDateTime' => date('c'),
+                'status' => smsState::PENDING,
+                'attemptCount' => 1,
+            );
+
         }
+
+        $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
 
         $this->db->trans_complete();
 
