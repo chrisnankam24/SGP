@@ -50,35 +50,9 @@ class Porting extends CI_Controller
 
         if(isset($_POST) && count($_POST) > 0) {
 
-            $temporalNumber = $this->input->post('temporalNumber');
+            $temporalNumber = $this->input->post('temporalNumber'); // Without 237 prepended
 
-            // Load temporal number info from BSCS
-            $bscsOperationService = new BscsOperationService();
-            $data = $bscsOperationService->loadTemporalNumberInfo($temporalNumber);
-
-            // Number in BSCS
-            if($data){
-
-                $response['success'] = true;
-
-                $responseData = [];
-
-                $responseData['msisdn'] = $data['MSISDN'];
-                $responseData['type_client'] = $data['TYPE_CLIENT'];
-                $responseData['nom'] = $data['NOM'];
-                $responseData['prenom'] = $data['PRENOM'];
-                $responseData['id_piece'] = $data['ID_PIECE'];
-
-                $responseData['ste'] = $data['STE'];
-                // TODO: Include contact number and TIN
-
-                $response['data'] = $data;
-
-            }else{
-
-                $response['success'] = false;
-
-            }
+            $response = $this->numberInfo($temporalNumber);
 
         }else{
 
@@ -867,6 +841,42 @@ class Porting extends CI_Controller
     {
         header("Content-type: text/json");
         echo json_encode($response);
+    }
+
+    // Utility Functions
+
+    private function numberInfo($msisdn){
+
+        $response = [];
+
+        // Load temporal number info from BSCS
+        $bscsOperationService = new BscsOperationService();
+        $data = $bscsOperationService->loadTemporalNumberInfo($msisdn);
+
+        // Number in BSCS
+        if($data){
+
+            $response['success'] = true;
+
+            $responseData = [];
+
+            $responseData['msisdn'] = $data['MSISDN'];
+            $responseData['type_client'] = $data['TYPE_CLIENT'];
+            $responseData['nom'] = $data['NOM'];
+            $responseData['prenom'] = $data['PRENOM'];
+            $responseData['id_piece'] = $data['ID_PIECE'];
+
+            $responseData['ste'] = $data['STE'];
+            // TODO: Include contact number and TIN
+
+            $response['data'] = $responseData;
+
+        }else{
+
+            $response['success'] = false;
+
+        }
+
     }
 
 }
