@@ -15,6 +15,9 @@ require_once APPPATH . '/controllers/rio/RIO.php';
  */
 class SVI extends CI_Controller {
 
+    const SVI_FRENCH_LANGUAGE = 'FR';
+    const SVI_ENGLISH_LANGUAGE = 'EN';
+
     public function __construct()
     {
         parent::__construct();
@@ -27,7 +30,7 @@ class SVI extends CI_Controller {
     public function index(){
 
         // Create a new soap server in WSDL mode
-        $server = new SoapServer( 'RIOMock.wsdl');
+        $server = new SoapServer( __DIR__ . '/RIOMock.wsdl');
 
         // Set the object for the soap server
         $server->setObject($this);
@@ -56,6 +59,12 @@ class SVI extends CI_Controller {
             $response->return->returnCode = $rioWithInfo['clientType'];
             $response->return->rioNumber = $rioWithInfo['rio'];
 
+            if($rioWithInfo['language'] == 'ANGLAIS' ){
+                $response->return->language = SVI::SVI_ENGLISH_LANGUAGE;
+            }else{
+                $response->return->language = SVI::SVI_FRENCH_LANGUAGE;
+            }
+
         }else{
 
             $response->return->returnCode = '2';
@@ -80,6 +89,11 @@ class RIOInfo {
      * @var string
      */
     public $rioNumber;
+
+    /**
+     * @var string
+     */
+    public $language;
 
 }
 

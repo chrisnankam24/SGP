@@ -22,6 +22,12 @@
       <xs:complexType name="RIOInfo">
         <xs:sequence>
           <xs:element minOccurs="0" name="returnCode" nillable="true" type="xs:string"/>
+          <xs:element minOccurs="0" name="language" nillable="true">
+            <restriction base="string">
+              <enumeration value="FR"/>
+              <enumeration value="EN"/>
+            </restriction>
+          </xs:element>
           <xs:element minOccurs="0" name="rioNumber" nillable="true" type="xs:string"/>
         </xs:sequence>
       </xs:complexType>
