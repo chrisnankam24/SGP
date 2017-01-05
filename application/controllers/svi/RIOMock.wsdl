@@ -57,7 +57,7 @@
   </wsdl:binding>
   <wsdl:service name="RIOService">
     <wsdl:port name="RIOServiceEndpoint" binding="ns:RIOServiceBinding">
-      <soap12:address location="RIOWS/"/>
+      <soap12:address location="http://172.21.75.34/SGP/svi/SVI"/>
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>
