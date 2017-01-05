@@ -81,7 +81,7 @@ class BscsOperationService extends CI_Controller  {
      */
     public function loadTemporalNumberInfo($temporalNumber){
 
-        $subscriberInfo = $this->BSCS_model->get_msisdn_info($temporalNumber);
+        $subscriberInfo = $this->loadNumberInfo($temporalNumber);
 
         return $subscriberInfo;
 

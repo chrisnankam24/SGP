@@ -197,10 +197,12 @@ function isValidProcessType($processType){
 }
 
 /**
- * Returns preferred porting datetime which is 2 days from now, without considering weekends and Public Holidays
+ * Generate preferred porting datetime
  * @return false|string
  */
 function getRecipientPortingDateTime(){
+
+    // TODO: Generate 2 days from now which are neither weekends or public holidays as found in the restricted days file
 
     $date = date('c');
 

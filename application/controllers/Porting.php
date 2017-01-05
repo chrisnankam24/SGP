@@ -56,8 +56,29 @@ class Porting extends CI_Controller
             $bscsOperationService = new BscsOperationService();
             $data = $bscsOperationService->loadTemporalNumberInfo($temporalNumber);
 
-            $response['success'] = true;
-            $response['data'] = $data;
+            // Number in BSCS
+            if($data){
+
+                $response['success'] = true;
+
+                $responseData = [];
+
+                $responseData['msisdn'] = $data['MSISDN'];
+                $responseData['type_client'] = $data['TYPE_CLIENT'];
+                $responseData['nom'] = $data['NOM'];
+                $responseData['prenom'] = $data['PRENOM'];
+                $responseData['id_piece'] = $data['ID_PIECE'];
+
+                $responseData['ste'] = $data['STE'];
+                // TODO: Include contact number and TIN
+
+                $response['data'] = $data;
+
+            }else{
+
+                $response['success'] = false;
+
+            }
 
         }else{
 
