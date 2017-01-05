@@ -64,8 +64,10 @@ class Porting extends CI_Controller
         $this->send_response($response);
     }
 
+
+
     /**
-     * API for performing order request
+     * API for performing order request. This is the individual Endpoint
      */
     public function orderPorting() {
 
@@ -89,24 +91,9 @@ class Porting extends CI_Controller
             $temporalNumber = $this->input->post('temporalNumber');
             $contractId = $this->input->post('contractId');
 
-            // Construct subscriber info
-
-            $subscriberInfo = new \PortingService\Porting\subscriberInfoType();
-
-            if($subscriberType == 0){
-                $subscriberInfo->physicalPersonFirstName = $physicalPersonFirstName;
-                $subscriberInfo->physicalPersonLastName = $physicalPersonLastName;
-                $subscriberInfo->physicalPersonIdNumber = $physicalPersonIdNumber;
-            }else{
-                $subscriberInfo->legalPersonName = $legalPersonName;
-                $subscriberInfo->legalPersonTin = $legalPersonTin;
-                $subscriberInfo->contactNumber = $contactNumber;
-            }
-
-            // Make Order Porting Operation
-
-            $portingOperationService = new PortingOperationService();
-            $orderResponse = $portingOperationService->order($donorOperator, $portingDateTime, $portingMsisdn, $rio, $subscriberInfo);
+            $orderResponse = $this->orderPort($donorOperator, $portingMsisdn, $subscriberType, $rio, $physicalPersonFirstName,
+                $physicalPersonLastName, $physicalPersonIdNumber, $legalPersonName, $legalPersonTin,
+                $contactNumber, $portingDateTime);
 
             // Verify response
 
@@ -115,7 +102,6 @@ class Porting extends CI_Controller
                 $this->db->trans_start();
 
                 // Fill in submission table with submission state ordered
-                //$orderResponse = new \PortingService\Porting\orderResponse();
 
                 $submissionParams = array(
                     'donorNetworkId' => $orderResponse->portingTransaction->donorNrn->networkId,
@@ -149,7 +135,8 @@ class Porting extends CI_Controller
                     'recipientSubmissionDateTime' => $orderResponse->portingTransaction->recipientSubmissionDateTime,
                     'portingDateTime' => $orderResponse->portingTransaction->portingDateTime,
                     'rio' =>  $orderResponse->portingTransaction->rio,
-                    'subscriberMSISDN' =>  $orderResponse->portingTransaction->numberRanges->numberRange->startNumber,
+                    'startMSISDN' =>  $orderResponse->portingTransaction->numberRanges->numberRange->startNumber,
+                    'endMSISDN' =>  $orderResponse->portingTransaction->numberRanges->numberRange->startNumber,
                     'cadbOrderDateTime' => $orderResponse->portingTransaction->cadbOrderDateTime,
                     'lastChangeDateTime' => $orderResponse->portingTransaction->lastChangeDateTime,
                     'portingState' => \PortingService\Porting\portingStateType::ORDERED,
@@ -211,9 +198,6 @@ class Porting extends CI_Controller
                     // Terminal Processes
                     case Fault::INVALID_OPERATOR_FAULT:
                         $response['success'] = true;
-
-                        $donorNetworkId = '';
-                        $donorRoutingNumber = '';
 
                         if($donorOperator == 0) {
                             // MTN
@@ -310,7 +294,6 @@ class Porting extends CI_Controller
 
                 }
 
-
             }
 
         }else{
@@ -322,6 +305,16 @@ class Porting extends CI_Controller
 
         $this->send_response($response);
 
+    }
+
+    /**
+     * API for performing order request for an enterprise
+     */
+    public function orderEnterprisePorting(){
+        // TODO: OrderEnterprisePorting
+        // It practically receives the legalPersonName, legalPersonTin, contactNumber (subscriberInfo), and an upload of
+        // a csv file containing the MSISDN and the RIO for each MSISDN.
+        // It then makes an order request for each MSISDN with the RIOs and sends and array of responses for each
     }
 
     /**
@@ -469,6 +462,14 @@ class Porting extends CI_Controller
     }
 
     /**
+     * API for performing accept request for an enterprise
+     */
+    public function acceptEnterprisePorting(){
+        // TODO: acceptEnterprisePorting
+        // Receives list of porting IDs linked to enterprise and perform accept one after the other
+    }
+
+    /**
      * API for performing reject request
      */
     public function rejectPorting(){
@@ -594,6 +595,11 @@ class Porting extends CI_Controller
         }
 
         $this->send_response($response);
+    }
+
+    public function rejectEnterprisePorting(){
+        // TODO: rejectEnterprisePorting
+        // Receives list of portinf IDs linked to enterprise and perform reject one after the other
     }
 
     /**
@@ -845,6 +851,11 @@ class Porting extends CI_Controller
 
     // Utility Functions
 
+    /**
+     * Retrieves info on number from BSCS
+     * @param $msisdn
+     * @return array
+     */
     private function numberInfo($msisdn){
 
         $response = [];
@@ -861,6 +872,7 @@ class Porting extends CI_Controller
             $responseData = [];
 
             $responseData['msisdn'] = $data['MSISDN'];
+            $responseData['contract_id'] = $data['CONTRACT_ID'];
             $responseData['type_client'] = $data['TYPE_CLIENT'];
             $responseData['nom'] = $data['NOM'];
             $responseData['prenom'] = $data['PRENOM'];
@@ -876,6 +888,53 @@ class Porting extends CI_Controller
             $response['success'] = false;
 
         }
+
+        return $response;
+
+    }
+
+    /**
+     * Make port order for given msisdn
+     * @param $donorOperator
+     * @param $portingMsisdn
+     * @param $subscriberType
+     * @param $rio
+     * @param $physicalPersonFirstName
+     * @param $physicalPersonLastName
+     * @param $physicalPersonIdNumber
+     * @param $legalPersonName
+     * @param $legalPersonTin
+     * @param $contactNumber
+     * @param $portingDateTime
+     * @param $temporalNumber
+     * @param $contractId
+     */
+    private function orderPort($donorOperator, $portingMsisdn, $subscriberType, $rio, $physicalPersonFirstName,
+                               $physicalPersonLastName, $physicalPersonIdNumber, $legalPersonName, $legalPersonTin,
+                               $contactNumber, $portingDateTime) {
+
+        // TODO: Get porting datetime from common.php
+
+        // Construct subscriber info
+
+        $subscriberInfo = new \PortingService\Porting\subscriberInfoType();
+
+        if($subscriberType == 0){
+            $subscriberInfo->physicalPersonFirstName = $physicalPersonFirstName;
+            $subscriberInfo->physicalPersonLastName = $physicalPersonLastName;
+            $subscriberInfo->physicalPersonIdNumber = $physicalPersonIdNumber;
+        }else{
+            $subscriberInfo->legalPersonName = $legalPersonName;
+            $subscriberInfo->legalPersonTin = $legalPersonTin;
+            $subscriberInfo->contactNumber = $contactNumber;
+        }
+
+        // Make Order Porting Operation
+
+        $portingOperationService = new PortingOperationService();
+        $orderResponse = $portingOperationService->order($donorOperator, $portingDateTime, $portingMsisdn, $rio, $subscriberInfo);
+
+        return $orderResponse;
 
     }
 

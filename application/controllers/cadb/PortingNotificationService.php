@@ -74,9 +74,8 @@ class PortingNotificationService extends CI_Controller
 
         $subscriberType = getSubscriberType($rio);
 
-        $subscriberMSISDN = $notifyOrderedRequest->portingTransaction->numberRanges->numberRange->startNumber;
-
-        $denom_OPR = '';
+        $startMSISDN = $notifyOrderedRequest->portingTransaction->numberRanges->numberRange->startNumber;
+        $endMSISDN = $notifyOrderedRequest->portingTransaction->numberRanges->numberRange->endNumber;
 
         if($notifyOrderedRequest->portingTransaction->recipientNrn->networkId == Operator::MTN_NETWORK_ID){
             $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_MTN;
@@ -97,7 +96,9 @@ class PortingNotificationService extends CI_Controller
             'recipientSubmissionDateTime' => $notifyOrderedRequest->portingTransaction->recipientSubmissionDateTime,
             'portingDateTime' => $notifyOrderedRequest->portingTransaction->portingDateTime,
             'rio' =>  $notifyOrderedRequest->portingTransaction->rio,
-            'subscriberMSISDN' =>  $subscriberMSISDN);
+            'startMSISDN' =>  $startMSISDN,
+            'endMSISDN' =>  $endMSISDN
+        );
 
         $portingParams['cadbOrderDateTime'] = $notifyOrderedRequest->portingTransaction->cadbOrderDateTime;
         $portingParams['lastChangeDateTime'] = $notifyOrderedRequest->portingTransaction->lastChangeDateTime;
@@ -129,7 +130,7 @@ class PortingNotificationService extends CI_Controller
         $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
 
         // Send SMS to Subscriber
-        $smsResponse = SMS::OPD_Inform_Subcriber($subscriberMSISDN, $denom_OPR, $portingId);
+        $smsResponse = SMS::OPD_Inform_Subcriber($startMSISDN, $denom_OPR, $portingId);
 
         if($smsResponse->success){
 

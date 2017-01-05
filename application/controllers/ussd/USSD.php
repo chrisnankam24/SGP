@@ -36,7 +36,7 @@ class USSD extends CI_Controller {
 
         $template = '';
 
-        $rio = RIO::get_rio($msisdn);
+        $rio = RIO::getPersonalRIO($msisdn);
 
         if($rio){
 

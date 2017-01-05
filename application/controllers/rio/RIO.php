@@ -37,27 +37,33 @@ class RIO extends CI_Controller {
 
         if($subsInfo){
 
-            // TODO: If enterprise number return false. What about enterprise RIO
+            $contractId = $subsInfo['CONTRACT_ID'];
+
+            return RIO::calculateRIO($contractId, $msisdn);
+
+        }else{
+            return false;
+        }
+
+    }
+
+    /**
+     * Returns RIO for personal number
+     * @param $msisdn
+     * @return bool|string
+     */
+    public static function getPersonalRIO($msisdn){
+
+        $bscsOperationService = new BscsOperationService();
+        $subsInfo = $bscsOperationService->loadNumberInfo($msisdn);
+
+        if($subsInfo){
 
             $contractId = $subsInfo['CONTRACT_ID'];
 
             if($subsInfo['TYPE_CLIENT'] == 'C'){
 
-                // RIO == OOQRRRRRRCCC
-
-                $OO = Operator::ORANGE_NETWORK_ID; // Operator ID
-
-                $Q = 'P'; // Subscriber Type :: P == Personal / E == Enterprise
-
-                $Q_NC = $Q == 'E' ? '0' : '1';
-
-                $RRRRRR = strtoupper(substr(str_pad(base_convert($contractId, 10, 36), 6, '0', STR_PAD_LEFT), 0, 6)); // Generated
-
-                $CCC = strtoupper(substr(base_convert(Operator::ORANCE_NETWORK_ID_NUMBER . $Q_NC . $msisdn, 10, 36), 0, 3)); // Encrypted Check sum
-
-                $rio = $OO . $Q . $RRRRRR . $CCC;
-
-                return $rio;
+                return RIO::calculateRIO($contractId, $msisdn);
 
             }else{
 
@@ -70,5 +76,63 @@ class RIO extends CI_Controller {
         }
 
     }
+
+    /**
+     * Called by SVI, returns RIO and info on subscriber
+     * @param $msisdn
+     * @return array|bool
+     */
+    public static function getRIOAndInfo($msisdn){
+
+        $response = [];
+
+        $bscsOperationService = new BscsOperationService();
+        $subsInfo = $bscsOperationService->loadNumberInfo($msisdn);
+
+        if($subsInfo){
+
+            $contractId = $subsInfo['CONTRACT_ID'];
+
+            $response['rio'] = RIO::calculateRIO($contractId, $msisdn);
+
+            $response['language'] = $subsInfo['LANGUE'];
+
+            if($subsInfo['TYPE_CLIENT'] == 'C'){
+
+                $response['clientType'] = '0';
+
+            }else{
+
+                $response['clientType'] = '1';
+
+            }
+
+            return $response;
+
+        }else{
+            return false;
+        }
+    }
+
+    private static function calculateRIO($contractId, $msisdn){
+
+        // RIO == OOQRRRRRRCCC
+
+        $OO = Operator::ORANGE_NETWORK_ID; // Operator ID
+
+        $Q = 'P'; // Subscriber Type :: P == Personal / E == Enterprise
+
+        $Q_NC = $Q == 'E' ? '0' : '1';
+
+        $RRRRRR = strtoupper(substr(str_pad(base_convert($contractId, 10, 36), 6, '0', STR_PAD_LEFT), 0, 6)); // Generated
+
+        $CCC = strtoupper(substr(base_convert(Operator::ORANGE_NETWORK_ID_NUMBER . $Q_NC . $msisdn, 10, 36), 0, 3)); // Encrypted Check sum
+
+        $rio = $OO . $Q . $RRRRRR . $CCC;
+
+        return $rio;
+    }
+
+
 
 }

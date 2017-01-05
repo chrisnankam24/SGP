@@ -168,10 +168,10 @@ class BatchOperationService extends CI_Controller {
                 }
 
             }
-            else{
+            else if($subscriberInfo == null){ // BSCS returns this in case of in existent user
                 // Number not owned by Orange
                 $portingDenialReason = \PortingService\Porting\denialReasonType::NUMBER_NOT_OWNED_BY_SUBSCRIBER;
-                $cause = 'Inexistent Number';
+                $cause = 'In existent Number';
             }
 
             if($portingDenialReason == null) {
@@ -229,8 +229,6 @@ class BatchOperationService extends CI_Controller {
                         case Fault::INVALID_REQUEST_FORMAT:
                         case Fault::PORTING_ACTION_NOT_AVAILABLE:
                         case Fault::INVALID_PORTING_ID:
-                            $emailService->adminErrorReport($fault, []);
-                            break;
                         default:
                             $emailService->adminErrorReport($fault, []);
 
@@ -516,16 +514,38 @@ class BatchOperationService extends CI_Controller {
      */
     public function portingApprovedToAcceptedRejected(){
 
-        // Load ports in Porting table in APPROVED state in which we are OPD
+        // Load ports in Porting table in APPROVED state in which we are OPD AND Personal
 
-        $approvedPorts = $this->Porting_model->get_porting_by_state_and_donor(\PortingService\Porting\portingStateType::APPROVED, Operator::ORANGE_NETWORK_ID);
+        $approvedPorts = $this->Porting_model->get_porting_by_state_and_donor(\PortingService\Porting\portingStateType::APPROVED, Operator::ORANGE_NETWORK_ID, 0);
 
         $emailService = new EmailService();
 
         foreach ($approvedPorts as $approvedPort){
 
             // Send mail to Back Office with Admin in CC for Acceptance / Rejection
-            $emailService->backOfficePortingAcceptReject([]);
+            $emailService->backOfficePortingAcceptReject($approvedPort);
+
+        }
+
+    }
+
+    public function portingApprovedToAcceptedRejectedEnterprise(){
+        // TODO: portingApprovedToAcceptedRejectedEnterprise
+        // Similar to portingApprovedToAcceptedRejected but form enterprise. Might be merged in future versions.
+        // Actually groups elements for same enterprise and sends a single mail
+
+        // Load ports in Porting table in APPROVED state in which we are OPD AND Enterprise
+
+        $approvedPorts = $this->Porting_model->get_porting_by_state_and_donor(\PortingService\Porting\portingStateType::APPROVED, Operator::ORANGE_NETWORK_ID, 1);
+
+        $emailService = new EmailService();
+
+        $enterpriseGrouping = array(); // Group ports by enterprise
+
+        foreach ($approvedPorts as $approvedPort){
+
+            $is_added = false;
+
 
         }
 
@@ -2488,6 +2508,8 @@ class BatchOperationService extends CI_Controller {
      * Performs SFTP synchronization of transferred and returned numbers
      */
     public function synchronizer(){
+
+        // TODO: Move ported processes to complete state for those not complete. Generate mail if not complete state is different from CONFIRMED
 
         /*$sftp = new SFTP(sftpParams::HOST);
 
