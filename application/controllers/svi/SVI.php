@@ -15,12 +15,10 @@ require_once APPPATH . '/controllers/rio/RIO.php';
  */
 class SVI extends CI_Controller {
 
-    const SVI_FRENCH_LANGUAGE = 'FR';
-    const SVI_ENGLISH_LANGUAGE = 'EN';
-
     public function __construct()
     {
         parent::__construct();
+        $this->load->model('FileLog_model');
 
     }
 
@@ -59,10 +57,8 @@ class SVI extends CI_Controller {
             $response->return->returnCode = $rioWithInfo['clientType'];
             $response->return->rioNumber = $rioWithInfo['rio'];
 
-            if($rioWithInfo['language'] == 'ANGLAIS' ){
-                $response->return->language = SVI::SVI_ENGLISH_LANGUAGE;
-            }else{
-                $response->return->language = SVI::SVI_FRENCH_LANGUAGE;
+            if($rioWithInfo['language'] != '' ){
+                $response->return->language = $rioWithInfo['language'];
             }
 
         }else{
@@ -70,6 +66,8 @@ class SVI extends CI_Controller {
             $response->return->returnCode = '2';
 
         }
+
+        $this->FileLog_model->write_log('sdf', 'sdf', json_encode($response));
 
         // TODO: Send SMS to Client in appropriate language
 

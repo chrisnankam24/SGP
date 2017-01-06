@@ -68,6 +68,8 @@ class PortingNotificationService extends CI_Controller
      */
     public function notifyOrdered($notifyOrderedRequest){
 
+        $bscsOperationService = new BscsOperationService();
+
         $rio = $notifyOrderedRequest->portingTransaction->rio;
 
         $portingId = $notifyOrderedRequest->portingTransaction->portingId;
@@ -77,101 +79,122 @@ class PortingNotificationService extends CI_Controller
         $startMSISDN = $notifyOrderedRequest->portingTransaction->numberRanges->numberRange->startNumber;
         $endMSISDN = $notifyOrderedRequest->portingTransaction->numberRanges->numberRange->endNumber;
 
-        if($notifyOrderedRequest->portingTransaction->recipientNrn->networkId == Operator::MTN_NETWORK_ID){
-            $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_MTN;
-        }else{
-            $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_NEXTTEL;
-        }
+        $numberInfo = $bscsOperationService->loadNumberInfo($startMSISDN);
+        $contractId = null;
+        $language = null;
 
-        $this->db->trans_start();
+        if($numberInfo){
+            $contractId = $numberInfo['CONTRACT_ID'];
+            if($numberInfo['LANGUE'] != ''){
+                $language = $numberInfo['LANGUE'];
+            }
 
-        // Insert Porting table
+            $this->db->trans_start();
 
-        $portingParams = array(
-            'portingId' => $portingId,
-            'recipientNetworkId' => $notifyOrderedRequest->portingTransaction->recipientNrn->networkId,
-            'recipientRoutingNumber' => $notifyOrderedRequest->portingTransaction->recipientNrn->routingNumber,
-            'donorNetworkId' => $notifyOrderedRequest->portingTransaction->donorNrn->networkId,
-            'donorRoutingNumber' => $notifyOrderedRequest->portingTransaction->recipientNrn->routingNumber,
-            'recipientSubmissionDateTime' => $notifyOrderedRequest->portingTransaction->recipientSubmissionDateTime,
-            'portingDateTime' => $notifyOrderedRequest->portingTransaction->portingDateTime,
-            'rio' =>  $notifyOrderedRequest->portingTransaction->rio,
-            'startMSISDN' =>  $startMSISDN,
-            'endMSISDN' =>  $endMSISDN
-        );
+            // Insert Porting table
 
-        $portingParams['cadbOrderDateTime'] = $notifyOrderedRequest->portingTransaction->cadbOrderDateTime;
-        $portingParams['lastChangeDateTime'] = $notifyOrderedRequest->portingTransaction->lastChangeDateTime;
-        $portingParams['portingState'] = \PortingService\Porting\portingStateType::ORDERED;
-
-        if($subscriberType == 0) {
-            $portingParams['physicalPersonFirstName'] = $notifyOrderedRequest->portingTransaction->subscriberInfo->physicalPersonFirstName;
-            $portingParams['physicalPersonLastName'] = $notifyOrderedRequest->portingTransaction->subscriberInfo->physicalPersonLastName;
-            $portingParams['physicalPersonIdNumber'] = $notifyOrderedRequest->portingTransaction->subscriberInfo->physicalPersonIdNumber;
-
-        }
-        else{
-            $portingParams['legalPersonName'] = $notifyOrderedRequest->portingTransaction->subscriberInfo->legalPersonName;
-            $portingParams['legalPersonTin'] = $notifyOrderedRequest->portingTransaction->subscriberInfo->legalPersonTin;
-            $portingParams['contactNumber'] = $notifyOrderedRequest->portingTransaction->subscriberInfo->contactNumber;
-        }
-
-        $this->Porting_model->add_porting($portingParams);
-
-        // Insert Porting State evolution table
-
-        $portingEvolutionParams = array(
-            'lastChangeDateTime' => $notifyOrderedRequest->portingTransaction->lastChangeDateTime,
-            'portingState' => \PortingService\Porting\portingStateType::ORDERED,
-            'isAutoReached' => false,
-            'portingId' => $notifyOrderedRequest->portingTransaction->portingId,
-        );
-
-        $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
-
-        // Send SMS to Subscriber
-        $smsResponse = SMS::OPD_Inform_Subcriber($startMSISDN, $denom_OPR, $portingId);
-
-        if($smsResponse->success){
-
-            // Insert Porting SMS Notification
-            $smsNotificationparams = array(
+            $portingParams = array(
                 'portingId' => $portingId,
-                'smsType' => SMSType::OPD_PORTING_INIT,
-                'creationDateTime' => date('c'),
-                'status' => smsState::SENT,
-                'attemptCount' => 1,
-                'sendDateTime' => date('c')
+                'recipientNetworkId' => $notifyOrderedRequest->portingTransaction->recipientNrn->networkId,
+                'recipientRoutingNumber' => $notifyOrderedRequest->portingTransaction->recipientNrn->routingNumber,
+                'donorNetworkId' => $notifyOrderedRequest->portingTransaction->donorNrn->networkId,
+                'donorRoutingNumber' => $notifyOrderedRequest->portingTransaction->recipientNrn->routingNumber,
+                'recipientSubmissionDateTime' => $notifyOrderedRequest->portingTransaction->recipientSubmissionDateTime,
+                'portingDateTime' => $notifyOrderedRequest->portingTransaction->portingDateTime,
+                'rio' =>  $notifyOrderedRequest->portingTransaction->rio,
+                'contractId' =>  $contractId,
+                'language' =>  $language,
+                'startMSISDN' =>  $startMSISDN,
+                'endMSISDN' =>  $endMSISDN
             );
 
+            $portingParams['cadbOrderDateTime'] = $notifyOrderedRequest->portingTransaction->cadbOrderDateTime;
+            $portingParams['lastChangeDateTime'] = $notifyOrderedRequest->portingTransaction->lastChangeDateTime;
+            $portingParams['portingState'] = \PortingService\Porting\portingStateType::ORDERED;
+
+            if($subscriberType == 0) {
+                $portingParams['physicalPersonFirstName'] = $notifyOrderedRequest->portingTransaction->subscriberInfo->physicalPersonFirstName;
+                $portingParams['physicalPersonLastName'] = $notifyOrderedRequest->portingTransaction->subscriberInfo->physicalPersonLastName;
+                $portingParams['physicalPersonIdNumber'] = $notifyOrderedRequest->portingTransaction->subscriberInfo->physicalPersonIdNumber;
+
+            }
+            else{
+                $portingParams['legalPersonName'] = $notifyOrderedRequest->portingTransaction->subscriberInfo->legalPersonName;
+                $portingParams['legalPersonTin'] = $notifyOrderedRequest->portingTransaction->subscriberInfo->legalPersonTin;
+                $portingParams['contactNumber'] = $notifyOrderedRequest->portingTransaction->subscriberInfo->contactNumber;
+            }
+
+            $this->Porting_model->add_porting($portingParams);
+
+            // Insert Porting State evolution table
+
+            $portingEvolutionParams = array(
+                'lastChangeDateTime' => $notifyOrderedRequest->portingTransaction->lastChangeDateTime,
+                'portingState' => \PortingService\Porting\portingStateType::ORDERED,
+                'isAutoReached' => false,
+                'portingId' => $notifyOrderedRequest->portingTransaction->portingId,
+            );
+
+            $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
+
+            // Send SMS to Subscriber
+
+            if($notifyOrderedRequest->portingTransaction->recipientNrn->networkId == Operator::MTN_NETWORK_ID){
+                $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_MTN;
+            }else{
+                $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_NEXTTEL;
+            }
+
+            $smsResponse = SMS::OPD_Inform_Subcriber($startMSISDN, $denom_OPR, $portingId);
+
+            if($smsResponse->success){
+
+                // Insert Porting SMS Notification
+                $smsNotificationparams = array(
+                    'portingId' => $portingId,
+                    'smsType' => SMSType::OPD_PORTING_INIT,
+                    'creationDateTime' => date('c'),
+                    'status' => smsState::SENT,
+                    'attemptCount' => 1,
+                    'sendDateTime' => date('c')
+                );
+
+            }else{
+
+                $smsNotificationparams = array(
+                    'portingId' => $portingId,
+                    'smsType' => SMSType::OPD_PORTING_INIT,
+                    'creationDateTime' => date('c'),
+                    'status' => smsState::PENDING,
+                    'attemptCount' => 1,
+                );
+            }
+
+            $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
+
+            $this->db->trans_complete();
+
+            if ($this->db->trans_status() === FALSE) {
+
+                $emailService = new EmailService();
+                $emailService->adminErrorReport('ORDERED_PORTING_RECEIVED_BUT_DB_FILLING_ERROR', []);
+
+            }else {
+
+            }
+
+            $response = new PortingNotification\notifyOrderedResponse();
+
+            return $response;
+
+
         }else{
 
-            $smsNotificationparams = array(
-                'portingId' => $portingId,
-                'smsType' => SMSType::OPD_PORTING_INIT,
-                'creationDateTime' => date('c'),
-                'status' => smsState::PENDING,
-                'attemptCount' => 1,
-            );
-        }
+            // TODO Inform admin of BSCS unavailability
 
-        $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
-
-        $this->db->trans_complete();
-
-        if ($this->db->trans_status() === FALSE) {
-
-            $emailService = new EmailService();
-            $emailService->adminErrorReport('ORDERED_PORTING_RECEIVED_BUT_DB_FILLING_ERROR', []);
-
-        }else {
+            throw new ldbAdministrationServiceFault();
 
         }
-
-        $response = new PortingNotification\notifyOrderedResponse();
-
-        return $response;
-
     }
 
     /**

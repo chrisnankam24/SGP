@@ -107,6 +107,11 @@ class sftpParams{
     const PATH = '/';
 }
 
+class languageParams{
+    const FRENCH = 'FR';
+    const ENGLISH = 'EN';
+}
+
 /////////////// Primitive Types Verification
 
 /**

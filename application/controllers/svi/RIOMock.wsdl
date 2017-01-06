@@ -22,12 +22,6 @@
       <xs:complexType name="RIOInfo">
         <xs:sequence>
           <xs:element minOccurs="0" name="returnCode" nillable="true" type="xs:string"/>
-          <xs:element minOccurs="0" name="language" nillable="true">
-            <restriction base="string">
-              <enumeration value="FR"/>
-              <enumeration value="EN"/>
-            </restriction>
-          </xs:element>
           <xs:element minOccurs="0" name="rioNumber" nillable="true" type="xs:string"/>
         </xs:sequence>
       </xs:complexType>
@@ -63,7 +57,7 @@
   </wsdl:binding>
   <wsdl:service name="RIOService">
     <wsdl:port name="RIOServiceEndpoint" binding="ns:RIOServiceBinding">
-      <soap12:address location="http://172.21.75.34/SGP/svi/SVI"/>
+      <soap12:address location="http://localhost/SGP/svi/SVI"/>
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>

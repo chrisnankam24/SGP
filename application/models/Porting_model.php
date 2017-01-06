@@ -23,13 +23,13 @@ class Porting_model extends CI_Model
      * Get porting in particular state and for particular donor.
      * personType = 0 for personal and 1 for enterprise
      */
-    function get_porting_by_state_and_donor($portingState, $donorNetworkId, $personType)
+    function get_porting_by_state_and_donor($portingState, $donorNetworkId, $personType = null)
     {
         $query = "SELECT * FROM Porting WHERE donorNetworkId = ? AND portingState = ?";
 
         if($personType == 0){ // Personal
             $query .= " AND legalPersonName IS NULL";
-        }else{ // Enterprise
+        }else if($personType == 1){ // Enterprise
             $query .= " AND legalPersonName IS NULL";
         }
 

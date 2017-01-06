@@ -350,6 +350,8 @@ class BatchOperationService extends CI_Controller {
             $contactNumber = $startedPort('contactNumber');
             $portingDateTime = $startedPort('portingDateTime');
             $orderedDateTime = $startedPort('orderedDateTime');
+            $contractId = $startedPort('contractId');
+            $language = $startedPort('language');
 
             // Construct subscriber info
 
@@ -410,6 +412,8 @@ class BatchOperationService extends CI_Controller {
                     'cadbOrderDateTime' => $orderResponse->portingTransaction->cadbOrderDateTime,
                     'lastChangeDateTime' => $orderResponse->portingTransaction->lastChangeDateTime,
                     'portingState' => \PortingService\Porting\portingStateType::ORDERED,
+                    'contractId' => $contractId,
+                    'language' => $language,
                     'portingSubmissionId' => $portingSubmissionId,
                 );
 
@@ -530,9 +534,6 @@ class BatchOperationService extends CI_Controller {
     }
 
     public function portingApprovedToAcceptedRejectedEnterprise(){
-        // TODO: portingApprovedToAcceptedRejectedEnterprise
-        // Similar to portingApprovedToAcceptedRejected but form enterprise. Might be merged in future versions.
-        // Actually groups elements for same enterprise and sends a single mail
 
         // Load ports in Porting table in APPROVED state in which we are OPD AND Enterprise
 
@@ -546,7 +547,25 @@ class BatchOperationService extends CI_Controller {
 
             $is_added = false;
 
+            foreach ($enterpriseGrouping as $enterprisePort){
 
+                if($enterprisePort['legalPersonTin'] == $approvedPort['legalPersonTin']){
+                    $is_added = true;
+                    array_push( $enterprisePort['portingIds'], $approvedPort['portingId']);
+                    break;
+                }
+
+            }
+
+            if(!$is_added){
+                $enterprisePort['portingIds'] = array($approvedPort['portingId']);
+            }
+
+        }
+
+        foreach ($enterpriseGrouping as $enterprisePort){
+            // Send mail to Back Office with Admin in CC for Acceptance / Rejection
+            $emailService->backOfficePortingAcceptReject($enterprisePort);
         }
 
     }
@@ -588,9 +607,9 @@ class BatchOperationService extends CI_Controller {
             if($provisionPort){
 
                 // Porting already provisioned. Start porting moving to CONTRACT_DELETED_CONFIRMED state
-                $subscriberMSISDN = $acceptedPort['subscriberMSISDN'];
+                $subscriberMSISDN = $acceptedPort['startMSISDN'];
 
-                $contractId = $bscsOperationService->getContractId($subscriberMSISDN);
+                $contractId = $acceptedPort['contractId'];
 
                 $deleteResponse = $bscsOperationService->deleteContract($contractId);
 
@@ -636,8 +655,6 @@ class BatchOperationService extends CI_Controller {
                     // Notify Admin on failed Export
                     $faultCode = $deleteResponse->error;
 
-                    $fault = '';
-
                     switch ($faultCode) {
                         // Terminal Processes
                         case Fault::SIGNATURE_MISMATCH_CODE:
@@ -681,7 +698,7 @@ class BatchOperationService extends CI_Controller {
             $portingId = $msisdnContractDeletedPort['portingId'];
 
             // Porting already provisioned. Start porting moving to MSISDN_EXPORT_CONFIRMED state
-            $subscriberMSISDN = $msisdnContractDeletedPort['subscriberMSISDN'];
+            $subscriberMSISDN = $msisdnContractDeletedPort['startMSISDN'];
 
             $exportResponse = $bscsOperationService->exportMSISDN($subscriberMSISDN);
 
@@ -830,7 +847,6 @@ class BatchOperationService extends CI_Controller {
 
             }
 
-
         }
 
     }
@@ -838,7 +854,7 @@ class BatchOperationService extends CI_Controller {
     /**
      * Executed as OPR
      * BATCH_004_{C, D, E}
-     * Checks for all ports in ACCEPTED state, if any performs porting to MSISDN_IMPORT_CONFIRMED state
+     * Checks for all ports in ACCEPTED state, if any check porting date and performs porting to MSISDN_IMPORT_CONFIRMED state
      * Checks for all ports in MSISDN_IMPORT_CONFIRMED state, if any, move to MSISDN_CHANGE_IMPORT_CONFIRMED state
      * Checks for all ports in MSISDN_CHANGE_IMPORT_CONFIRMED state, if any, perform porting to CONFIRMED state, sending confirm request and updating Porting table
      */
@@ -880,11 +896,11 @@ class BatchOperationService extends CI_Controller {
 
             $diff = date_diff($start_time, $end_time);
 
-            // End time >= start time, less than 30minutes difference
+            // End time >= start time, less than 30 minutes difference
             if($diff->invert == 0 && $diff->i < 30){
 
                 // Start porting moving to MSISDN_IMPORT_CONFIRMED state. Import Porting MSISDN into BSCS
-                $subscriberMSISDN = $acceptedPort['subscriberMSISDN'];
+                $subscriberMSISDN = $acceptedPort['startMSISDN'];
 
                 $importResponse = $bscsOperationService->importMSISDN($subscriberMSISDN);
 
@@ -981,7 +997,7 @@ class BatchOperationService extends CI_Controller {
 
             $subscriberInfo = $this->Portingsubmission_model->get_submissionByPortingId($portingId);
 
-            $subscriberMSISDN = $acceptedPort['subscriberMSISDN'];
+            $subscriberMSISDN = $acceptedPort['startMSISDN'];
 
             $changeResponse = $bscsOperationService->changeImportMSISDN($subscriberInfo['temporalMSISDN'], $subscriberMSISDN);
 

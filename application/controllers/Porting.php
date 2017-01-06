@@ -64,8 +64,6 @@ class Porting extends CI_Controller
         $this->send_response($response);
     }
 
-
-
     /**
      * API for performing order request. This is the individual Endpoint
      */
@@ -90,6 +88,7 @@ class Porting extends CI_Controller
             $portingDateTime = $this->input->post('portingDateTime');
             $temporalNumber = $this->input->post('temporalNumber');
             $contractId = $this->input->post('contractId');
+            $language = $this->input->post('language'); // EN or FR
 
             $orderResponse = $this->orderPort($donorOperator, $portingMsisdn, $subscriberType, $rio, $physicalPersonFirstName,
                 $physicalPersonLastName, $physicalPersonIdNumber, $legalPersonName, $legalPersonTin,
@@ -107,7 +106,7 @@ class Porting extends CI_Controller
                     'donorNetworkId' => $orderResponse->portingTransaction->donorNrn->networkId,
                     'donorRoutingNumber' => $orderResponse->portingTransaction->donorNrn->routingNumber,
                     'subscriberSubmissionDateTime' => date('c'),
-                    'portingDateTime' => $portingDateTime,
+                    'portingDateTime' => $orderResponse->portingTransaction->portingDateTime,
                     'rio' => $rio,
                     'portingMSISDN' => $portingMsisdn,
                     'physicalPersonIdNumber' => $physicalPersonIdNumber,
@@ -117,6 +116,7 @@ class Porting extends CI_Controller
                     'legalPersonTin' => $legalPersonTin,
                     'contactNumber' => $contactNumber,
                     'contractId' => $contractId,
+                    'language' => $language,
                     'temporalMSISDN' => $temporalNumber,
                     'submissionState' => \PortingService\Porting\portingSubmissionStateType::ORDERED,
                     'orderedDateTime' => date('c')
@@ -140,6 +140,8 @@ class Porting extends CI_Controller
                     'cadbOrderDateTime' => $orderResponse->portingTransaction->cadbOrderDateTime,
                     'lastChangeDateTime' => $orderResponse->portingTransaction->lastChangeDateTime,
                     'portingState' => \PortingService\Porting\portingStateType::ORDERED,
+                    'contractId' => $contractId,
+                    'language' => $language,
                     'portingSubmissionId' => $portingsubmission_id,
                 );
 
@@ -225,6 +227,7 @@ class Porting extends CI_Controller
                             'legalPersonTin' => $legalPersonTin,
                             'contactNumber' => $contactNumber,
                             'contractId' => $contractId,
+                            'language' => $language,
                             'temporalMSISDN' => $temporalNumber,
                             'submissionState' => \PortingService\Porting\portingSubmissionStateType::STARTED,
                             'orderedDateTime' => date('c')
