@@ -9,7 +9,7 @@ require_once APPPATH . '/controllers/rio/RIO.php';
  * Date: 12/8/2016
  * Time: 8:06 AM
  */
-class Rio extends CI_Controller {
+class RioAPI extends CI_Controller {
 
     function _construct()
     {
@@ -31,6 +31,18 @@ class Rio extends CI_Controller {
         if(isset($_POST) && count($_POST) > 0) {
 
             $msisdn = $this->input->post('MSISDN');
+
+            $rio = RIO::get_rio($msisdn);
+
+            if($rio){
+
+                $response['success'] = true;
+                $response['rio'] = $rio;
+
+            }else{
+                $response['success'] = false;
+                $response['message'] = 'Unable to get RIO corresponding to MSISDN';
+            }
 
         }else{
 
