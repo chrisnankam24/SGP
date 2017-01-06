@@ -19,6 +19,7 @@ class RIO extends CI_Controller {
     public function __construct()
     {
         parent::__construct();
+        $bscsOperationService = new BscsOperationService();
 
     }
 
@@ -75,6 +76,32 @@ class RIO extends CI_Controller {
             return false;
         }
 
+    }
+
+    public static function getBulkRio($msisdns){
+
+        $response = [];
+        $bscsOperationService = new BscsOperationService();
+
+        foreach ($msisdns as $msisdn){
+
+            $subsInfo = $bscsOperationService->loadNumberInfo($msisdn);
+
+            $result = false;
+
+            if($subsInfo){
+
+                $contractId = $subsInfo['CONTRACT_ID'];
+
+                $result = RIO::calculateRIO($contractId, $msisdn);
+
+            }else{
+
+            }
+            array_push($response, array($msisdn, $result));
+        }
+
+        return $response;
     }
 
     /**
