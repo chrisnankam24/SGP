@@ -93,6 +93,50 @@ class Porting extends CI_Controller
 
     }
 
+    public function orderIndividualBulkPorting(){
+        $response = [];
+
+        if(isset($_POST)) {
+
+            $file_name = $this->input->post('fileName');
+
+            if($file_name != ''){
+                $row = 1;
+
+                $orders = array();
+
+                if (($handle = fopen(FCPATH . 'uploads/' .$file_name, "r")) !== FALSE) {
+
+                    while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+                        if($row == 1){
+                            $row++;
+                        }else{
+                            $msisdns[] = $data[0]; // MSISDN
+                        }
+                    }
+
+                    fclose($handle);
+                }
+
+                $response['success'] = true;
+                $response['data'] = RIO::getBulkRio($msisdns);
+
+            }else{
+                $response['success'] = false;
+                $response['message'] = 'No file name found';
+            }
+
+        }else{
+
+            $response['success'] = false;
+            $response['message'] = 'No file name found';
+
+        }
+
+        $this->send_response($response);
+
+    }
+
     /**
      * API for performing bulk order request for an enterprise
      */

@@ -17,23 +17,20 @@ class RioAPI extends CI_Controller {
         $this->load->helper(array('form', 'url'));
     }
 
-
     public function index(){
-        $this->load->helper(array('form', 'url'));
-        $this->load->view('upload_form', array('error' => ' ' ));
+        // Webservice File descriptor load
     }
 
     /**
      * Returns RIO of individual Number
      */
     public function getRioIndividualMSISDN(){
+
         $response = [];
 
-        if(isset($_POST) && count($_POST) > 0) {
+        if(isset($_POST)) {
 
             $msisdn = $this->input->post('MSISDN');
-
-            $rio = RIO::get_rio($msisdn);
 
             $response = $this->getIndivRIO($msisdn);
 
@@ -83,6 +80,12 @@ class RioAPI extends CI_Controller {
 
                     while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
                         if($row == 1){
+                            // Check if header Ok
+                            if(strtolower($data[0]) != 'msisdn'){
+                                $response['success'] = false;
+                                $response['message'] = 'Invalid file content format. First Column must be name <MSISDN>. 
+                                                        If you have difficulties creating file, contact administrator';
+                            }
                             $row++;
                         }else{
                             $msisdns[] = $data[0]; // MSISDN
