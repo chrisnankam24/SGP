@@ -106,11 +106,11 @@ class RIO extends CI_Controller {
 
             if($result){
 
-                $response = array('MSISDN' => $msisdn, 'success' => true, 'rio' => $result);
+                $response[] = array('MSISDN' => $msisdn, 'success' => true, 'rio' => $result);
 
             }else{
 
-                $response = array('MSISDN' => $msisdn, 'success' => 'false', 'message' => 'Unable to get RIO corresponding to MSISDN');
+                $response[] = array('MSISDN' => $msisdn, 'success' => 'false', 'message' => 'Unable to get RIO corresponding to MSISDN');
 
             }
         }

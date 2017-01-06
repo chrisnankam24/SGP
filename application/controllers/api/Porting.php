@@ -27,20 +27,6 @@ class Porting extends CI_Controller
 
     }
 
-    /*
-     * Listing of porting
-     */
-    function index()
-    {
-        $data['porting'] = $this->Porting_model->get_all_porting();
-
-        $this->load->view('porting/index',$data);
-    }
-
-    function test(){
-        $this->FileLog_model->write_log('23', 'Porting', 'Message');
-    }
-
     /**
      * API for retrieving BSCS info linked to temporal number
      */
@@ -48,7 +34,7 @@ class Porting extends CI_Controller
 
         $response = [];
 
-        if(isset($_POST) && count($_POST) > 0) {
+        if(isset($_POST)) {
 
             $temporalNumber = $this->input->post('temporalNumber'); // Without 237 prepended
 
@@ -71,7 +57,7 @@ class Porting extends CI_Controller
 
         $response = [];
 
-        if(isset($_POST) && count($_POST) > 0) {
+        if(isset($_POST)) {
 
             // Retrieve POST params
 
@@ -92,212 +78,9 @@ class Porting extends CI_Controller
 
             $orderResponse = $this->orderPort($donorOperator, $portingMsisdn, $subscriberType, $rio, $physicalPersonFirstName,
                 $physicalPersonLastName, $physicalPersonIdNumber, $legalPersonName, $legalPersonTin,
-                $contactNumber, $portingDateTime);
+                $contactNumber, $portingDateTime, $temporalNumber, $contractId, $language);
 
-            // Verify response
-
-            if($orderResponse->success){
-
-                $this->db->trans_start();
-
-                // Fill in submission table with submission state ordered
-
-                $submissionParams = array(
-                    'donorNetworkId' => $orderResponse->portingTransaction->donorNrn->networkId,
-                    'donorRoutingNumber' => $orderResponse->portingTransaction->donorNrn->routingNumber,
-                    'subscriberSubmissionDateTime' => date('c'),
-                    'portingDateTime' => $orderResponse->portingTransaction->portingDateTime,
-                    'rio' => $rio,
-                    'portingMSISDN' => $portingMsisdn,
-                    'physicalPersonIdNumber' => $physicalPersonIdNumber,
-                    'physicalPersonFirstName' => $physicalPersonFirstName,
-                    'physicalPersonLastName' => $physicalPersonLastName,
-                    'legalPersonName' => $legalPersonName,
-                    'legalPersonTin' => $legalPersonTin,
-                    'contactNumber' => $contactNumber,
-                    'contractId' => $contractId,
-                    'language' => $language,
-                    'temporalMSISDN' => $temporalNumber,
-                    'submissionState' => \PortingService\Porting\portingSubmissionStateType::ORDERED,
-                    'orderedDateTime' => date('c')
-                );
-
-                $portingsubmission_id = $this->Portingsubmission_model->add_portingsubmission($submissionParams);
-
-                // Fill in porting table with state ordered
-
-                $portingParams = array(
-                    'portingId' => $orderResponse->portingTransaction->portingId,
-                    'recipientNetworkId' => $orderResponse->portingTransaction->recipientNrn->networkId,
-                    'recipientRoutingNumber' => $orderResponse->portingTransaction->recipientNrn->routingNumber,
-                    'donorNetworkId' => $orderResponse->portingTransaction->donorNrn->networkId,
-                    'donorRoutingNumber' => $orderResponse->portingTransaction->recipientNrn->routingNumber,
-                    'recipientSubmissionDateTime' => $orderResponse->portingTransaction->recipientSubmissionDateTime,
-                    'portingDateTime' => $orderResponse->portingTransaction->portingDateTime,
-                    'rio' =>  $orderResponse->portingTransaction->rio,
-                    'startMSISDN' =>  $orderResponse->portingTransaction->numberRanges->numberRange->startNumber,
-                    'endMSISDN' =>  $orderResponse->portingTransaction->numberRanges->numberRange->startNumber,
-                    'cadbOrderDateTime' => $orderResponse->portingTransaction->cadbOrderDateTime,
-                    'lastChangeDateTime' => $orderResponse->portingTransaction->lastChangeDateTime,
-                    'portingState' => \PortingService\Porting\portingStateType::ORDERED,
-                    'contractId' => $contractId,
-                    'language' => $language,
-                    'portingSubmissionId' => $portingsubmission_id,
-                );
-
-                if($subscriberType == 0) {
-                    $portingParams['physicalPersonFirstName'] = $orderResponse->portingTransaction->subscriberInfo->physicalPersonFirstName;
-                    $portingParams['physicalPersonLastName'] = $orderResponse->portingTransaction->subscriberInfo->physicalPersonLastName;
-                    $portingParams['physicalPersonIdNumber'] = $orderResponse->portingTransaction->subscriberInfo->physicalPersonIdNumber;
-                }
-                else{
-                    $portingParams['legalPersonName'] = $orderResponse->portingTransaction->subscriberInfo->legalPersonName;
-                    $portingParams['legalPersonTin'] = $orderResponse->portingTransaction->subscriberInfo->legalPersonTin;
-                    $portingParams['contactNumber'] = $orderResponse->portingTransaction->subscriberInfo->contactNumber;
-                }
-
-                $this->Porting_model->add_porting($portingParams);
-
-
-                // Fill in portingStateEvolution table with state ordered
-
-                $portingEvolutionParams = array(
-                    'lastChangeDateTime' => $orderResponse->portingTransaction->lastChangeDateTime,
-                    'portingState' => \PortingService\Porting\portingStateType::ORDERED,
-                    'isAutoReached' => false,
-                    'portingId' => $orderResponse->portingTransaction->portingId,
-                );
-
-                $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
-
-                $this->db->trans_complete();
-
-
-                $response['success'] = true;
-
-                if ($this->db->trans_status() === FALSE) {
-
-                    $emailService = new EmailService();
-                    $emailService->adminErrorReport('PORTING_ORDERED_BUT_DB_FILLED_INCOMPLETE', []);
-
-                }else {
-
-                }
-
-                $response['message'] = 'Porting has been ORDERED successfully!';
-
-            }
-
-            else{
-
-                $fault = $orderResponse->error;
-
-                $emailService = new EmailService();
-
-                $response['success'] = false;
-
-                switch ($fault) {
-                    // Terminal Processes
-                    case Fault::INVALID_OPERATOR_FAULT:
-                        $response['success'] = true;
-
-                        if($donorOperator == 0) {
-                            // MTN
-                            $donorNetworkId = Operator::MTN_NETWORK_ID;
-                            $donorRoutingNumber = Operator::MTN_ROUTING_NUMBER;
-                        }else{
-                            // Orange
-                            $donorNetworkId = Operator::NEXTTEL_NETWORK_ID;
-                            $donorRoutingNumber = Operator::NEXTTEL_ROUTING_NUMBER;
-                        }
-
-                        $this->db->trans_start();
-
-                        $submissionParams = array(
-                            'donorNetworkId' => $donorNetworkId,
-                            'donorRoutingNumber' => $donorRoutingNumber,
-                            'subscriberSubmissionDateTime' => date('c'),
-                            'portingDateTime' => $portingDateTime,
-                            'rio' => $rio,
-                            'portingMSISDN' => $portingMsisdn,
-                            'physicalPersonIdNumber' => $physicalPersonIdNumber,
-                            'physicalPersonFirstName' => $physicalPersonFirstName,
-                            'physicalPersonLastName' => $physicalPersonLastName,
-                            'legalPersonName' => $legalPersonName,
-                            'legalPersonTin' => $legalPersonTin,
-                            'contactNumber' => $contactNumber,
-                            'contractId' => $contractId,
-                            'language' => $language,
-                            'temporalMSISDN' => $temporalNumber,
-                            'submissionState' => \PortingService\Porting\portingSubmissionStateType::STARTED,
-                            'orderedDateTime' => date('c')
-                        );
-
-                        $this->Portingsubmission_model->add_portingsubmission($submissionParams);
-
-                        $this->db->trans_complete();
-
-                        $response['success'] = true;
-
-                        if ($this->db->trans_status() === FALSE) {
-
-                            $emailService = new EmailService();
-                            $emailService->adminErrorReport('PORTING_REQUESTED_OPERATOR_INACTIVE_BUT_STARTED_INCOMPLETE', []);
-                            $response['message'] = 'Operator is currently Inactive. We have nonetheless encountered problems saving your request. Please contact Back Office';
-
-                        }else {
-
-                            $response['message'] = 'Operator is currently Inactive. You request has been saved and will be performed as soon as possible';
-
-                        }
-
-                        break;
-
-                    case Fault::NUMBER_NOT_OWNED_BY_OPERATOR:
-                        $response['message'] = 'Porting number not owned by donor';
-                        break;
-
-                    case Fault::UNKNOWN_NUMBER:
-                        $response['message'] = 'Porting number is unknown';
-                        break;
-
-                    case Fault::TOO_NEAR_PORTED_PERIOD:
-                        $response['message'] = 'Number was already ported within 60 days';
-                        break;
-
-                    case Fault::PORTING_NOT_ALLOWED_REQUESTS:
-                        $response['message'] = 'Number was already ported two times in period of one year';
-                        break;
-
-                    case Fault::RIO_NOT_VALID:
-                        $response['message'] = 'RIO format or checksum digits don’t match up';
-                        break;
-
-                    case Fault::NUMBER_RESERVED_BY_PROCESS:
-                        $response['message'] = 'Number already in transaction';
-                        break;
-
-                    case Fault::INVALID_PORTING_DATE_AND_TIME:
-                        $response['message'] = 'Invalid porting date and time (out of defined time period)';
-                        break;
-
-                    // Terminal Error Processes
-                    case Fault::NUMBER_RANGES_OVERLAP:
-                    case Fault::NUMBER_RANGE_QUANTITY_LIMIT_EXCEEDED:
-                    case Fault::INVALID_REQUEST_FORMAT:
-                    case Fault::ACTION_NOT_AUTHORIZED:
-                    case Fault::SUBSCRIBER_DATA_MISSING:
-                        $emailService->adminErrorReport($fault, []);
-                        $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
-                        break;
-
-                    default:
-                        $emailService->adminErrorReport($fault, []);
-                        $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
-
-                }
-
-            }
+            $response = $orderResponse;
 
         }else{
 
@@ -311,13 +94,10 @@ class Porting extends CI_Controller
     }
 
     /**
-     * API for performing order request for an enterprise
+     * API for performing bulk order request for an enterprise
      */
-    public function orderEnterprisePorting(){
-        // TODO: OrderEnterprisePorting
-        // It practically receives the legalPersonName, legalPersonTin, contactNumber (subscriberInfo), and an upload of
-        // a csv file containing the MSISDN and the RIO for each MSISDN.
-        // It then makes an order request for each MSISDN with the RIOs and sends and array of responses for each
+    public function orderEnterpriseBulkPorting(){
+
     }
 
     /**
@@ -914,11 +694,13 @@ class Porting extends CI_Controller
      */
     private function orderPort($donorOperator, $portingMsisdn, $subscriberType, $rio, $physicalPersonFirstName,
                                $physicalPersonLastName, $physicalPersonIdNumber, $legalPersonName, $legalPersonTin,
-                               $contactNumber, $portingDateTime) {
+                               $contactNumber, $portingDateTime, $temporalNumber, $contractId, $language) {
 
         // TODO: Get porting datetime from common.php
 
         // Construct subscriber info
+
+        $response = [];
 
         $subscriberInfo = new \PortingService\Porting\subscriberInfoType();
 
@@ -937,7 +719,212 @@ class Porting extends CI_Controller
         $portingOperationService = new PortingOperationService();
         $orderResponse = $portingOperationService->order($donorOperator, $portingDateTime, $portingMsisdn, $rio, $subscriberInfo);
 
-        return $orderResponse;
+        // Verify response
+
+        if($orderResponse->success){
+
+            $this->db->trans_start();
+
+            // Fill in submission table with submission state ordered
+
+            $submissionParams = array(
+                'donorNetworkId' => $orderResponse->portingTransaction->donorNrn->networkId,
+                'donorRoutingNumber' => $orderResponse->portingTransaction->donorNrn->routingNumber,
+                'subscriberSubmissionDateTime' => date('c'),
+                'portingDateTime' => $orderResponse->portingTransaction->portingDateTime,
+                'rio' => $rio,
+                'portingMSISDN' => $portingMsisdn,
+                'physicalPersonIdNumber' => $physicalPersonIdNumber,
+                'physicalPersonFirstName' => $physicalPersonFirstName,
+                'physicalPersonLastName' => $physicalPersonLastName,
+                'legalPersonName' => $legalPersonName,
+                'legalPersonTin' => $legalPersonTin,
+                'contactNumber' => $contactNumber,
+                'contractId' => $contractId,
+                'language' => $language,
+                'temporalMSISDN' => $temporalNumber,
+                'submissionState' => \PortingService\Porting\portingSubmissionStateType::ORDERED,
+                'orderedDateTime' => date('c')
+            );
+
+            $portingsubmission_id = $this->Portingsubmission_model->add_portingsubmission($submissionParams);
+
+            // Fill in porting table with state ordered
+
+            $portingParams = array(
+                'portingId' => $orderResponse->portingTransaction->portingId,
+                'recipientNetworkId' => $orderResponse->portingTransaction->recipientNrn->networkId,
+                'recipientRoutingNumber' => $orderResponse->portingTransaction->recipientNrn->routingNumber,
+                'donorNetworkId' => $orderResponse->portingTransaction->donorNrn->networkId,
+                'donorRoutingNumber' => $orderResponse->portingTransaction->recipientNrn->routingNumber,
+                'recipientSubmissionDateTime' => $orderResponse->portingTransaction->recipientSubmissionDateTime,
+                'portingDateTime' => $orderResponse->portingTransaction->portingDateTime,
+                'rio' =>  $orderResponse->portingTransaction->rio,
+                'startMSISDN' =>  $orderResponse->portingTransaction->numberRanges->numberRange->startNumber,
+                'endMSISDN' =>  $orderResponse->portingTransaction->numberRanges->numberRange->startNumber,
+                'cadbOrderDateTime' => $orderResponse->portingTransaction->cadbOrderDateTime,
+                'lastChangeDateTime' => $orderResponse->portingTransaction->lastChangeDateTime,
+                'portingState' => \PortingService\Porting\portingStateType::ORDERED,
+                'contractId' => $contractId,
+                'language' => $language,
+                'portingSubmissionId' => $portingsubmission_id,
+            );
+
+            if($subscriberType == 0) {
+                $portingParams['physicalPersonFirstName'] = $orderResponse->portingTransaction->subscriberInfo->physicalPersonFirstName;
+                $portingParams['physicalPersonLastName'] = $orderResponse->portingTransaction->subscriberInfo->physicalPersonLastName;
+                $portingParams['physicalPersonIdNumber'] = $orderResponse->portingTransaction->subscriberInfo->physicalPersonIdNumber;
+            }
+            else{
+                $portingParams['legalPersonName'] = $orderResponse->portingTransaction->subscriberInfo->legalPersonName;
+                $portingParams['legalPersonTin'] = $orderResponse->portingTransaction->subscriberInfo->legalPersonTin;
+                $portingParams['contactNumber'] = $orderResponse->portingTransaction->subscriberInfo->contactNumber;
+            }
+
+            $this->Porting_model->add_porting($portingParams);
+
+
+            // Fill in portingStateEvolution table with state ordered
+
+            $portingEvolutionParams = array(
+                'lastChangeDateTime' => $orderResponse->portingTransaction->lastChangeDateTime,
+                'portingState' => \PortingService\Porting\portingStateType::ORDERED,
+                'isAutoReached' => false,
+                'portingId' => $orderResponse->portingTransaction->portingId,
+            );
+
+            $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
+
+            $this->db->trans_complete();
+
+
+            $response['success'] = true;
+
+            if ($this->db->trans_status() === FALSE) {
+
+                $emailService = new EmailService();
+                $emailService->adminErrorReport('PORTING_ORDERED_BUT_DB_FILLED_INCOMPLETE', []);
+
+            }else {
+
+            }
+
+            $response['message'] = 'Porting has been ORDERED successfully!';
+
+        }
+
+        else{
+
+            $fault = $orderResponse->error;
+
+            $emailService = new EmailService();
+
+            $response['success'] = false;
+
+            switch ($fault) {
+                // Terminal Processes
+                case Fault::INVALID_OPERATOR_FAULT:
+                    $response['success'] = true;
+
+                    if($donorOperator == 0) {
+                        // MTN
+                        $donorNetworkId = Operator::MTN_NETWORK_ID;
+                        $donorRoutingNumber = Operator::MTN_ROUTING_NUMBER;
+                    }else{
+                        // Orange
+                        $donorNetworkId = Operator::NEXTTEL_NETWORK_ID;
+                        $donorRoutingNumber = Operator::NEXTTEL_ROUTING_NUMBER;
+                    }
+
+                    $this->db->trans_start();
+
+                    $submissionParams = array(
+                        'donorNetworkId' => $donorNetworkId,
+                        'donorRoutingNumber' => $donorRoutingNumber,
+                        'subscriberSubmissionDateTime' => date('c'),
+                        'portingDateTime' => $portingDateTime,
+                        'rio' => $rio,
+                        'portingMSISDN' => $portingMsisdn,
+                        'physicalPersonIdNumber' => $physicalPersonIdNumber,
+                        'physicalPersonFirstName' => $physicalPersonFirstName,
+                        'physicalPersonLastName' => $physicalPersonLastName,
+                        'legalPersonName' => $legalPersonName,
+                        'legalPersonTin' => $legalPersonTin,
+                        'contactNumber' => $contactNumber,
+                        'contractId' => $contractId,
+                        'language' => $language,
+                        'temporalMSISDN' => $temporalNumber,
+                        'submissionState' => \PortingService\Porting\portingSubmissionStateType::STARTED,
+                        'orderedDateTime' => date('c')
+                    );
+
+                    $this->Portingsubmission_model->add_portingsubmission($submissionParams);
+
+                    $this->db->trans_complete();
+
+                    $response['success'] = true;
+
+                    if ($this->db->trans_status() === FALSE) {
+
+                        $emailService = new EmailService();
+                        $emailService->adminErrorReport('PORTING_REQUESTED_OPERATOR_INACTIVE_BUT_STARTED_INCOMPLETE', []);
+                        $response['message'] = 'Operator is currently Inactive. We have nonetheless encountered problems saving your request. Please contact Back Office';
+
+                    }else {
+
+                        $response['message'] = 'Operator is currently Inactive. You request has been saved and will be performed as soon as possible';
+
+                    }
+
+                    break;
+
+                case Fault::NUMBER_NOT_OWNED_BY_OPERATOR:
+                    $response['message'] = 'Porting number not owned by donor';
+                    break;
+
+                case Fault::UNKNOWN_NUMBER:
+                    $response['message'] = 'Porting number is unknown';
+                    break;
+
+                case Fault::TOO_NEAR_PORTED_PERIOD:
+                    $response['message'] = 'Number was already ported within 60 days';
+                    break;
+
+                case Fault::PORTING_NOT_ALLOWED_REQUESTS:
+                    $response['message'] = 'Number was already ported two times in period of one year';
+                    break;
+
+                case Fault::RIO_NOT_VALID:
+                    $response['message'] = 'RIO format or checksum digits don’t match up';
+                    break;
+
+                case Fault::NUMBER_RESERVED_BY_PROCESS:
+                    $response['message'] = 'Number already in transaction';
+                    break;
+
+                case Fault::INVALID_PORTING_DATE_AND_TIME:
+                    $response['message'] = 'Invalid porting date and time (out of defined time period)';
+                    break;
+
+                // Terminal Error Processes
+                case Fault::NUMBER_RANGES_OVERLAP:
+                case Fault::NUMBER_RANGE_QUANTITY_LIMIT_EXCEEDED:
+                case Fault::INVALID_REQUEST_FORMAT:
+                case Fault::ACTION_NOT_AUTHORIZED:
+                case Fault::SUBSCRIBER_DATA_MISSING:
+                    $emailService->adminErrorReport($fault, []);
+                    $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
+                    break;
+
+                default:
+                    $emailService->adminErrorReport($fault, []);
+                    $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
+
+            }
+
+        }
+
+        return $response;
 
     }
 

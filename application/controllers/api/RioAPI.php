@@ -47,6 +47,9 @@ class RioAPI extends CI_Controller {
         $this->send_response($response);
     }
 
+    /**
+     * Returns RIOs calculated from MSISDNs in file
+     */
     public function getRioFile()
     {
         /*$config['upload_path'] = './uploads/';
@@ -67,33 +70,40 @@ class RioAPI extends CI_Controller {
 
         $response = [];
 
-        if(isset($_POST) && count($_POST) > 0) {
+        if(isset($_POST)) {
 
             $file_name = $this->input->post('fileName');
 
-            $row = 1;
+            if($file_name != ''){
+                $row = 1;
 
-            $msisdns = array();
+                $msisdns = array();
 
-            if (($handle = fopen(FCPATH . 'uploads/' .$file_name, "r")) !== FALSE) {
+                if (($handle = fopen(FCPATH . 'uploads/' .$file_name, "r")) !== FALSE) {
 
-                while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
-                    if($row == 1){
-                        $row++;
-                    }else{
-                        $msisdns[] = $data[0]; // MSISDN
+                    while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+                        if($row == 1){
+                            $row++;
+                        }else{
+                            $msisdns[] = $data[0]; // MSISDN
+                        }
                     }
+
+                    fclose($handle);
                 }
 
-                fclose($handle);
-            }
+                $response['success'] = true;
+                $response['data'] = RIO::getBulkRio($msisdns);
 
-            $response = RIO::getBulkRio($msisdns);
+            }else{
+                $response['success'] = false;
+                $response['message'] = 'No file name found';
+            }
 
         }else{
 
             $response['success'] = false;
-            $response['message'] = 'No MSISDN found';
+            $response['message'] = 'No file name found';
 
         }
 
