@@ -49,7 +49,7 @@ class RioAPI extends CI_Controller {
 
     public function getRioFile()
     {
-        $config['upload_path'] = './uploads/';
+        /*$config['upload_path'] = './uploads/';
         $config['allowed_types'] = 'csv';
         $config['max_size'] = 100;
 
@@ -63,7 +63,13 @@ class RioAPI extends CI_Controller {
 
             $file_name = $data['upload_data']['file_name'];
 
-            $totalResults = array();
+        }*/
+
+        $response = [];
+
+        if(isset($_POST) && count($_POST) > 0) {
+
+            $file_name = $this->input->post('fileName');
 
             $row = 1;
 
@@ -75,21 +81,25 @@ class RioAPI extends CI_Controller {
                     if($row == 1){
                         $row++;
                     }else{
-                        $result = array();
                         $msisdns[] = $data[0]; // MSISDN
-
                     }
                 }
 
                 fclose($handle);
             }
 
-            $responses = RIO::getBulkRio($msisdns);
+            $response = RIO::getBulkRio($msisdns);
 
-            var_dump($responses);
+        }else{
 
+            $response['success'] = false;
+            $response['message'] = 'No MSISDN found';
 
         }
+
+        $this->send_response($response);
+
+
     }
 
     private function getIndivRIO($msisdn){
