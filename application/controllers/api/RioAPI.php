@@ -66,9 +66,11 @@ class RioAPI extends CI_Controller {
             $totalResults = array();
 
             $row = 1;
+
+            $msisdns = array();
+
             if (($handle = fopen(FCPATH . 'uploads/' .$file_name, "r")) !== FALSE) {
 
-                $msisdns = array();
                 while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
                     if($row == 1){
                         $row++;
@@ -79,12 +81,13 @@ class RioAPI extends CI_Controller {
                     }
                 }
 
-                $response = RIO::getBulkRio($msisdns);
-
-                var_dump($response);
-
                 fclose($handle);
             }
+
+            $responses = RIO::getBulkRio($msisdns);
+
+            var_dump($responses);
+
 
         }
     }

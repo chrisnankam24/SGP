@@ -78,6 +78,11 @@ class RIO extends CI_Controller {
 
     }
 
+    /**
+     * Performs Bulk RIO Calculations
+     * @param $msisdns
+     * @return array
+     */
     public static function getBulkRio($msisdns){
 
         $response = [];
@@ -98,7 +103,16 @@ class RIO extends CI_Controller {
             }else{
 
             }
-            array_push($response, array($msisdn, $result));
+
+            if($result){
+
+                array_push($response, array('MSISDN' => $msisdn, 'success' => true, 'rio' => $result));
+
+            }else{
+
+                array_push($response, array('MSISDN' => $msisdn, 'success' => 'false'));
+
+            }
         }
 
         return $response;
