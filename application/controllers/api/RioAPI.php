@@ -14,12 +14,13 @@ class RioAPI extends CI_Controller {
     function _construct()
     {
         parent::__construct();
-
+        $this->load->helper(array('form', 'url'));
     }
 
 
     public function index(){
-        $this->load->view('rio');
+        $this->load->helper(array('form', 'url'));
+        $this->load->view('upload_form', array('error' => ' ' ));
     }
 
     /**
@@ -34,15 +35,7 @@ class RioAPI extends CI_Controller {
 
             $rio = RIO::get_rio($msisdn);
 
-            if($rio){
-
-                $response['success'] = true;
-                $response['rio'] = $rio;
-
-            }else{
-                $response['success'] = false;
-                $response['message'] = 'Unable to get RIO corresponding to MSISDN';
-            }
+            $response = $this->getIndivRIO($msisdn);
 
         }else{
 
@@ -52,6 +45,68 @@ class RioAPI extends CI_Controller {
         }
 
         $this->send_response($response);
+    }
+
+    public function getRioFile()
+    {
+        $config['upload_path'] = './uploads/';
+        $config['allowed_types'] = 'csv';
+        $config['max_size'] = 100;
+
+        $this->load->library('upload', $config);
+
+        if (!$this->upload->do_upload('rioFile')) {
+            $error = array('error' => $this->upload->display_errors());
+        }else
+        {
+            $data = array('upload_data' => $this->upload->data());
+
+            $file_name = $data['upload_data']['file_name'];
+
+            $totalResults = array();
+
+            $row = 1;
+            if (($handle = fopen(FCPATH . 'uploads/' .$file_name, "r")) !== FALSE) {
+
+                while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+                    if($row == 1){
+                        $row++;
+                    }else{
+                        $result = array();
+                        $msisdn = $data[0]; // MSISDN
+                        $msisdnRioResponse = $this->getIndivRIO($msisdn);
+                        $result['MSISDN'] = $msisdn;
+                        $result = array_merge($result, $msisdnRioResponse);
+                        var_dump($result);
+                        array_push($totalResults, $result);
+                    }
+                }
+                fclose($handle);
+            }
+
+            var_dump($totalResults);
+
+        }
+    }
+
+    private function getIndivRIO($msisdn){
+
+        $response = [];
+
+        $rio = RIO::get_rio($msisdn);
+
+        if($rio){
+
+            $response['success'] = true;
+            $response['rio'] = $rio;
+
+        }else{
+            $response['success'] = false;
+            $response['message'] = 'Unable to get RIO corresponding to MSISDN';
+        }
+
+        return $response;
+
     }
 
     /**

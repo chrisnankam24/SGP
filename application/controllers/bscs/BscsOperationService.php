@@ -100,12 +100,14 @@ class BscsOperationService extends CI_Controller  {
 
             $subscriberInfo = $this->BSCS_model->get_msisdn_info($msisdn);
 
-            if($subscriberInfo['LANGUE'] == 'ANGLAIS'){
-                $subscriberInfo['LANGUE'] = languageParams::ENGLISH;
-            }else if($subscriberInfo['LANGUE'] == 'FRANCAIS'){
-                $subscriberInfo['LANGUE'] = languageParams::FRENCH;
-            }else{
-                $subscriberInfo['LANGUE'] = '';
+            if($subscriberInfo){
+                if($subscriberInfo['LANGUE'] == 'ANGLAIS'){
+                    $subscriberInfo['LANGUE'] = languageParams::ENGLISH;
+                }else if($subscriberInfo['LANGUE'] == 'FRANCAIS'){
+                    $subscriberInfo['LANGUE'] = languageParams::FRENCH;
+                }else{
+                    $subscriberInfo['LANGUE'] = '';
+                }
             }
 
         }catch (Exception $ex){
