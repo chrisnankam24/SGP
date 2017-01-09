@@ -84,7 +84,7 @@ class BatchOperationService extends CI_Controller {
             $portingDenialReason = null;
             $cause = null;
 
-            if($subscriberInfo){
+            if($subscriberInfo != -1 && $subscriberInfo != null){ // Connection to BSCS successful and User found
 
                 // Number Owned by Orange
 
@@ -168,11 +168,13 @@ class BatchOperationService extends CI_Controller {
                 }
 
             }
-
             else if($subscriberInfo == null){ // BSCS returns this in case of in existent user
                 // Number not owned by Orange
                 $portingDenialReason = \PortingService\Porting\denialReasonType::NUMBER_NOT_OWNED_BY_SUBSCRIBER;
                 $cause = 'In existent Number';
+            }else{
+                // Connection to BSCS failed. Wait and try again later
+
             }
 
             if($portingDenialReason == null) {
