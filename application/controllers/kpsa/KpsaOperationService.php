@@ -34,19 +34,67 @@ class KpsaOperationService extends CI_Controller {
      * @param $toRoutingNumber
      * @return array
      */
-    public function performKPSAOperation($misisdn, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber){
+    public function performKPSAOperation($msisdn, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber){
         $response = [];
-        $response->success = true;
-        $response->message = '';
+        $response['success'] = true;
 
         // Search for MSISDN in KPSA
+        $searchResponse = $this->viewSubscriberTEKELEC($msisdn);
 
+        if($searchResponse->success == true){ // MSISDN in KPSA
 
-        // If OPR = OPA, delete MSISDN in KPSA
+            // If OPR = OPA, delete MSISDN in KPSA
+            if($toOperator == Operator::ORANGE_NETWORK_ID && $this->isOCMNumber($msisdn)){ // Orange number coming back
 
-        // Else if MSISDN not in KPSA, create MSISDN with routing number toOperator
+                // Delete number from KPSA
+                $deleteResponse = $this->deleteSubscriberTEKELEC($msisdn, $searchResponse['routingNumber']);
 
-        // Else if MSISDN in KPSA, update MSISDN with routing number toOperator
+                if($deleteResponse->success == true){
+                    // Operation successful
+                    $response['success'] = true;
+                }else{
+                    // Operation failed
+                    $response['message'] = $deleteResponse['message'];
+                }
+
+            }else{ // update MSISDN with toOperator routing Number
+
+                // Update number in KPSA
+                $updateResponse = $this->updateSubscriberTEKELEC($msisdn, $toRoutingNumber);
+
+                if($updateResponse->success == true){
+                    // Operation successful
+                    $response['success'] = true;
+                }else{
+                    // Operation failed
+                    $response['message'] = $updateResponse['message'];
+                }
+
+            }
+
+        }if($searchResponse->success == false){ // MSISDN not in KPSA
+
+            //create MSISDN with routing number toOperator
+
+            $createResponse = $this->creationSubscriberTEKELEC($msisdn, $toRoutingNumber);
+
+            if($createResponse->success == true){
+                // Operation successful
+                $response['success'] = true;
+            }else{
+                // Operation failed
+                $response['message'] = $createResponse['message'];
+            }
+
+            $response['success'] = true;
+
+        } else{ // Response is -1, connection to KPSA Failed
+
+            $response['success'] = false;
+            $response['message'] = $searchResponse['message'];
+
+        }
+
         return $response;
 
     }
@@ -60,9 +108,48 @@ class KpsaOperationService extends CI_Controller {
     public function performKPSAReturnOperation($msisdn, $returnOperator, $returnRoutingNumber){
 
         $response = [];
-        $response->success = true;
-        $response->message = '';
-        // Delete Number from KPSA if found. Should be found
+        $response['success'] = true;
+
+        // Search for MSISDN in KPSA
+        $searchResponse = $this->viewSubscriberTEKELEC($msisdn);
+
+        if($searchResponse->success == true){ // MSISDN in KPSA
+
+            // Update number in KPSA
+            $updateResponse = $this->updateSubscriberTEKELEC($msisdn, $toRoutingNumber);
+
+            if($updateResponse->success == true){
+                // Operation successful
+                $response['success'] = true;
+            }else{
+                // Operation failed
+                $response['message'] = $updateResponse['message'];
+            }
+
+        }if($searchResponse->success == false){ // MSISDN not in KPSA
+
+            //create MSISDN with routing number toOperator
+
+            $deleteResponse = $this->deleteSubscriberTEKELEC($msisdn, $searchResponse['routingNumber']);
+
+            if($deleteResponse->success == true){
+                // Operation successful
+                $response['success'] = true;
+            }else{
+                // Operation failed
+                $response['message'] = $deleteResponse['message'];
+            }
+
+            $response['success'] = true;
+
+        } else{ // Response is -1, connection to KPSA Failed
+
+            $response['success'] = false;
+            $response['message'] = $searchResponse['message'];
+
+        }
+
+        return $response;
 
     }
 
@@ -74,14 +161,49 @@ class KpsaOperationService extends CI_Controller {
      * @return array
      */
     public function performKPSAOtherOperation($msisdn, $toOperator, $toRoutingNumber){
+
         $response = [];
-        $response->success = true;
-        $response->message = '';
-        // If OPR = OPA, delete MSISDN in KPSA
+        $response['success'] = true;
 
-        // Else if MSISDN not in KPSA, create MSISDN with routing number toOperator
+        // Search for MSISDN in KPSA
+        $searchResponse = $this->viewSubscriberTEKELEC($msisdn);
 
-        // Else if MSISDN in KPSA, update MSISDN with routing number toOperator
+        if($searchResponse->success == true){ // MSISDN in KPSA
+
+            // Update number in KPSA
+            $updateResponse = $this->updateSubscriberTEKELEC($msisdn, $toRoutingNumber);
+
+            if($updateResponse->success == true){
+                // Operation successful
+                $response['success'] = true;
+            }else{
+                // Operation failed
+                $response['message'] = $updateResponse['message'];
+            }
+
+        }if($searchResponse->success == false){ // MSISDN not in KPSA
+
+            //create MSISDN with routing number toOperator
+
+            $createResponse = $this->creationSubscriberTEKELEC($msisdn, $toRoutingNumber);
+
+            if($createResponse->success == true){
+                // Operation successful
+                $response['success'] = true;
+            }else{
+                // Operation failed
+                $response['message'] = $createResponse['message'];
+            }
+
+            $response['success'] = true;
+
+        } else{ // Response is -1, connection to KPSA Failed
+
+            $response['success'] = false;
+            $response['message'] = $searchResponse['message'];
+
+        }
+
         return $response;
 
     }
@@ -95,33 +217,38 @@ class KpsaOperationService extends CI_Controller {
     private function creationSubscriberTEKELEC($msisdn, $routingNumber){
 
         $creationResponse = [];
-        $creationResponse['success'] = true;
+        $viewResponse['success'] = -1; // -1 means connection to KPSA failed, false means connection to KPSA ok but STATUS is FAILED, and finally, true means connected to KPSA with STATUS COMPLETED
 
         //TODO: Verify if MSISDN is full or partial
 
         $requestId = 1;
 
-        $response = file_get_contents("https://" . KPSAParams::HOST . ":" . KPSAParams::PORT .
-            "/exec_mcp?MCP={ID=$requestId;ACT=TEKELEC_CREATE_NEW_PORT;MSISDN=$msisdn;MOBILE_NETWORK=$routingNumber}");
+        try {
 
-       if($response){
-           $tmp_responses = explode(';', $response);
+            $response = file_get_contents("https://" . KPSAParams::HOST . ":" . KPSAParams::PORT .
+                "/exec_mcp?MCP={ID=$requestId;ACT=TEKELEC_CREATE_NEW_PORT;MSISDN=$msisdn;MOBILE_NETWORK=$routingNumber}");
 
-           $responses = [];
+            $tmp_responses = explode(';', $response);
 
-           foreach ($tmp_responses as $tmp_response){
-               $pieces = explode('=', $tmp_response);
-               $responses[$pieces[0]] = $pieces[1];
-           }
+            $responses = [];
 
-           if($responses['STATUS'] == 'FAILED'){
-               $creationResponse['success'] = false;
-               $creationResponse['message'] = $responses['LIBELLE'];
-           }
-       }else{
-           $creationResponse['success'] = false;
-           $creationResponse['message'] = 'FAILED GETTING CONTENT FROM API';
-       }
+            foreach ($tmp_responses as $tmp_response){
+                $pieces = explode('=', $tmp_response);
+                $responses[$pieces[0]] = $pieces[1];
+            }
+
+            if($responses['STATUS'] == 'FAILED'){
+                $creationResponse['success'] = false;
+                $creationResponse['message'] = $responses['LIBELLE'];
+            }else{
+                $viewResponse['success'] = true;
+                $viewResponse['routingNumber'] = $responses['MOBILE_NETWORK'];
+            }
+
+        }catch (Exception $ex){
+            $viewResponse['success'] = -1;
+            $viewResponse['message'] = 'FAILED CONNECTING TO KPSA';
+        }
 
         return $creationResponse;
 
@@ -136,16 +263,17 @@ class KpsaOperationService extends CI_Controller {
     private function deleteSubscriberTEKELEC($msisdn, $routingNumber){
 
         $deleteResponse = [];
-        $deleteResponse['success'] = true;
+        $viewResponse['success'] = -1; // -1 means connection to KPSA failed, false means connection to KPSA ok but STATUS is FAILED, and finally, true means connected to KPSA with STATUS COMPLETED
 
         //TODO: Verify if MSISDN is full or partial
 
         $requestId = 1;
 
-        $response = file_get_contents("https://" . KPSAParams::HOST . ":" . KPSAParams::PORT .
-            "/exec_mcp?MCP={ID=$requestId;ACT=TEKELEC_DELETE_PORT;MSISDN=$msisdn;MOBILE_NETWORK=$routingNumber}");
+        try {
 
-        if($response){
+            $response = file_get_contents("https://" . KPSAParams::HOST . ":" . KPSAParams::PORT .
+                "/exec_mcp?MCP={ID=$requestId;ACT=TEKELEC_DELETE_PORT;MSISDN=$msisdn;MOBILE_NETWORK=$routingNumber}");
+
             $tmp_responses = explode(';', $response);
 
             $responses = [];
@@ -158,10 +286,14 @@ class KpsaOperationService extends CI_Controller {
             if($responses['STATUS'] == 'FAILED'){
                 $deleteResponse['success'] = false;
                 $deleteResponse['message'] = $responses['LIBELLE'];
+            }else{
+                $viewResponse['success'] = true;
+                $viewResponse['routingNumber'] = $responses['MOBILE_NETWORK'];
             }
-        }else{
-            $deleteResponse['success'] = false;
-            $deleteResponse['message'] = 'FAILED GETTING CONTENT FROM API';
+
+        }catch (Exception $ex){
+            $viewResponse['success'] = -1;
+            $viewResponse['message'] = 'FAILED CONNECTING TO KPSA';
         }
 
         return $deleteResponse;
@@ -177,16 +309,17 @@ class KpsaOperationService extends CI_Controller {
     private function updateSubscriberTEKELEC($msisdn, $routingNumber){
 
         $updateResponse = [];
-        $updateResponse['success'] = true;
+        $viewResponse['success'] = -1; // -1 means connection to KPSA failed, false means connection to KPSA ok but STATUS is FAILED, and finally, true means connected to KPSA with STATUS COMPLETED
 
         //TODO: Verify if MSISDN is full or partial
 
         $requestId = 1;
 
-        $response = file_get_contents("https://" . KPSAParams::HOST . ":" . KPSAParams::PORT .
-            "/exec_mcp?MCP={ID=$requestId;ACT=TEKELEC_UPDATE_PORT_NETWORK;MSISDN=$msisdn;MOBILE_NETWORK=$routingNumber}");
+        try {
 
-        if($response){
+            $response = file_get_contents("https://" . KPSAParams::HOST . ":" . KPSAParams::PORT .
+                "/exec_mcp?MCP={ID=$requestId;ACT=TEKELEC_UPDATE_PORT_NETWORK;MSISDN=$msisdn;MOBILE_NETWORK=$routingNumber}");
+
             $tmp_responses = explode(';', $response);
 
             $responses = [];
@@ -199,10 +332,14 @@ class KpsaOperationService extends CI_Controller {
             if($responses['STATUS'] == 'FAILED'){
                 $updateResponse['success'] = false;
                 $updateResponse['message'] = $responses['LIBELLE'];
+            }else{
+                $viewResponse['success'] = true;
+                $viewResponse['routingNumber'] = $responses['MOBILE_NETWORK'];
             }
-        }else{
-            $updateResponse['success'] = false;
-            $updateResponse['message'] = 'FAILED GETTING CONTENT FROM API';
+
+        }catch (Exception $ex){
+            $viewResponse['success'] = -1;
+            $viewResponse['message'] = 'FAILED CONNECTING TO KPSA';
         }
 
         return $updateResponse;
@@ -241,6 +378,7 @@ class KpsaOperationService extends CI_Controller {
                 $viewResponse['success'] = false;
                 $viewResponse['message'] = $responses['LIBELLE'];
             }else{
+                $viewResponse['success'] = true;
                 $viewResponse['routingNumber'] = $responses['MOBILE_NETWORK'];
             }
 
@@ -251,6 +389,15 @@ class KpsaOperationService extends CI_Controller {
 
         return $viewResponse;
 
+    }
+
+    /**
+     * Verifies if MSISDN has Orange as OPA
+     * @param $msisdn
+     * @return bool
+     */
+    private function isOCMNumber($msisdn){
+        return true;
     }
 
 }
