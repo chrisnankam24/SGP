@@ -6,7 +6,7 @@
 
 <?php echo $error;?>
 
-<?php echo form_open_multipart('http://localhost/sgp/index.php/api/RioAPI/getRioFile');?>
+<?php echo form_open_multipart('http://172.21.75.34/SGP/index.php/api/RioAPI/getRioFile');?>
 
 <input type="file" accept=".csv" name="rioFile" size="20" />
 

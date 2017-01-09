@@ -19,6 +19,8 @@ class USSD extends CI_Controller {
     {
         parent::__construct();
 
+        $this->load->model('FileLog_model');
+
     }
 
     /**
@@ -37,6 +39,8 @@ class USSD extends CI_Controller {
         $template = '';
 
         $rio = RIO::getPersonalRIO($msisdn);
+
+        $this->FileLog_model->write_log('USSD_INIT', 'USSD', 'MSISDN received:: ' . $msisdn . ' :: Language :: ' . $language . ' :: rio :: ' . $rio);
 
         if($rio){
 

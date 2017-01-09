@@ -19,12 +19,15 @@ class RIO extends CI_Controller {
     public function __construct()
     {
         parent::__construct();
-        $bscsOperationService = new BscsOperationService();
-
     }
 
     public function index(){
-        echo self::get_rio('dsf');
+        echo self::get_rio('694975166');
+    }
+
+    public static function test()
+    {
+        echo self::get_rio('694975166');
     }
 
     /**

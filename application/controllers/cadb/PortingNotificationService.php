@@ -55,7 +55,7 @@ class PortingNotificationService extends CI_Controller
 
     }
 
-    function test(){
+    public function test(){
         $kpsaOperationService = new KpsaOperationService();
         $response = $kpsaOperationService->viewSubscriberTEKELEC('694975166');
         print_r($response);
