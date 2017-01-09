@@ -92,23 +92,7 @@ class BscsOperationService extends CI_Controller  {
 
         $subscriberInfo = false;
 
-        try {
-
-            $subscriberInfo = $this->BSCS_model->get_msisdn_info($msisdn);
-
-            if($subscriberInfo){
-                if($subscriberInfo['LANGUE'] == 'ANGLAIS'){
-                    $subscriberInfo['LANGUE'] = languageParams::ENGLISH;
-                }else if($subscriberInfo['LANGUE'] == 'FRANCAIS'){
-                    $subscriberInfo['LANGUE'] = languageParams::FRENCH;
-                }else{
-                    $subscriberInfo['LANGUE'] = '';
-                }
-            }
-
-        }catch (Exception $ex){
-
-        }
+        $subscriberInfo = $this->BSCS_model->get_msisdn_info($msisdn);
 
         return $subscriberInfo;
 
@@ -129,8 +113,13 @@ class BscsOperationService extends CI_Controller  {
      */
     public function getContractId($msisdn){
 
+        $contractId = -1;
+
         $subscriberInfo = $this->BSCS_model->get_msisdn_info($msisdn);
-        $contractId = $subscriberInfo['CONTRACT_ID'];
+
+        if($subscriberInfo != null && $subscriberInfo != -1) {
+            $contractId = $subscriberInfo['CONTRACT_ID'];
+        }
 
         return $contractId;
 

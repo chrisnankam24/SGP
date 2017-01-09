@@ -94,6 +94,7 @@ class Porting extends CI_Controller
     }
 
     public function orderIndividualBulkPorting(){
+
         $response = [];
 
         if(isset($_POST)) {
@@ -103,23 +104,22 @@ class Porting extends CI_Controller
             if($file_name != ''){
                 $row = 1;
 
-                $orders = array();
-
                 if (($handle = fopen(FCPATH . 'uploads/' .$file_name, "r")) !== FALSE) {
 
                     while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
                         if($row == 1){
+                            // Check if header Ok
+                            if(strtolower($data[0]) != 'msisdn'){
+
+                            }
                             $row++;
                         }else{
-                            $msisdns[] = $data[0]; // MSISDN
+
                         }
                     }
 
                     fclose($handle);
                 }
-
-                $response['success'] = true;
-                $response['data'] = RIO::getBulkRio($msisdns);
 
             }else{
                 $response['success'] = false;

@@ -20,10 +20,28 @@ class KpsaOperationService extends CI_Controller {
 
     }
 
-    public function performKPSAOperation($fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber){
+    public function test(){
+        $response = $this->viewSubscriberTEKELEC('694975166');
+        var_dump($response);
+    }
+
+    /**
+     * Switches or creates or deletes number in KPSA to toOperator from fromOperator
+     * @param $misisdn
+     * @param $fromOperator
+     * @param $toOperator
+     * @param $fromRoutingNumber
+     * @param $toRoutingNumber
+     * @return array
+     */
+    public function performKPSAOperation($misisdn, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber){
         $response = [];
         $response->success = true;
         $response->message = '';
+
+        // Search for MSISDN in KPSA
+
+
         // If OPR = OPA, delete MSISDN in KPSA
 
         // Else if MSISDN not in KPSA, create MSISDN with routing number toOperator
@@ -33,7 +51,29 @@ class KpsaOperationService extends CI_Controller {
 
     }
 
-    public function performKPSAOtherOperation($toOperator, $toRoutingNumber){
+    /**
+     * Returns Number to Operator. Used during number return PO
+     * @param $msisdn
+     * @param $toOperator
+     * @param $toRoutingNumber
+     */
+    public function performKPSAReturnOperation($msisdn, $returnOperator, $returnRoutingNumber){
+
+        $response = [];
+        $response->success = true;
+        $response->message = '';
+        // Delete Number from KPSA if found. Should be found
+
+    }
+
+    /**
+     * Switches or creates MSISDN in KPSA. This is called by other operator not directly involved in porting, rollback or return process
+     * @param $msisdn
+     * @param $toOperator
+     * @param $toRoutingNumber
+     * @return array
+     */
+    public function performKPSAOtherOperation($msisdn, $toOperator, $toRoutingNumber){
         $response = [];
         $response->success = true;
         $response->message = '';
@@ -177,16 +217,17 @@ class KpsaOperationService extends CI_Controller {
     public function viewSubscriberTEKELEC($msisdn){
 
         $viewResponse = [];
-        $viewResponse['success'] = true;
+        $viewResponse['success'] = -1; // -1 means connection to KPSA failed, false means connection to KPSA ok but STATUS is FAILED, and finally, true means connected to KPSA with STATUS COMPLETED
 
         //TODO: Verify if MSISDN is full or partial
 
         $requestId = 1;
 
-        $response = file_get_contents("https://" . KPSAParams::HOST . ":" . KPSAParams::PORT .
-            "/exec_mcp?MCP={ID=$requestId;ACT=TEKELEC_QUERY_SUBSCRIBER;MSISDN=$msisdn}");
+        try {
 
-        if($response){
+            $response = file_get_contents("https://" . KPSAParams::HOST . ":" . KPSAParams::PORT .
+                "/exec_mcp?MCP={ID=$requestId;ACT=TEKELEC_QUERY_SUBSCRIBER;MSISDN=$msisdn}");
+
             $tmp_responses = explode(';', $response);
 
             $responses = [];
@@ -202,9 +243,10 @@ class KpsaOperationService extends CI_Controller {
             }else{
                 $viewResponse['routingNumber'] = $responses['MOBILE_NETWORK'];
             }
-        }else{
-            $viewResponse['success'] = false;
-            $viewResponse['message'] = 'FAILED GETTING CONTENT FROM API';
+
+        }catch (Exception $ex){
+            $viewResponse['success'] = -1;
+            $viewResponse['message'] = 'FAILED CONNECTING TO KPSA';
         }
 
         return $viewResponse;
