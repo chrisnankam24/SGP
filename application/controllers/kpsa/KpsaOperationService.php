@@ -217,16 +217,17 @@ class KpsaOperationService extends CI_Controller {
     public function viewSubscriberTEKELEC($msisdn){
 
         $viewResponse = [];
-        $viewResponse['success'] = true;
+        $viewResponse['success'] = -1; // -1 means connection to KPSA failed, false means connection to KPSA ok but STATUS is FAILED, and finally, true means connected to KPSA with STATUS COMPLETED
 
         //TODO: Verify if MSISDN is full or partial
 
         $requestId = 1;
 
-        $response = file_get_contents("https://" . KPSAParams::HOST . ":" . KPSAParams::PORT .
-            "/exec_mcp?MCP={ID=$requestId;ACT=TEKELEC_QUERY_SUBSCRIBER;MSISDN=$msisdn}");
+        try {
 
-        if($response){
+            $response = file_get_contents("https://" . KPSAParams::HOST . ":" . KPSAParams::PORT .
+                "/exec_mcp?MCP={ID=$requestId;ACT=TEKELEC_QUERY_SUBSCRIBER;MSISDN=$msisdn}");
+
             $tmp_responses = explode(';', $response);
 
             $responses = [];
@@ -242,9 +243,10 @@ class KpsaOperationService extends CI_Controller {
             }else{
                 $viewResponse['routingNumber'] = $responses['MOBILE_NETWORK'];
             }
-        }else{
-            $viewResponse['success'] = false;
-            $viewResponse['message'] = 'FAILED GETTING CONTENT FROM API';
+
+        }catch (Exception $ex){
+            $viewResponse['success'] = -1;
+            $viewResponse['message'] = 'FAILED CONNECTING TO KPSA';
         }
 
         return $viewResponse;
