@@ -94,7 +94,7 @@ class BatchOperationService extends CI_Controller {
 
                     // Subscriber RIO Valid
 
-                    // Check subscriber type
+                    /*// Check subscriber type
                     if($orderedPort['physicalPersonFirstName']){
 
                         // Physical Person
@@ -159,7 +159,7 @@ class BatchOperationService extends CI_Controller {
                             $cause = 'Invalid Person Name';
                         }
 
-                    }
+                    }*/
 
                 }else{
                     // Subscriber RIO Invalid
@@ -168,6 +168,7 @@ class BatchOperationService extends CI_Controller {
                 }
 
             }
+
             else if($subscriberInfo == null){ // BSCS returns this in case of in existent user
                 // Number not owned by Orange
                 $portingDenialReason = \PortingService\Porting\denialReasonType::NUMBER_NOT_OWNED_BY_SUBSCRIBER;
