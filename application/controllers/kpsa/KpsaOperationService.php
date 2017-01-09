@@ -20,10 +20,28 @@ class KpsaOperationService extends CI_Controller {
 
     }
 
-    public function performKPSAOperation($fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber){
+    public function test(){
+        $response = $this->viewSubscriberTEKELEC('694975166');
+        var_dump($response);
+    }
+
+    /**
+     * Switches or creates or deletes number in KPSA to toOperator from fromOperator
+     * @param $misisdn
+     * @param $fromOperator
+     * @param $toOperator
+     * @param $fromRoutingNumber
+     * @param $toRoutingNumber
+     * @return array
+     */
+    public function performKPSAOperation($misisdn, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber){
         $response = [];
         $response->success = true;
         $response->message = '';
+
+        // Search for MSISDN in KPSA
+
+
         // If OPR = OPA, delete MSISDN in KPSA
 
         // Else if MSISDN not in KPSA, create MSISDN with routing number toOperator
@@ -33,7 +51,29 @@ class KpsaOperationService extends CI_Controller {
 
     }
 
-    public function performKPSAOtherOperation($toOperator, $toRoutingNumber){
+    /**
+     * Returns Number to Operator. Used during number return PO
+     * @param $msisdn
+     * @param $toOperator
+     * @param $toRoutingNumber
+     */
+    public function performKPSAReturnOperation($msisdn, $returnOperator, $returnRoutingNumber){
+
+        $response = [];
+        $response->success = true;
+        $response->message = '';
+        // Delete Number from KPSA if found. Should be found
+
+    }
+
+    /**
+     * Switches or creates MSISDN in KPSA. This is called by other operator not directly involved in porting, rollback or return process
+     * @param $msisdn
+     * @param $toOperator
+     * @param $toRoutingNumber
+     * @return array
+     */
+    public function performKPSAOtherOperation($msisdn, $toOperator, $toRoutingNumber){
         $response = [];
         $response->success = true;
         $response->message = '';

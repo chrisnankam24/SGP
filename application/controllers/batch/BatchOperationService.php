@@ -786,6 +786,8 @@ class BatchOperationService extends CI_Controller {
 
             $portingId = $msisdnExportedPort['portingId'];
 
+            $subscriberMSISDN = $msisdnExportedPort['startMSISDN'];
+
             $fromOperator = $msisdnExportedPort['donorNetworkId'];
 
             $toOperator = $msisdnExportedPort['recipientNetworkId'];
@@ -795,7 +797,7 @@ class BatchOperationService extends CI_Controller {
             $toRoutingNumber = $msisdnExportedPort['recipientRoutingNumber'];
 
             // Perform KPSA Operation
-            $kpsaResponse = $kpsaOperationService->performKPSAOperation($fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
+            $kpsaResponse = $kpsaOperationService->performKPSAOperation($subscriberMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
 
             if($kpsaResponse->success){
 
@@ -1048,6 +1050,8 @@ class BatchOperationService extends CI_Controller {
             // Move porting to CONFIRMED state
             $fromOperator = $msisdnChangePort['donorNetworkId'];
 
+            $subscriberMSISDN = $msisdnChangePort['startMSISDN'];
+
             $toOperator = $msisdnChangePort['recipientNetworkId'];
 
             $fromRoutingNumber = $msisdnChangePort['donorRoutingNumber'];
@@ -1055,7 +1059,7 @@ class BatchOperationService extends CI_Controller {
             $toRoutingNumber = $msisdnChangePort['recipientRoutingNumber'];
 
             // Perform KPSA Operation
-            $kpsaResponse = $kpsaOperationService->performKPSAOperation($fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
+            $kpsaResponse = $kpsaOperationService->performKPSAOperation($subscriberMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
 
             if($kpsaResponse->success){
 
@@ -1511,6 +1515,8 @@ class BatchOperationService extends CI_Controller {
 
             $fromOperator = $msisdnExportedRollback['donorNetworkId'];
 
+            $subscriberMSISDN = $msisdnExportedRollback['startMSISDN'];
+
             $toOperator = $msisdnExportedRollback['recipientNetworkId'];
 
             $fromRoutingNumber = $msisdnExportedRollback['donorRoutingNumber'];
@@ -1518,7 +1524,7 @@ class BatchOperationService extends CI_Controller {
             $toRoutingNumber = $msisdnExportedRollback['recipientRoutingNumber'];
 
             // Perform KPSA Operation
-            $kpsaResponse = $kpsaOperationService->performKPSAOperation($fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
+            $kpsaResponse = $kpsaOperationService->performKPSAOperation($subscriberMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
 
             if($kpsaResponse->success){
 
@@ -1730,12 +1736,14 @@ class BatchOperationService extends CI_Controller {
 
                 $fromOperator = $msisdnConfirmedRollback['recipientNetworkId'];
 
+                $subscriberMSISDN = $msisdnConfirmedRollback['startMSISDN'];
+
                 $toRoutingNumber = $msisdnConfirmedRollback['donorRoutingNumber'];
 
                 $fromRoutingNumber = $msisdnConfirmedRollback['recipientRoutingNumber'];
 
                 // Perform KPSA Operation
-                $kpsaResponse = $kpsaOperationService->performKPSAOperation($fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
+                $kpsaResponse = $kpsaOperationService->performKPSAOperation($subscriberMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
 
                 if($kpsaResponse->success){
 
@@ -1845,12 +1853,14 @@ class BatchOperationService extends CI_Controller {
 
             $fromOperator = $msisdnActivatedRollback['recipientNetworkId'];
 
+            $subscriberMSISDN = $msisdnConfirmedRollback['startMSISDN'];
+
             $toRoutingNumber = $msisdnActivatedRollback['donorRoutingNumber'];
 
             $fromRoutingNumber = $msisdnActivatedRollback['recipientRoutingNumber'];
 
             // Perform KPSA Operation
-            $kpsaResponse = $kpsaOperationService->performKPSAOperation($fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
+            $kpsaResponse = $kpsaOperationService->performKPSAOperation($subscriberMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
 
             if($kpsaResponse->success){
 
@@ -2194,6 +2204,8 @@ class BatchOperationService extends CI_Controller {
 
             $toOperator = $msisdnConfirmedReturn['primaryOwnerNetworkId'];
 
+            $returnMSISDN = $msisdnConfirmedReturn['returnMSISDN'];
+
             $fromOperator = $msisdnConfirmedReturn['ownerNetworkId'];
 
             $toRoutingNumber = $msisdnConfirmedReturn['primaryOwnerRoutingNumber'];
@@ -2201,7 +2213,7 @@ class BatchOperationService extends CI_Controller {
             $fromRoutingNumber = $msisdnConfirmedReturn['ownerRoutingNumber'];
 
             // Perform KPSA Operation
-            $kpsaResponse = $kpsaOperationService->performKPSAOperation($fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
+            $kpsaResponse = $kpsaOperationService->performKPSAOperation($returnMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
 
             if($kpsaResponse->success){
 
@@ -2374,6 +2386,8 @@ class BatchOperationService extends CI_Controller {
 
             $toOperator = $msisdnConfirmedReturn['primaryOwnerNetworkId'];
 
+            $returnMSISDN = $msisdnConfirmedReturn['returnMSISDN'];
+
             $fromOperator = $msisdnConfirmedReturn['ownerNetworkId'];
 
             $toRoutingNumber = $msisdnConfirmedReturn['primaryOwnerRoutingNumber'];
@@ -2381,7 +2395,7 @@ class BatchOperationService extends CI_Controller {
             $fromRoutingNumber = $msisdnConfirmedReturn['ownerRoutingNumber'];
 
             // Perform KPSA Operation
-            $kpsaResponse = $kpsaOperationService->performKPSAOperation($fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
+            $kpsaResponse = $kpsaOperationService->performKPSAReturnOperation($returnMSISDN, $toOperator, $toRoutingNumber);
 
             if($kpsaResponse->success){
 
@@ -2470,10 +2484,12 @@ class BatchOperationService extends CI_Controller {
 
             $toOperator = $startedProvision['endNetworkId'];
 
+            $subscriberMSISDN = $startedProvision['subscriberMSISDN'];
+
             $toRoutingNumber = $startedProvision['endRoutingNumber'];
 
             // Perform KPSA Operation
-            $kpsaResponse = $kpsaOperationService->performKPSAOtherOperation($toOperator, $toRoutingNumber);
+            $kpsaResponse = $kpsaOperationService->performKPSAOtherOperation($subscriberMSISDN, $toOperator, $toRoutingNumber);
 
             if($kpsaResponse->success){
 
