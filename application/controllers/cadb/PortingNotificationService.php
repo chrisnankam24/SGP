@@ -81,7 +81,7 @@ class PortingNotificationService extends CI_Controller
 
         $numberInfo = $bscsOperationService->loadNumberInfo($startMSISDN);
         $contractId = null;
-        $language = null;
+        $language = 'FR';
 
         if($numberInfo){
             $contractId = $numberInfo['CONTRACT_ID'];
@@ -145,7 +145,7 @@ class PortingNotificationService extends CI_Controller
                 $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_NEXTTEL;
             }
 
-            $smsResponse = SMS::OPD_Inform_Subcriber($startMSISDN, $denom_OPR, $portingId);
+            $smsResponse = SMS::OPD_Inform_Subcriber($language, $startMSISDN, $denom_OPR, $portingId);
 
             if($smsResponse->success){
 
@@ -329,6 +329,11 @@ class PortingNotificationService extends CI_Controller
 
         // Send SMS to Subscriber
 
+        // Get porting Info for language
+        $portingInfo = $this->Porting_model->get_porting($portingId);
+
+        $language = $portingInfo['language'];
+
         $subscriberMSISDN = $notifyAcceptedRequest->portingTransaction->numberRanges->numberRange->startNumber;
 
         $portingDateTime = $notifyAcceptedRequest->portingTransaction->portingDateTime;
@@ -337,7 +342,7 @@ class PortingNotificationService extends CI_Controller
         $start_time = date('h:i:s', strtotime($portingDateTime));
         $end_time = date('h:i:s', strtotime('+2 hours', strtotime($portingDateTime)));
 
-        $smsResponse = SMS::OPR_Subscriber_OK($subscriberMSISDN, $day, $start_time, $end_time);
+        $smsResponse = SMS::OPR_Subscriber_OK($language, $subscriberMSISDN, $day, $start_time, $end_time);
 
         if($smsResponse->success){
 
@@ -575,9 +580,14 @@ class PortingNotificationService extends CI_Controller
 
         // Send SMS to Subscriber
 
+        // Get porting Info for language
+        $portingInfo = $this->Porting_model->get_porting($portingId);
+
+        $language = $portingInfo['language'];
+
         $subscriberMSISDN = $notifyDeniedRequest->portingTransaction->numberRanges->numberRange->startNumber;
 
-        $smsResponse = SMS::OPR_Subscriber_KO($subscriberMSISDN);
+        $smsResponse = SMS::OPR_Subscriber_KO($language, $subscriberMSISDN);
 
         if($smsResponse->success){
 
@@ -664,9 +674,14 @@ class PortingNotificationService extends CI_Controller
 
         // Send SMS to Subscriber
 
+        // Get porting Info for language
+        $portingInfo = $this->Porting_model->get_porting($portingId);
+
+        $language = $portingInfo['language'];
+
         $subscriberMSISDN = $notifyRejectedRequest->portingTransaction->numberRanges->numberRange->startNumber;
 
-        $smsResponse = SMS::OPR_Subscriber_KO($subscriberMSISDN);
+        $smsResponse = SMS::OPR_Subscriber_KO($language, $subscriberMSISDN);
 
         if($smsResponse->success){
 

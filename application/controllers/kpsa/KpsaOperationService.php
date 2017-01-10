@@ -116,7 +116,7 @@ class KpsaOperationService extends CI_Controller {
         if($searchResponse->success == true){ // MSISDN in KPSA
 
             // Update number in KPSA
-            $updateResponse = $this->updateSubscriberTEKELEC($msisdn, $toRoutingNumber);
+            $updateResponse = $this->updateSubscriberTEKELEC($msisdn, $returnRoutingNumber);
 
             if($updateResponse->success == true){
                 // Operation successful

@@ -83,7 +83,7 @@ class RioAPI extends CI_Controller {
                             // Check if header Ok
                             if(strtolower($data[0]) != 'msisdn'){
                                 $response['success'] = false;
-                                $response['message'] = 'Invalid file content format. First Column must be name <MSISDN>. If you have difficulties creating file, please contact administrator';
+                                $response['message'] = 'Invalid file content format. First Column must be named <MSISDN>. If you have difficulties creating file, please contact administrator';
 
                                 $this->send_response($response);
                                 return;

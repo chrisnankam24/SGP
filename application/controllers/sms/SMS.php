@@ -48,12 +48,17 @@ class SMS extends CI_Controller {
     /**
      * SMS sent by OPD (Orange CM) to subscriber upon receiving a porting request from OPR on behalf of Subscriber
      * @param $msisidn
+     * @param $language
      * @param $porting_num
      */
-    public static function OPD_Inform_Subcriber($msisdn, $denom_OPR, $porting_num){
+    public static function OPD_Inform_Subcriber($language, $msisdn, $denom_OPR, $porting_num){
 
         // Load template
-        $template = file_get_contents(__DIR__ . '/fr_sms_template_OPD_Subscriber_Init.txt');
+        if(strtolower($language) == 'en'){
+            $template = file_get_contents(__DIR__ . '/en_sms_template_OPD_Subscriber_Init.txt');
+        }else{
+            $template = file_get_contents(__DIR__ . '/fr_sms_template_OPD_Subscriber_Init.txt');
+        }
 
         // Set Denomination of OPR
         $template = str_replace('[OPR]', $denom_OPR, $template);
@@ -72,15 +77,21 @@ class SMS extends CI_Controller {
 
     /**
      * SMS sent by OPR (Orange CM) to Subscriber upon receiving ACCEPTED from OPD.
+     * @param $language
      * @param $msisdn string subscriber MSISDN
      * @param $day string in JJ/MM/AAAA format
      * @param $start_time
      * @param $end_time
      */
-    public static function OPR_Subscriber_OK($msisdn, $day, $start_time, $end_time){
+    public static function OPR_Subscriber_OK($language, $msisdn, $day, $start_time, $end_time){
 
         // Load template
-        $template = file_get_contents(__DIR__ . '/fr_sms_template_OPR_Subscriber_OK.txt');
+        if(strtolower($language) == 'en'){
+            $template = file_get_contents(__DIR__ . '/en_sms_template_OPR_Subscriber_OK.txt');
+        }else{
+            $template = file_get_contents(__DIR__ . '/fr_sms_template_OPR_Subscriber_OK.txt');
+        }
+
 
         // Set Subscriber MSISDN
         $template = str_replace('[subs_msisdn]', $msisdn, $template);
@@ -105,12 +116,17 @@ class SMS extends CI_Controller {
 
     /**
      * SMS sent by OPR (Orange CM) to Subscriber upon receiving DENIED / REJECTED from OPR.
+     * @param $language
      * @param $msisdn string subscriber MSISDN
      */
-    public static function OPR_Subscriber_KO($msisdn){
+    public static function OPR_Subscriber_KO($language, $msisdn){
 
         // Load Message
-        $message = file_get_contents(__DIR__ . '/fr_sms_template_OPR_Subscriber_KO.txt');
+        if(strtolower($language) == 'en'){
+            $message = file_get_contents(__DIR__ . '/en_sms_template_OPR_Subscriber_KO.txt');
+        }else{
+            $message = file_get_contents(__DIR__ . '/fr_sms_template_OPR_Subscriber_KO.txt');
+        }
 
         $response = self::send_response($msisdn, $message);
 
@@ -119,15 +135,20 @@ class SMS extends CI_Controller {
 
     /**
      * SMS Sent by OPD(Orange CM) to Subscriber atleast 4hrs from the porting time
+     * @param $language
      * @param $msisdn
      * @param $day
      * @param $start_time
      * @param $end_time
      */
-    public static function OPD_Subscriber_Reminder($msisdn, $denom_OPR, $day, $start_time, $end_time){
+    public static function OPD_Subscriber_Reminder($language, $msisdn, $denom_OPR, $day, $start_time, $end_time){
 
         // Load template
-        $template = file_get_contents(__DIR__ . '/fr_sms_template_OPD_Subscriber_Reminder.txt');
+        if(strtolower($language) == 'en'){
+            $template = file_get_contents(__DIR__ . '/en_sms_template_OPD_Subscriber_Reminder.txt');
+        }else{
+            $template = file_get_contents(__DIR__ . '/fr_sms_template_OPD_Subscriber_Reminder.txt');
+        }
 
         // Set Subscriber MSISDN
         $template = str_replace('[subs_msisdn]', $msisdn, $template);
@@ -152,12 +173,17 @@ class SMS extends CI_Controller {
 
     /**
      * SMS sent by OPR(Orange CM) to Subscriber upon Cancellation of his Porting request
+     * @param $language
      * @param $msisdn
      */
-    public static function OPR_Subscriber_Cancellation($msisdn){
+    public static function OPR_Subscriber_Cancellation($language, $msisdn){
 
         // Load template
-        $template = file_get_contents(__DIR__ . '/fr_sms_template_OPR_Subscriber_Cancellation.txt');
+        if(strtolower($language) == 'en'){
+            $template = file_get_contents(__DIR__ . '/en_sms_template_OPR_Subscriber_Cancellation.txt');
+        }else{
+            $template = file_get_contents(__DIR__ . '/fr_sms_template_OPR_Subscriber_Cancellation.txt');
+        }
 
         // Set Subscriber MSISDN
         $template = str_replace('[subs_msisdn]', $msisdn, $template);
@@ -172,10 +198,10 @@ class SMS extends CI_Controller {
 
     /**
      * SMS sent by OPR(Orange CM) to Subscriber upon reception of notifyAbandoned reception message
+     * @param $language
      * @param $msisdn
      */
-    public static function Subscriber_CADB_Abandoned($msisdn){
-        self::send_response($msisdn, 'CADB abandoned your port');
+    public static function Subscriber_CADB_Abandoned($language, $msisdn){
 
         $response = self::send_response($msisdn, 'CADB abandoned your port');
 
@@ -186,7 +212,7 @@ class SMS extends CI_Controller {
      * SMS sent by OPR(Orange CM) to Subscriber upon reception of confirmRoutingData ACK
      * @param $msisdn
      */
-    public static function OPR_Subscriber_Welcome($msisdn){
+    public static function OPR_Subscriber_Welcome($language, $msisdn){
 
     }
 
@@ -194,13 +220,18 @@ class SMS extends CI_Controller {
 
     /**
      * SMS sent by OPR(Orange CM) to Subscriber upon reception of rollback request from OPD
+     * @param $language
      * @param $msisdn
      * @param $denom_OPD
      * @param $rollback_num
      */
-    public static function OPR_Inform_Subscriber($msisdn, $denom_OPD, $rollback_num){
+    public static function OPR_Inform_Subscriber($language, $msisdn, $denom_OPD, $rollback_num){
         // Load template
-        $template = file_get_contents(__DIR__ . '/fr_sms_template_OPR_Subscriber_Init_Rollback.txt');
+        if(strtolower($language) == 'en'){
+            $template = file_get_contents(__DIR__ . '/en_sms_template_OPR_Subscriber_Init_Rollback.txt');
+        }else{
+            $template = file_get_contents(__DIR__ . '/fr_sms_template_OPR_Subscriber_Init_Rollback.txt');
+        }
 
         // Set Denomination of OPR
         $template = str_replace('[OPD]', $denom_OPD, $template);
@@ -217,15 +248,20 @@ class SMS extends CI_Controller {
 
     /**
      * SMS sent by OPD (Orange CM) to Subscriber upon receiving ACCEPTED from OPD.
+     * @param $language
      * @param $msisdn string subscriber MSISDN
      * @param $day string in JJ/MM/AAAA format
      * @param $start_time
      * @param $end_time
      */
-    public static function OPD_Subscriber_OK($msisdn, $day, $start_time, $end_time){
+    public static function OPD_Subscriber_OK($language, $msisdn, $day, $start_time, $end_time){
 
         // Load template
-        $template = file_get_contents(__DIR__ . '/fr_sms_template_OPD_Subscriber_OK_Rollback.txt');
+        if(strtolower($language) == 'en'){
+            $template = file_get_contents(__DIR__ . '/en_sms_template_OPD_Subscriber_OK_Rollback.txt');
+        }else{
+            $template = file_get_contents(__DIR__ . '/fr_sms_template_OPD_Subscriber_OK_Rollback.txt');
+        }
 
         // Set Subscriber MSISDN
         $template = str_replace('[subs_msisdn]', $msisdn, $template);
@@ -250,12 +286,18 @@ class SMS extends CI_Controller {
 
     /**
      * SMS sent by OPD (Orange CM) to Subscriber upon receiving REJECTED from OPR.
+     * @param $language
      * @param $msisdn string subscriber MSISDN
      */
-    public static function OPD_Subscriber_KO($msisdn){
+    public static function OPD_Subscriber_KO($language, $msisdn){
 
         // Load Message
-        $message = file_get_contents(__DIR__ . '/fr_sms_template_OPR_Subscriber_KO_Rollback.txt');
+        if(strtolower($language) == 'en'){
+            $message = file_get_contents(__DIR__ . '/en_sms_template_OPR_Subscriber_KO_Rollback.txt');
+        }else{
+            $message = file_get_contents(__DIR__ . '/fr_sms_template_OPR_Subscriber_KO_Rollback.txt');
+        }
+
 
         $response = self::send_response($msisdn, $message);
 
@@ -265,7 +307,7 @@ class SMS extends CI_Controller {
     /**
      * @param $msisdn
      */
-    public static function Subscriber_CADB_Abandoned_Rollback($msisdn){
+    public static function Subscriber_CADB_Abandoned_Rollback($language, $msisdn){
         self::send_response($msisdn, 'CADB abandoned your rollback');
     }
 
@@ -273,12 +315,17 @@ class SMS extends CI_Controller {
 
     /**
      * SMS sent by OPD(Orange CM) to Subscriber informing him of his RIO
+     * @param $language
      * @param $msisdn
      */
-    public static function Subscriber_RIO($msisdn){
+    public static function Subscriber_RIO($language, $msisdn){
 
         // Load template
-        $template = file_get_contents(__DIR__ . '/fr_sms_template_rio.txt');
+        if(strtolower($language) == 'en'){
+            $template = file_get_contents(__DIR__ . '/en_sms_template_rio.txt');
+        }else{
+            $template = file_get_contents(__DIR__ . '/fr_sms_template_rio.txt');
+        }
 
         $rio = RIO::get_rio($msisdn);
 

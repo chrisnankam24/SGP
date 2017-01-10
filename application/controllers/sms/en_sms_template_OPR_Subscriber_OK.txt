@@ -1,0 +1,2 @@
+Conformément à votre demande, la portabilité de votre numéro [subs_msisdn] vers
+[OPR] sera effectuée le [day] entre [start_time] et [end_time] . Il vous est demande de changer votre SIM à [start_time].

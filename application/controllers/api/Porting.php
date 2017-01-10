@@ -93,6 +93,9 @@ class Porting extends CI_Controller
 
     }
 
+    /**
+     * API for performing bulk order request for individuals
+     */
     public function orderIndividualBulkPorting(){
 
         $response = [];
@@ -104,16 +107,100 @@ class Porting extends CI_Controller
             if($file_name != ''){
                 $row = 1;
 
+                $response['success'] = true;
+                $response['data'] = [];
+
                 if (($handle = fopen(FCPATH . 'uploads/' .$file_name, "r")) !== FALSE) {
 
                     while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
                         if($row == 1){
                             // Check if header Ok
-                            if(strtolower($data[0]) != 'msisdn'){
+                            $errorFound = false;
+                            if(strtolower($data[0]) != 'donoroperator'){
+                                $errorFound = true;
+                            }
+                            if(strtolower($data[1]) != 'portingmsisdn'){
+                                $errorFound = true;
+                            }
+                            if(strtolower($data[1]) != 'rio'){
+                                $errorFound = true;
+                            }
+                            if(strtolower($data[1]) != 'firstname'){
+                                $errorFound = true;
+                            }
+                            if(strtolower($data[1]) != 'lastname'){
+                                $errorFound = true;
+                            }
+                            if(strtolower($data[1]) != 'idnumber'){
+                                $errorFound = true;
+                            }
+                            if(strtolower($data[1]) != 'temporalnumber'){
+                                $errorFound = true;
+                            }
+                            if(strtolower($data[1]) != 'language'){
+                                $errorFound = true;
+                            }
+                            if($errorFound){
+                                $response['success'] = false;
+                                $response['message'] = 'Invalid file content format. Columns do not match defined template. If you have difficulties creating file, please contact administrator';
 
+                                $this->send_response($response);
+                                return;
                             }
                             $row++;
                         }else{
+
+                            $tempResponse = [];
+
+                            $donorOperator = $data[0]; // Donor Operator, either MTN or NEXTTEL
+                            $portingMSISDN = $data[1]; // MSISDN to port
+                            $rio = $data[2]; // RIO
+                            $physicalPersonFirstName = $data[3]; // FirstName
+                            $physicalPersonLastName = $data[4]; // lastName
+                            $physicalPersonIdNumber = $data[5]; // idNumber
+                            $temporalNumber = $data[6]; // temporalNumber
+                            $language = $data[7]; // language
+
+                            $subscriberType = 0; // Physical person
+
+                            // Get subscriber contractId from BSCS with temporal MSISDN
+                            $bscsOperationService = new BscsOperationService();
+                            $contractId = $bscsOperationService->getContractId($temporalNumber);
+
+                            if($contractId == -1){
+
+                                $tempResponse['success'] = false;
+                                $tempResponse['message'] = 'Connection to BSCS Unsuccessful. Please try again later';
+
+                            }elseif($contractId == null){
+
+                                $tempResponse['success'] = false;
+                                $tempResponse['message'] = 'Temporal number not found in BSCS. Please verify number has been identified properly and try again';
+
+                            }else{
+
+                                if(strtolower($donorOperator) == 'mtn'){
+                                    $donorOperator = 0;
+                                }elseif (strtolower($donorOperator) == 'nexttel'){
+                                    $donorOperator = 1;
+                                }else{
+                                    $tempResponse['success'] = false;
+                                    $tempResponse['message'] = "Invalid donor operator. Must be <MTN> or <NEXTTEL>";
+                                }
+
+                                if($donorOperator == 0 || $donorOperator == 1){
+
+                                    $portingDateTime = getRecipientPortingDateTime();
+
+                                    $tempResponse = $this->orderPort($donorOperator, $portingMSISDN, $subscriberType, $rio, $physicalPersonFirstName,
+                                        $physicalPersonLastName, $physicalPersonIdNumber, null, null,
+                                        null, $portingDateTime, $temporalNumber, $contractId, $language);
+
+                                }
+
+                            }
+
+                            $response['data'][] = $tempResponse;
 
                         }
                     }
@@ -138,9 +225,133 @@ class Porting extends CI_Controller
     }
 
     /**
-     * API for performing bulk order request for an enterprise
+     * API for performing bulk order request for enterprises
      */
     public function orderEnterpriseBulkPorting(){
+
+        $response = [];
+
+        if(isset($_POST)) {
+
+            $file_name = $this->input->post('fileName');
+
+            if($file_name != ''){
+                $row = 1;
+
+                $response['success'] = true;
+                $response['data'] = [];
+
+                if (($handle = fopen(FCPATH . 'uploads/' .$file_name, "r")) !== FALSE) {
+
+                    while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+                        if($row == 1){
+                            // Check if header Ok
+                            $errorFound = false;
+                            if(strtolower($data[0]) != 'donoroperator'){
+                                $errorFound = true;
+                            }
+                            if(strtolower($data[1]) != 'portingmsisdn'){
+                                $errorFound = true;
+                            }
+                            if(strtolower($data[1]) != 'rio'){
+                                $errorFound = true;
+                            }
+                            if(strtolower($data[1]) != 'legalname'){
+                                $errorFound = true;
+                            }
+                            if(strtolower($data[1]) != 'legaltin'){
+                                $errorFound = true;
+                            }
+                            if(strtolower($data[1]) != 'contactnumber'){
+                                $errorFound = true;
+                            }
+                            if(strtolower($data[1]) != 'temporalnumber'){
+                                $errorFound = true;
+                            }
+                            if(strtolower($data[1]) != 'language'){
+                                $errorFound = true;
+                            }
+                            if($errorFound){
+                                $response['success'] = false;
+                                $response['message'] = 'Invalid file content format. Columns do not match defined template. If you have difficulties creating file, please contact administrator';
+
+                                $this->send_response($response);
+                                return;
+                            }
+                            $row++;
+                        }else{
+
+                            $tempResponse = [];
+
+                            $donorOperator = $data[0]; // Donor Operator, either MTN or NEXTTEL
+                            $portingMSISDN = $data[1]; // MSISDN to port
+                            $rio = $data[2]; // RIO
+                            $legalPersonName = $data[3]; // legalName
+                            $legalPersonTin = $data[4]; // legalTIN
+                            $contactNumber = $data[5]; // contactNumber
+                            $temporalNumber = $data[6]; // temporalNumber
+                            $language = $data[7]; // language
+
+                            $subscriberType = 1; // legal person
+
+                            // Get subscriber contractId from BSCS with temporal MSISDN
+                            $bscsOperationService = new BscsOperationService();
+                            $contractId = $bscsOperationService->getContractId($temporalNumber);
+
+                            if($contractId == -1){
+
+                                $tempResponse['success'] = false;
+                                $tempResponse['message'] = 'Connection to BSCS Unsuccessful. Please try again later';
+
+                            }elseif($contractId == null){
+
+                                $tempResponse['success'] = false;
+                                $tempResponse['message'] = 'Temporal number not found in BSCS. Please verify number has been identified properly and try again';
+
+                            }else{
+
+                                if(strtolower($donorOperator) == 'mtn'){
+                                    $donorOperator = 0;
+                                }elseif (strtolower($donorOperator) == 'nexttel'){
+                                    $donorOperator = 1;
+                                }else{
+                                    $tempResponse['success'] = false;
+                                    $tempResponse['message'] = "Invalid donor operator. Must be <MTN> or <NEXTTEL>";
+                                }
+
+                                if($donorOperator == 0 || $donorOperator == 1){
+
+                                    $portingDateTime = getRecipientPortingDateTime();
+
+                                    $tempResponse = $this->orderPort($donorOperator, $portingMSISDN, $subscriberType, $rio, null,
+                                        null, null,$legalPersonName, $legalPersonTin, $contactNumber, $portingDateTime,
+                                        $temporalNumber, $contractId, $language);
+
+                                }
+
+                            }
+
+                            $response['data'][] = $tempResponse;
+
+                        }
+                    }
+
+                    fclose($handle);
+                }
+
+            }else{
+                $response['success'] = false;
+                $response['message'] = 'No file name found';
+            }
+
+        }else{
+
+            $response['success'] = false;
+            $response['message'] = 'No file name found';
+
+        }
+
+        $this->send_response($response);
 
     }
 
@@ -148,133 +359,44 @@ class Porting extends CI_Controller
      * API for performing accept request
      */
     public function acceptPorting(){
+
         $response = [];
 
         if(isset($_POST) && count($_POST) > 0) {
 
             $portingId = $this->input->post('portingId');
 
-            // Make Accept Porting Operation
+            $response = $this->acceptPort($portingId);
 
-            $portingOperationService = new PortingOperationService();
-            $acceptResponse = $portingOperationService->accept($portingId);
+        }else{
 
-            // Verify response
+            $response['success'] = false;
+            $response['message'] = 'No porting id found';
 
-            if($acceptResponse->success){
+        }
 
-                $this->db->trans_start();
+        $this->send_response($response);
 
-                // Insert into Porting State Evolution table
+    }
 
-                $portingEvolutionParams = array(
-                    'lastChangeDateTime' => $acceptResponse->portingTransaction->lastChangeDateTime,
-                    'portingState' => \PortingService\Porting\portingStateType::ACCEPTED,
-                    'isAutoReached' => false,
-                    'portingId' => $acceptResponse->portingTransaction->portingId,
-                );
+    /**
+     * API for performing accept request for bulk
+     */
+    public function acceptBulkPorting(){
 
-                $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
+        // Receives list of porting IDs linked to enterprise and perform accept one after the other
+        $response = [];
 
-                // Update Porting table
+        if(isset($_POST) && count($_POST) > 0) {
 
-                $portingParams = array(
-                    'portingDateTime' => $acceptResponse->portingTransaction->portingDateTime,
-                    'cadbOrderDateTime' => $acceptResponse->portingTransaction->cadbOrderDateTime,
-                    'lastChangeDateTime' => $acceptResponse->portingTransaction->lastChangeDateTime,
-                    'portingState' => \PortingService\Porting\portingStateType::ACCEPTED
-                );
+            $portingData = $this->input->post('portingData'); // Array of portingIds
 
-                $this->Porting_model->update_porting($portingId, $portingParams);
+            $response['success'] = true;
+            $response['data'] = [];
 
+            foreach ($portingData as $portingId){
 
-                // Send SMS to Subscriber
-
-                $subscriberMSISDN = $acceptResponse->portingTransaction->numberRanges->numberRange->startNumber;
-
-                $portingDateTime = $acceptResponse->portingTransaction->portingDateTime;
-
-                $day = date('d/m/Y', strtotime($portingDateTime));
-                $start_time = date('h:i:s', strtotime($portingDateTime));
-                $end_time = date('h:i:s', strtotime('+2 hours', strtotime($portingDateTime)));
-
-                $denom_OPR = $acceptResponse->portingTransaction->recipientNrn->networkId;
-
-                if($acceptResponse->portingTransaction->recipientNrn->networkId == Operator::MTN_NETWORK_ID){
-                    $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_MTN;
-                }else{
-                    $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_NEXTTEL;
-                }
-
-                $smsResponse = SMS::OPD_Subscriber_Reminder($subscriberMSISDN, $denom_OPR, $day, $start_time, $end_time);
-
-                if($smsResponse->success){
-                    // Insert Porting SMS Notification
-                    $smsNotificationparams = array(
-                        'portingId' => $portingId,
-                        'smsType' => SMSType::OPD_PORTING_REMINDER,
-                        'creationDateTime' => date('c'),
-                        'status' => smsState::SENT,
-                        'attemptCount' => 1,
-                        'sendDateTime' => date('c')
-                    );
-
-                }else{
-
-                    $smsNotificationparams = array(
-                        'portingId' => $portingId,
-                        'smsType' => SMSType::OPD_PORTING_REMINDER,
-                        'creationDateTime' => date('c'),
-                        'status' => smsState::PENDING,
-                        'attemptCount' => 1,
-                    );
-                }
-
-                $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
-
-                $this->db->trans_complete();
-
-                $response['success'] = true;
-
-                if ($this->db->trans_status() === FALSE) {
-
-                    $emailService = new EmailService();
-                    $emailService->adminErrorReport('PORTING_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', []);
-
-                }
-
-                $response['message'] = 'Porting has been ACCEPTED successfully!';
-
-            }
-
-            else{
-
-                $fault = $acceptResponse->error;
-
-                $emailService = new EmailService();
-
-                $response['success'] = false;
-
-                switch ($fault) {
-                    // Terminal Processes
-                    case Fault::INVALID_OPERATOR_FAULT:
-                        $response['message'] = 'Operator is not active. Please try again later';
-                        break;
-
-                    // Terminal Error Processes
-                    case Fault::PORTING_ACTION_NOT_AVAILABLE:
-                    case Fault::INVALID_PORTING_ID:
-                    case Fault::INVALID_REQUEST_FORMAT:
-                        $emailService->adminErrorReport($fault, []);
-                        $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
-                        break;
-
-                    default:
-                        $emailService->adminErrorReport($fault, []);
-                        $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
-
-                }
-
+                $response['data'][] = $this->acceptPort($portingId);
 
             }
 
@@ -286,14 +408,7 @@ class Porting extends CI_Controller
         }
 
         $this->send_response($response);
-    }
 
-    /**
-     * API for performing accept request for an enterprise
-     */
-    public function acceptEnterprisePorting(){
-        // TODO: acceptEnterprisePorting
-        // Receives list of porting IDs linked to enterprise and perform accept one after the other
     }
 
     /**
@@ -308,111 +423,7 @@ class Porting extends CI_Controller
             $rejectionReason = $this->input->post('rejectionReason');
             $cause = $this->input->post('cause');
 
-            if($rejectionReason != rejectionReasonType::OUTSTANDING_OBLIGATIONS_TO_DONOR &&
-                $rejectionReason != rejectionReasonType::SUBSCRIBER_CANCELLED_PORTING &&
-                $rejectionReason != rejectionReasonType::SUBSCRIBER_CHANGED_NUMBER){
-
-                // Make Reject Porting Operation
-
-                $portingOperationService = new PortingOperationService();
-                $rejectResponse = $portingOperationService->reject($portingId, $rejectionReason, $cause);
-
-                // Verify response
-
-                if($rejectResponse->success){
-
-                    $this->db->trans_start();
-
-                    $rejectResponse = new \PortingService\Porting\rejectResponse();
-
-                    // Insert into Porting State Evolution table
-
-                    $portingEvolutionParams = array(
-                        'lastChangeDateTime' => $rejectResponse->portingTransaction->lastChangeDateTime,
-                        'portingState' => \PortingService\Porting\portingStateType::REJECTED,
-                        'isAutoReached' => false,
-                        'portingId' => $rejectResponse->portingTransaction->portingId,
-                    );
-
-                    $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
-
-                    // Update Porting table
-
-                    $portingParams = array(
-                        'portingDateTime' => $rejectResponse->portingTransaction->portingDateTime,
-                        'cadbOrderDateTime' => $rejectResponse->portingTransaction->cadbOrderDateTime,
-                        'lastChangeDateTime' => $rejectResponse->portingTransaction->lastChangeDateTime,
-                        'portingState' => \PortingService\Porting\portingStateType::REJECTED
-                    );
-
-                    $this->Porting_model->update_porting($portingId, $portingParams);
-
-                    // Insert into PortingDenyRejectionAbandoned
-
-                    $pdraParams = array(
-                        'denyRejectionReason' => $rejectionReason,
-                        'cause' => $cause,
-                        'portingId' => $portingId
-                    );
-
-                    $this->Portingdenyrejectionabandon_model->add_portingdenyrejectionabandon($pdraParams);
-
-
-                    $this->db->trans_complete();
-
-                    $response['success'] = true;
-
-                    if ($this->db->trans_status() === FALSE) {
-
-                        $emailService = new EmailService();
-                        $emailService->adminErrorReport('PORTING_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', []);
-
-                    }else {
-
-                    }
-
-                    $response['message'] = 'Porting has been ACCEPTED successfully!';
-
-                }
-
-                else{
-
-                    $fault = $rejectResponse->error;
-
-                    $emailService = new EmailService();
-
-                    $response['success'] = false;
-
-                    switch ($fault) {
-                        // Terminal Processes
-                        case Fault::INVALID_OPERATOR_FAULT:
-                            $response['message'] = 'Operator is not active. Please try again later';
-                            break;
-
-                        // Terminal Error Processes
-                        case Fault::PORTING_ACTION_NOT_AVAILABLE:
-                        case Fault::INVALID_PORTING_ID:
-                        case Fault::INVALID_REQUEST_FORMAT:
-                        case Fault::CAUSE_MISSING:
-                            $emailService->adminErrorReport($fault, []);
-                            $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
-                            break;
-
-                        default:
-                            $emailService->adminErrorReport($fault, []);
-                            $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
-
-                    }
-
-
-                }
-
-            }
-            else{
-
-                $response['success'] = false;
-                $response['message'] = 'Invalid rejection reason';
-            }
+            $response = $this->rejectPort($portingId, $rejectionReason, $cause);
 
         }else{
 
@@ -424,9 +435,36 @@ class Porting extends CI_Controller
         $this->send_response($response);
     }
 
-    public function rejectEnterprisePorting(){
-        // TODO: rejectEnterprisePorting
-        // Receives list of portinf IDs linked to enterprise and perform reject one after the other
+    /**
+     * API for performing bulk reject request
+     */
+    public function rejectBulkPorting(){
+
+        // Receives list of porting IDs linked to enterprise and perform accept one after the other
+        $response = [];
+
+        if(isset($_POST) && count($_POST) > 0) {
+
+            $portingData = $this->input->post('$portingData'); // Array of rejection objects i.e (portingId, rejectionReason, cause)
+
+            $response['success'] = true;
+            $response['data'] = [];
+
+            foreach ($portingData as $portingDatum){
+
+                $response['data'][] = $this->rejectPort($portingDatum['portingId'], $portingDatum['rejectionReason'], $portingDatum['cause']);
+
+            }
+
+        }else{
+
+            $response['success'] = false;
+            $response['message'] = 'No porting id found';
+
+        }
+
+        $this->send_response($response);
+
     }
 
     /**
@@ -741,6 +779,7 @@ class Porting extends CI_Controller
                                $contactNumber, $portingDateTime, $temporalNumber, $contractId, $language) {
 
         // TODO: Get porting datetime from common.php
+        // TODO: Check if porting already ordered
 
         // Construct subscriber info
 
@@ -966,6 +1005,267 @@ class Porting extends CI_Controller
 
             }
 
+        }
+
+        return $response;
+
+    }
+
+    /**
+     * Make port accept for given portingId
+     * @param $portingId
+     * @return array
+     */
+    private function acceptPort($portingId){
+
+        $response = [];
+
+        // Make Accept Porting Operation
+
+        $portingOperationService = new PortingOperationService();
+        $acceptResponse = $portingOperationService->accept($portingId);
+
+        // Verify response
+
+        if($acceptResponse->success){
+
+            $this->db->trans_start();
+
+            // Insert into Porting State Evolution table
+
+            $portingEvolutionParams = array(
+                'lastChangeDateTime' => $acceptResponse->portingTransaction->lastChangeDateTime,
+                'portingState' => \PortingService\Porting\portingStateType::ACCEPTED,
+                'isAutoReached' => false,
+                'portingId' => $acceptResponse->portingTransaction->portingId,
+            );
+
+            $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
+
+            // Update Porting table
+
+            $portingParams = array(
+                'portingDateTime' => $acceptResponse->portingTransaction->portingDateTime,
+                'cadbOrderDateTime' => $acceptResponse->portingTransaction->cadbOrderDateTime,
+                'lastChangeDateTime' => $acceptResponse->portingTransaction->lastChangeDateTime,
+                'portingState' => \PortingService\Porting\portingStateType::ACCEPTED
+            );
+
+            $this->Porting_model->update_porting($portingId, $portingParams);
+
+            // Send SMS to Subscriber
+
+            // Get porting Info for language
+            $portingInfo = $this->Porting_model->get_porting($portingId);
+
+            $language = $portingInfo['language'];
+
+            $subscriberMSISDN = $acceptResponse->portingTransaction->numberRanges->numberRange->startNumber;
+
+            $portingDateTime = $acceptResponse->portingTransaction->portingDateTime;
+
+            $day = date('d/m/Y', strtotime($portingDateTime));
+            $start_time = date('h:i:s', strtotime($portingDateTime));
+            $end_time = date('h:i:s', strtotime('+2 hours', strtotime($portingDateTime)));
+
+            if($acceptResponse->portingTransaction->recipientNrn->networkId == Operator::MTN_NETWORK_ID){
+                $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_MTN;
+            }else{
+                $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_NEXTTEL;
+            }
+
+            $smsResponse = SMS::OPD_Subscriber_Reminder($language, $subscriberMSISDN, $denom_OPR, $day, $start_time, $end_time);
+
+            if($smsResponse->success){
+                // Insert Porting SMS Notification
+                $smsNotificationparams = array(
+                    'portingId' => $portingId,
+                    'smsType' => SMSType::OPD_PORTING_REMINDER,
+                    'creationDateTime' => date('c'),
+                    'status' => smsState::SENT,
+                    'attemptCount' => 1,
+                    'sendDateTime' => date('c')
+                );
+
+            }else{
+
+                $smsNotificationparams = array(
+                    'portingId' => $portingId,
+                    'smsType' => SMSType::OPD_PORTING_REMINDER,
+                    'creationDateTime' => date('c'),
+                    'status' => smsState::PENDING,
+                    'attemptCount' => 1,
+                );
+            }
+
+            $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
+
+            $this->db->trans_complete();
+
+            $response['success'] = true;
+
+            if ($this->db->trans_status() === FALSE) {
+
+                $emailService = new EmailService();
+                $emailService->adminErrorReport('PORTING_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', []);
+
+            }
+
+            $response['message'] = 'Porting has been ACCEPTED successfully!';
+
+        }
+
+        else{
+
+            $fault = $acceptResponse->error;
+
+            $emailService = new EmailService();
+
+            $response['success'] = false;
+
+            switch ($fault) {
+                // Terminal Processes
+                case Fault::INVALID_OPERATOR_FAULT:
+                    $response['message'] = 'Operator is not active. Please try again later';
+                    break;
+
+                // Terminal Error Processes
+                case Fault::PORTING_ACTION_NOT_AVAILABLE:
+                case Fault::INVALID_PORTING_ID:
+                case Fault::INVALID_REQUEST_FORMAT:
+                    $emailService->adminErrorReport($fault, []);
+                    $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
+                    break;
+
+                default:
+                    $emailService->adminErrorReport($fault, []);
+                    $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
+
+            }
+
+
+        }
+
+        return $response;
+
+    }
+
+    /**
+     * Make port reject
+     * @param $portingId
+     * @param $rejectionReason
+     * @param $cause
+     * @return array
+     */
+    private function rejectPort($portingId, $rejectionReason, $cause){
+
+        $response = [];
+
+        if($rejectionReason != rejectionReasonType::OUTSTANDING_OBLIGATIONS_TO_DONOR &&
+            $rejectionReason != rejectionReasonType::SUBSCRIBER_CANCELLED_PORTING &&
+            $rejectionReason != rejectionReasonType::SUBSCRIBER_CHANGED_NUMBER){
+
+            // Make Reject Porting Operation
+
+            $portingOperationService = new PortingOperationService();
+            $rejectResponse = $portingOperationService->reject($portingId, $rejectionReason, $cause);
+
+            // Verify response
+
+            if($rejectResponse->success){
+
+                $this->db->trans_start();
+
+                $rejectResponse = new \PortingService\Porting\rejectResponse();
+
+                // Insert into Porting State Evolution table
+
+                $portingEvolutionParams = array(
+                    'lastChangeDateTime' => $rejectResponse->portingTransaction->lastChangeDateTime,
+                    'portingState' => \PortingService\Porting\portingStateType::REJECTED,
+                    'isAutoReached' => false,
+                    'portingId' => $rejectResponse->portingTransaction->portingId,
+                );
+
+                $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
+
+                // Update Porting table
+
+                $portingParams = array(
+                    'portingDateTime' => $rejectResponse->portingTransaction->portingDateTime,
+                    'cadbOrderDateTime' => $rejectResponse->portingTransaction->cadbOrderDateTime,
+                    'lastChangeDateTime' => $rejectResponse->portingTransaction->lastChangeDateTime,
+                    'portingState' => \PortingService\Porting\portingStateType::REJECTED
+                );
+
+                $this->Porting_model->update_porting($portingId, $portingParams);
+
+                // Insert into PortingDenyRejectionAbandoned
+
+                $pdraParams = array(
+                    'denyRejectionReason' => $rejectionReason,
+                    'cause' => $cause,
+                    'portingId' => $portingId
+                );
+
+                $this->Portingdenyrejectionabandon_model->add_portingdenyrejectionabandon($pdraParams);
+
+
+                $this->db->trans_complete();
+
+                $response['success'] = true;
+
+                if ($this->db->trans_status() === FALSE) {
+
+                    $emailService = new EmailService();
+                    $emailService->adminErrorReport('PORTING_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', []);
+
+                }else {
+
+                }
+
+                $response['message'] = 'Porting has been ACCEPTED successfully!';
+
+            }
+
+            else{
+
+                $fault = $rejectResponse->error;
+
+                $emailService = new EmailService();
+
+                $response['success'] = false;
+
+                switch ($fault) {
+                    // Terminal Processes
+                    case Fault::INVALID_OPERATOR_FAULT:
+                        $response['message'] = 'Operator is not active. Please try again later';
+                        break;
+
+                    // Terminal Error Processes
+                    case Fault::PORTING_ACTION_NOT_AVAILABLE:
+                    case Fault::INVALID_PORTING_ID:
+                    case Fault::INVALID_REQUEST_FORMAT:
+                    case Fault::CAUSE_MISSING:
+                        $emailService->adminErrorReport($fault, []);
+                        $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
+                        break;
+
+                    default:
+                        $emailService->adminErrorReport($fault, []);
+                        $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
+
+                }
+
+
+            }
+
+        }
+
+        else{
+
+            $response['success'] = false;
+            $response['message'] = 'Invalid rejection reason';
         }
 
         return $response;

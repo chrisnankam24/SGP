@@ -28,6 +28,7 @@ class RollbackNotificationService extends CI_Controller {
 
         // Load required models
         $this->load->model('FileLog_model');
+        $this->load->model('Porting_model');
         $this->load->model('Rollback_model');
         $this->load->model('Rollbacksubmission_model');
         $this->load->model('Rollbackstateevolution_model');
@@ -70,11 +71,13 @@ class RollbackNotificationService extends CI_Controller {
 
         $this->db->trans_start();
 
+        $originalPortingId = $notifyOpenedRequest->rollbackTransaction->originalPortingId;
+
         // Insert into Rollback table
 
         $rollbackParams = array(
             'rollbackId' => $rollbackId,
-            'originalPortingId' => $notifyOpenedRequest->rollbackTransaction->originalPortingId,
+            'originalPortingId' => $originalPortingId,
             'donorSubmissionDateTime' => $notifyOpenedRequest->rollbackTransaction->donorSubmissionDateTime,
             'preferredRollbackDateTime' => $notifyOpenedRequest->rollbackTransaction->preferredRollbackDateTime,
             'rollbackDateAndTime' => $notifyOpenedRequest->rollbackTransaction->rollbackDateTime,
@@ -105,7 +108,13 @@ class RollbackNotificationService extends CI_Controller {
 
         // Send SMS
         // Send SMS to Subscriber
-        $smsResponse = SMS::OPR_Inform_Subscriber($subscriberMSISDN, $denom_OPD, $rollbackId);
+
+        // Get porting Info for language
+        $portingInfo = $this->Porting_model->get_porting($originalPortingId);
+
+        $language = $portingInfo['language'];
+
+        $smsResponse = SMS::OPR_Inform_Subscriber($language, $subscriberMSISDN, $denom_OPD, $rollbackId);
 
         if($smsResponse->success){
 
@@ -181,6 +190,12 @@ class RollbackNotificationService extends CI_Controller {
 
         // Send SMS to Subscriber
 
+        $originalPortingId = $notifyAcceptedRequest->rollbackTransaction->originalPortingId;
+
+        $portingInfo = $this->Porting_model->get_porting($originalPortingId);
+
+        $language = $portingInfo['language'];
+
         $subscriberMSISDN = $notifyAcceptedRequest->rollbackTransaction->numberRanges->numberRange->startNumber;
 
         $rollbackDateTime = $notifyAcceptedRequest->rollbackTransaction->rollbackDateTime;
@@ -189,7 +204,7 @@ class RollbackNotificationService extends CI_Controller {
         $start_time = date('h:i:s', strtotime($rollbackDateTime));
         $end_time = date('h:i:s', strtotime('+2 hours', strtotime($rollbackDateTime)));
 
-        $smsResponse = SMS::OPD_Subscriber_OK($subscriberMSISDN, $day, $start_time, $end_time);
+        $smsResponse = SMS::OPD_Subscriber_OK($language, $subscriberMSISDN, $day, $start_time, $end_time);
 
         if($smsResponse->success){
 
@@ -428,9 +443,15 @@ class RollbackNotificationService extends CI_Controller {
 
         // Send SMS to Subscriber
 
+        $originalPortingId = $notifyRejectedRequest->rollbackTransaction->originalPortingId;
+
+        $portingInfo = $this->Porting_model->get_porting($originalPortingId);
+
+        $language = $portingInfo['language'];
+
         $subscriberMSISDN = $notifyRejectedRequest->rollbackTransaction->numberRanges->numberRange->startNumber;
 
-        $smsResponse = SMS::OPD_Subscriber_KO($subscriberMSISDN);
+        $smsResponse = SMS::OPD_Subscriber_KO($language, $subscriberMSISDN);
 
         if($smsResponse->success){
             $smsParams = array(
@@ -506,9 +527,15 @@ class RollbackNotificationService extends CI_Controller {
 
         // Send SMS to Subscriber
 
+        $originalPortingId = $notifyAbandonedRequest->rollbackTransaction->originalPortingId;
+
+        $portingInfo = $this->Porting_model->get_porting($originalPortingId);
+
+        $language = $portingInfo['language'];
+
         $subscriberMSISDN = $notifyAbandonedRequest->rollbackTransaction->numberRanges->numberRange->startNumber;
 
-        $smsResponse = SMS::Subscriber_CADB_Abandoned_Rollback($subscriberMSISDN);
+        $smsResponse = SMS::Subscriber_CADB_Abandoned_Rollback($language, $subscriberMSISDN);
 
         if($smsResponse->success){
 
@@ -552,52 +579,6 @@ class RollbackNotificationService extends CI_Controller {
         $response = new RollbackNotification\notifyAbandonedResponse();
 
         return $response;
-
-    }
-
-    private function performRollbackOPD($rollbackNumber){
-
-        // BSCS Ops
-
-        // Import Ported MSISDN (ImportMSISDN)
-
-        // Verify if temporal MSISDN active
-
-        // If not active, activate, else change Import MSISDN (ChangeImportMSISDN)
-
-        // KPSA Ops
-
-        // If OPR = OPA, delete MSISDN in KPSA
-
-        // Else if MSISDN not in KPSA, create MSISDN with routing number Orange
-
-        // Else if MSISND in KPSA, update MSISDN with routing number Orange
-
-    }
-
-    private function performRollbackOPR($rollbackNumber){
-
-        // BSCS Ops
-
-        // Retrieve ContractId from BSCS
-
-        // Export MSISDN from BSCS (ExportMSISDN)
-
-        // KPSA Ops
-
-        // If MSISDN not in KPSA, create MSISDN with routing number OPR
-
-        // Else if MSISND in KPSA, update MSISDN with routing number OPR
-
-    }
-
-    private function performRollbackOther($rollbackNumber) {
-
-        // KPSA Ops
-
-        // If MSISDN not in KPSA, create MSISDN with routing number OPR
-
-        // Else if MSISDN in KPSA, update MSISDN with routing number OPR
 
     }
 
