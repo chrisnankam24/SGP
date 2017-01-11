@@ -75,7 +75,8 @@ class POSServerFunctionalities extends CI_Controller  {
         $response->portingTransaction->donorNrn = $orderRequest->donorNrn;
         $response->portingTransaction->numberRanges = $orderRequest->numberRanges;
         $response->portingTransaction->portingDateTime = $orderRequest->portingDateTime;
-        $response->portingTransaction->portingId = '20161208-02-237694975166-345';
+        $response->portingTransaction->portingId = '20170110-02-237694975166-' . mt_rand(100,999);
+
         $response->portingTransaction->portingState = Porting\portingStateType::ORDERED;
         $response->portingTransaction->recipientNrn = $orderRequest->recipientNrn;
         $response->portingTransaction->recipientSubmissionDateTime = date('c');
@@ -83,6 +84,8 @@ class POSServerFunctionalities extends CI_Controller  {
         $response->portingTransaction->subscriberInfo = $orderRequest->subscriberInfo;
 
         return $response;
+
+        //throw new numberRangesOverlapFault();
 
     }
 

@@ -71,14 +71,13 @@ class Porting extends CI_Controller
             $legalPersonName = $this->input->post('legalPersonName');
             $legalPersonTin = $this->input->post('legalPersonTin');
             $contactNumber = $this->input->post('contactNumber');
-            $portingDateTime = $this->input->post('portingDateTime');
             $temporalNumber = $this->input->post('temporalNumber');
             $contractId = $this->input->post('contractId');
             $language = $this->input->post('language'); // EN or FR
 
             $orderResponse = $this->orderPort($donorOperator, $portingMsisdn, $subscriberType, $rio, $physicalPersonFirstName,
                 $physicalPersonLastName, $physicalPersonIdNumber, $legalPersonName, $legalPersonTin,
-                $contactNumber, $portingDateTime, $temporalNumber, $contractId, $language);
+                $contactNumber, $temporalNumber, $contractId, $language);
 
             $response = $orderResponse;
 
@@ -107,10 +106,11 @@ class Porting extends CI_Controller
             if($file_name != ''){
                 $row = 1;
 
-                $response['success'] = true;
-                $response['data'] = [];
-
                 if (($handle = fopen(FCPATH . 'uploads/' .$file_name, "r")) !== FALSE) {
+
+                    $response['success'] = true;
+
+                    $tmpData = [];
 
                     while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
                         if($row == 1){
@@ -122,22 +122,22 @@ class Porting extends CI_Controller
                             if(strtolower($data[1]) != 'portingmsisdn'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[1]) != 'rio'){
+                            if(strtolower($data[2]) != 'rio'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[1]) != 'firstname'){
+                            if(strtolower($data[3]) != 'firstname'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[1]) != 'lastname'){
+                            if(strtolower($data[4]) != 'lastname'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[1]) != 'idnumber'){
+                            if(strtolower($data[5]) != 'idnumber'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[1]) != 'temporalnumber'){
+                            if(strtolower($data[6]) != 'temporalnumber'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[1]) != 'language'){
+                            if(strtolower($data[7]) != 'language'){
                                 $errorFound = true;
                             }
                             if($errorFound){
@@ -148,7 +148,8 @@ class Porting extends CI_Controller
                                 return;
                             }
                             $row++;
-                        }else{
+                        }
+                        else{
 
                             $tempResponse = [];
 
@@ -190,20 +191,20 @@ class Porting extends CI_Controller
 
                                 if($donorOperator == 0 || $donorOperator == 1){
 
-                                    $portingDateTime = getRecipientPortingDateTime();
-
                                     $tempResponse = $this->orderPort($donorOperator, $portingMSISDN, $subscriberType, $rio, $physicalPersonFirstName,
                                         $physicalPersonLastName, $physicalPersonIdNumber, null, null,
-                                        null, $portingDateTime, $temporalNumber, $contractId, $language);
+                                        null, $temporalNumber, $contractId, $language);
 
                                 }
 
                             }
 
-                            $response['data'][] = $tempResponse;
+                            $tmpData[] = $tempResponse;
 
                         }
                     }
+
+                    $response['data'] = $tmpData;
 
                     fclose($handle);
                 }
@@ -440,7 +441,7 @@ class Porting extends CI_Controller
      */
     public function rejectBulkPorting(){
 
-        // Receives list of porting IDs linked to enterprise and perform accept one after the other
+        // Receives list of porting IDs linked to enterprise and perform reject one after the other
         $response = [];
 
         if(isset($_POST) && count($_POST) > 0) {
@@ -776,10 +777,7 @@ class Porting extends CI_Controller
      */
     private function orderPort($donorOperator, $portingMsisdn, $subscriberType, $rio, $physicalPersonFirstName,
                                $physicalPersonLastName, $physicalPersonIdNumber, $legalPersonName, $legalPersonTin,
-                               $contactNumber, $portingDateTime, $temporalNumber, $contractId, $language) {
-
-        // TODO: Get porting datetime from common.php
-        // TODO: Check if porting already ordered
+                               $contactNumber, $temporalNumber, $contractId, $language) {
 
         // Construct subscriber info
 
@@ -799,6 +797,8 @@ class Porting extends CI_Controller
 
         // Make Order Porting Operation
 
+        $portingDateTime = getRecipientPortingDateTime();
+
         $portingOperationService = new PortingOperationService();
         $orderResponse = $portingOperationService->order($donorOperator, $portingDateTime, $portingMsisdn, $rio, $subscriberInfo);
 
@@ -817,18 +817,23 @@ class Porting extends CI_Controller
                 'portingDateTime' => $orderResponse->portingTransaction->portingDateTime,
                 'rio' => $rio,
                 'portingMSISDN' => $portingMsisdn,
-                'physicalPersonIdNumber' => $physicalPersonIdNumber,
-                'physicalPersonFirstName' => $physicalPersonFirstName,
-                'physicalPersonLastName' => $physicalPersonLastName,
-                'legalPersonName' => $legalPersonName,
-                'legalPersonTin' => $legalPersonTin,
-                'contactNumber' => $contactNumber,
                 'contractId' => $contractId,
                 'language' => $language,
                 'temporalMSISDN' => $temporalNumber,
                 'submissionState' => \PortingService\Porting\portingSubmissionStateType::ORDERED,
                 'orderedDateTime' => date('c')
             );
+
+            if($subscriberType == 0) {
+                $submissionParams['physicalPersonFirstName'] = $orderResponse->portingTransaction->subscriberInfo->physicalPersonFirstName;
+                $submissionParams['physicalPersonLastName'] = $orderResponse->portingTransaction->subscriberInfo->physicalPersonLastName;
+                $submissionParams['physicalPersonIdNumber'] = $orderResponse->portingTransaction->subscriberInfo->physicalPersonIdNumber;
+            }
+            else{
+                $submissionParams['legalPersonName'] = $orderResponse->portingTransaction->subscriberInfo->legalPersonName;
+                $submissionParams['legalPersonTin'] = $orderResponse->portingTransaction->subscriberInfo->legalPersonTin;
+                $submissionParams['contactNumber'] = $orderResponse->portingTransaction->subscriberInfo->contactNumber;
+            }
 
             $portingsubmission_id = $this->Portingsubmission_model->add_portingsubmission($submissionParams);
 
@@ -844,7 +849,7 @@ class Porting extends CI_Controller
                 'portingDateTime' => $orderResponse->portingTransaction->portingDateTime,
                 'rio' =>  $orderResponse->portingTransaction->rio,
                 'startMSISDN' =>  $orderResponse->portingTransaction->numberRanges->numberRange->startNumber,
-                'endMSISDN' =>  $orderResponse->portingTransaction->numberRanges->numberRange->startNumber,
+                'endMSISDN' =>  $orderResponse->portingTransaction->numberRanges->numberRange->endNumber,
                 'cadbOrderDateTime' => $orderResponse->portingTransaction->cadbOrderDateTime,
                 'lastChangeDateTime' => $orderResponse->portingTransaction->lastChangeDateTime,
                 'portingState' => \PortingService\Porting\portingStateType::ORDERED,
@@ -928,18 +933,23 @@ class Porting extends CI_Controller
                         'portingDateTime' => $portingDateTime,
                         'rio' => $rio,
                         'portingMSISDN' => $portingMsisdn,
-                        'physicalPersonIdNumber' => $physicalPersonIdNumber,
-                        'physicalPersonFirstName' => $physicalPersonFirstName,
-                        'physicalPersonLastName' => $physicalPersonLastName,
-                        'legalPersonName' => $legalPersonName,
-                        'legalPersonTin' => $legalPersonTin,
-                        'contactNumber' => $contactNumber,
                         'contractId' => $contractId,
                         'language' => $language,
                         'temporalMSISDN' => $temporalNumber,
                         'submissionState' => \PortingService\Porting\portingSubmissionStateType::STARTED,
                         'orderedDateTime' => date('c')
                     );
+
+                    if($subscriberType == 0) {
+                        $submissionParams['physicalPersonFirstName'] = $physicalPersonFirstName;
+                        $submissionParams['physicalPersonLastName'] = $physicalPersonLastName;
+                        $submissionParams['physicalPersonIdNumber'] = $physicalPersonIdNumber;
+                    }
+                    else{
+                        $submissionParams['legalPersonName'] = $legalPersonName;
+                        $submissionParams['legalPersonTin'] = $legalPersonTin;
+                        $submissionParams['contactNumber'] = $contactNumber;
+                    }
 
                     $this->Portingsubmission_model->add_portingsubmission($submissionParams);
 
@@ -949,6 +959,7 @@ class Porting extends CI_Controller
 
                     if ($this->db->trans_status() === FALSE) {
 
+                        $response['success'] = false;
                         $emailService = new EmailService();
                         $emailService->adminErrorReport('PORTING_REQUESTED_OPERATOR_INACTIVE_BUT_STARTED_INCOMPLETE', []);
                         $response['message'] = 'Operator is currently Inactive. We have nonetheless encountered problems saving your request. Please contact Back Office';
@@ -995,10 +1006,6 @@ class Porting extends CI_Controller
                 case Fault::INVALID_REQUEST_FORMAT:
                 case Fault::ACTION_NOT_AUTHORIZED:
                 case Fault::SUBSCRIBER_DATA_MISSING:
-                    $emailService->adminErrorReport($fault, []);
-                    $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
-                    break;
-
                 default:
                     $emailService->adminErrorReport($fault, []);
                     $response['message'] = 'Fatal Error Encountered. Please contact Back Office';

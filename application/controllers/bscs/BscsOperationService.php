@@ -30,7 +30,7 @@ class BscsOperationService extends CI_Controller  {
         parent::__construct();
 
         $this->load->model('FileLog_model');
-        $this->load->model('BSCS_model');
+        //$this->load->model('BSCS_model');
 
         // Disable wsdl cache
         ini_set("soap.wsdl_cache_enabled", "0");
@@ -116,13 +116,14 @@ class BscsOperationService extends CI_Controller  {
 
         $contractId = -1;
 
-        $subscriberInfo = $this->BSCS_model->get_msisdn_info($msisdn);
+        /*$subscriberInfo = $this->BSCS_model->get_msisdn_info($msisdn);
 
         if($subscriberInfo != null && $subscriberInfo != -1) {
             $contractId = $subscriberInfo['CONTRACT_ID'];
-        }
+        }*/
 
-        return $contractId;
+        return '8800092';
+        //return $contractId;
 
     }
 

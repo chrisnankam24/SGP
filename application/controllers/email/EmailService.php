@@ -64,9 +64,9 @@ class EmailService {
 
         $to = array('chp.testbed@gmail.com');
         $cc = array();
-        $subject = [];
+        $subject = 'Great';
 
-        $this->send_mail($to, $cc, $subject, $template);
+        //$this->send_mail($to, $cc, $subject, $template);
 
     }
 
@@ -99,6 +99,14 @@ class EmailService {
     }
 
     public function adminKPSAError($fault, $params){
+
+    }
+
+    public function cadbSynchronizationFailure($params){
+
+    }
+
+    public function cadbPortingStateOffConfirmed($params){
 
     }
 

@@ -1002,7 +1002,7 @@ class BatchOperationService extends CI_Controller {
 
             $subscriberInfo = $this->Portingsubmission_model->get_submissionByPortingId($portingId);
 
-            $subscriberMSISDN = $acceptedPort['startMSISDN'];
+            $subscriberMSISDN = $msisdnConfirmedPort['startMSISDN'];
 
             $changeResponse = $bscsOperationService->changeImportMSISDN($subscriberInfo['temporalMSISDN'], $subscriberMSISDN);
 
@@ -1583,13 +1583,12 @@ class BatchOperationService extends CI_Controller {
 
     }
 
-    // TODO : Implement Rollback OPD
     /**
      * Executed as OPD
      * BATCH_008_{C, D, E}
      * Checks for all rollbacks in ACCEPTED state, if any perform rollback to MSISDN_IMPORT_CONFIRMED state
-     * Checks for all rollbacks MSISDN_IMPORT_CONFIRMED state, if any and MSISDN active in BSCS, perform rollback to CONFIRMED state, sending confirm request and updating Rollback table else perform rollback to MSISDN_ACTIVATE_CONFIRMED state
-     * Checks for all rollbacks in MSISDN_ACTIVATE_CONFIRMED state, if any, perform porting to CONFIRMED state, sending confirm request and updating Rollback table
+     * Checks for all rollbacks MSISDN_IMPORT_CONFIRMED state, if any, move to MSISDN_CHANGE_IMPORT_CONFIRMED state
+     * Checks for all ports in MSISDN_CHANGE_IMPORT_CONFIRMED state, if any, perform porting to CONFIRMED state, sending confirm request and updating Rollback table
      */
     public function rollbackOPD(){
 
@@ -1601,9 +1600,9 @@ class BatchOperationService extends CI_Controller {
 
         $msisdnConfirmedRollbacks = $this->Rollback_model->get_rollback_by_state_and_donor(\RollbackService\Rollback\rollbackStateType::MSISDN_IMPORT_CONFIRMED, Operator::ORANGE_NETWORK_ID);
 
-        // Load rollbacks in Rollback table in MSISDN_ACTIVATE_CONFIRMED state in which we are OPD
+        // Load rollbacks in Rollback table in MSISDN_CHANGE_IMPORT_CONFIRMED state in which we are OPD
 
-        $msisdnActivatedRollbacks = $this->Rollback_model->get_rollback_by_state_and_donor(\RollbackService\Rollback\rollbackStateType::MSISDN_ACTIVATE_CONFIRMED, Operator::ORANGE_NETWORK_ID);
+        $msisdnChangeRollbacks = $this->Rollback_model->get_rollback_by_state_and_donor(\RollbackService\Rollback\rollbackStateType::MSISDN_CHANGE_IMPORT_CONFIRMED, Operator::ORANGE_NETWORK_ID);
 
         $bscsOperationService = new BscsOperationService();
 
@@ -1728,138 +1727,66 @@ class BatchOperationService extends CI_Controller {
 
             $rollbackId = $msisdnConfirmedRollback['rollbackId'];
 
-            // Verify if rollback MSISDN is ACTIVE
-
-            $isActive = $bscsOperationService->verifyActive($msisdnConfirmedRollback['subscriberMSISDN']);
-
-            if($isActive){
-                // MSISDN already active. Move porting to CONFIRMED state
-                $toOperator = $msisdnConfirmedRollback['donorNetworkId'];
-
-                $fromOperator = $msisdnConfirmedRollback['recipientNetworkId'];
-
-                $subscriberMSISDN = $msisdnConfirmedRollback['startMSISDN'];
-
-                $toRoutingNumber = $msisdnConfirmedRollback['donorRoutingNumber'];
-
-                $fromRoutingNumber = $msisdnConfirmedRollback['recipientRoutingNumber'];
-
-                // Perform KPSA Operation
-                $kpsaResponse = $kpsaOperationService->performKPSAOperation($subscriberMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
-
-                if($kpsaResponse->success){
-
-                    $this->db->trans_start();
-
-                    // Insert into rollback Evolution state table
-
-                    $rollbackEvolutionParams = array(
-                        'lastChangeDateTime' => date('c'),
-                        'rollbackState' => \RollbackService\Rollback\rollbackStateType::CONFIRMED,
-                        'isAutoReached' => false,
-                        'rollbackId' => $rollbackId,
-                    );
-
-                    $this->Rollbackstateevolution_model->add_rollbackstateevolution($rollbackEvolutionParams);
-
-                    // Update rollback table
-
-                    $rollbackParams = array(
-                        'lastChangeDateTime' => date('c'),
-                        'rollbackState' => \RollbackService\Rollback\rollbackStateType::CONFIRMED
-                    );
-
-                    $this->Rollback_model->update_rollback($rollbackId, $rollbackParams);
-
-                    // Update Provisioning table
-
-                    $prParams = array(
-                        'provisionState' => \ProvisionService\ProvisionNotification\provisionStateType::COMPLETED,
-                    );
-
-                    $this->Provisioning_model->update_provisioning($rollbackId, $prParams);
-
-                    // Notify Agents/Admin
-
-                    $this->db->trans_complete();
-
-                    if ($this->db->trans_status() === FALSE) {
-                        $emailService = new EmailService();
-                        $emailService->adminErrorReport('ROLLBACK_COMPLETED_BUT_DB_FILLED_INCOMPLETE', []);
-                    }else{
-
-                    }
-
-                }
-
-                else{
-
-                    $emailService->adminKPSAError($kpsaResponse->message, []);
-
-                }
-
-            }
-            else{
-                // MSISDN not active yet. Move porting to MSISDN_ACTIVATE_CONFIRMED
-
-                // Activate MSISDN in BSCS and Update tables
-                $activateResponse = $bscsOperationService->activeMSISDN($msisdnConfirmedRollback['subscriberMSISDN']);
-
-                if($activateResponse){
-
-                    // Successful Activation. Insert into rollback Evolution state table
-
-                    $rollbackEvolutionParams = array(
-                        'lastChangeDateTime' => date('c'),
-                        'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_ACTIVATE_CONFIRMED,
-                        'isAutoReached' => false,
-                        'rollbackId' => $rollbackId,
-                    );
-
-                    $this->Rollbackstateevolution_model->add_rollbackstateevolution($rollbackEvolutionParams);
-
-                    // Update Rollback table
-
-                    $rollbackParams = array(
-                        'lastChangeDateTime' => date('c'),
-                        'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_ACTIVATE_CONFIRMED
-                    );
-
-                    $this->Rollback_model->update_rollback($rollbackId, $rollbackParams);
-
-                    $this->db->trans_complete();
-
-                    if ($this->db->trans_status() === FALSE) {
-                        $emailService = new EmailService();
-                        $emailService->adminErrorReport('MSISDN_ACTIVATED_BUT_DB_FILLED_INCOMPLETE', []);
-                    }else{
-
-                    }
-
-
-                }
-                else{
-
-                    $emailService->adminErrorReport('FAILED_ACTIVATING_MSISDN_IN_BSCS', []);
-
-                }
-            }
-
-        }
-
-        foreach ($msisdnActivatedRollbacks as $msisdnActivatedRollback){
-
-            // Move porting to CONFIRMED state
-
-            $toOperator = $msisdnActivatedRollback['donorNetworkId'];
-
-            $fromOperator = $msisdnActivatedRollback['recipientNetworkId'];
+            $subscriberInfo = $this->Rollbacksubmission_model->get_submissionByRollbackId($rollbackId);
 
             $subscriberMSISDN = $msisdnConfirmedRollback['startMSISDN'];
 
-            $toRoutingNumber = $msisdnActivatedRollback['donorRoutingNumber'];
+            $changeResponse = $bscsOperationService->changeImportMSISDN($subscriberInfo['temporalMSISDN'], $subscriberMSISDN);
 
-            $fromRoutingNumber = $msisdnActivatedRollback['recipientRoutingNumber'];
+            if($changeResponse->success){
+
+                $this->db->trans_start();
+
+                // Insert into rollback Evolution state table
+
+                $rollbackEvolutionParams = array(
+                    'lastChangeDateTime' => date('c'),
+                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_CHANGE_IMPORT_CONFIRMED,
+                    'isAutoReached' => false,
+                    'rollbackId' => $rollbackId,
+                );
+
+                $this->Rollbackstateevolution_model->add_rollbackstateevolution($rollbackEvolutionParams);
+
+                // Update Rollback table
+
+                $rollbackParams = array(
+                    'lastChangeDateTime' => date('c'),
+                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_CHANGE_IMPORT_CONFIRMED
+                );
+
+                $this->Rollback_model->update_rollback($rollbackId, $rollbackParams);
+
+                // Notify Agents/Admin
+
+                $this->db->trans_complete();
+
+                if ($this->db->trans_status() === FALSE) {
+                    $emailService = new EmailService();
+                    $emailService->adminErrorReport('ROLLBACK_MSISDN_CHANGE_IMPORTED_BUT_DB_FILLED_INCOMPLETE', []);
+                }else{
+
+                }
+
+            }else{
+
+            }
+
+
+        }
+
+        foreach ($msisdnChangeRollbacks as $msisdnChangeRollback){
+
+            // Move Rollback to CONFIRMED state
+            $fromOperator = $msisdnChangeRollback['donorNetworkId'];
+
+            $subscriberMSISDN = $msisdnChangeRollback['startMSISDN'];
+
+            $toOperator = $msisdnChangeRollback['recipientNetworkId'];
+
+            $fromRoutingNumber = $msisdnChangeRollback['donorRoutingNumber'];
+
+            $toRoutingNumber = $msisdnChangeRollback['recipientRoutingNumber'];
 
             // Perform KPSA Operation
             $kpsaResponse = $kpsaOperationService->performKPSAOperation($subscriberMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
@@ -1868,7 +1795,7 @@ class BatchOperationService extends CI_Controller {
 
                 // Send confirm request
 
-                $rollbackId = $msisdnActivatedRollback['rollbackId'];
+                $rollbackId = $msisdnChangeRollback['rollbackId'];
 
                 $rollbackDateAndTime = date('c', strtotime('+5 minutes', strtotime(date('c'))));
 
@@ -2540,48 +2467,142 @@ class BatchOperationService extends CI_Controller {
     /**
      * Executed by all
      * BATCH_014
-     * Performs SFTP synchronization of transferred and returned numbers
+     * Performs SFTP synchronization of yesterday data
      */
-    public function synchronizer(){
+    private function CADBFileSynchronizer(){
 
-        // TODO: Move ported processes to complete state for those not complete. Generate mail if not complete state is different from CONFIRMED
+        $prevDay = date('Y-m-d', strtotime('-1 days', strtotime(date('c'))));
 
-        /*$sftp = new SFTP(sftpParams::HOST);
+        $this->synchronizeDateWithCADB($prevDay);
+
+    }
+
+    /**
+     * Perform SFTP synchronization of given date data
+     * @param $day
+     */
+    private function synchronizeDateWithCADB($day){
+
+        $syncResponse = $this->syncDateData($day);
+
+        $emailService = new EmailService();
+
+        if($syncResponse['success'] == true){
+
+            // Process downloaded file
+
+            $file_name = $syncResponse['fileName'];
+
+            if($file_name != ''){
+                $row = 1;
+
+                if (($handle = fopen(FCPATH . 'uploads/cadb/' .$file_name, "r")) !== FALSE) {
+
+                    while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+                        if($row == 1){
+                            $row++;
+                        }else{
+
+                            $cadbId = $data[0]; // CADB_ID
+                            $isdn = $data[1]; // ISDN
+                            $routingNumber = $data[2]; // $routingNumber
+                            $applyTime = $data[3]; // ApplyTime
+
+                            $porting = $this->Porting_model->get_porting($cadbId);
+
+                            if($porting['portingState'] == \PortingService\Porting\portingStateType::CONFIRMED) {
+
+                                $this->db->trans_start();
+
+                                // Insert into porting Evolution state table
+
+                                $portingEvolutionParams = array(
+                                    'lastChangeDateTime' => date('c'),
+                                    'portingState' => \PortingService\Porting\portingStateType::COMPLETED,
+                                    'isAutoReached' => false,
+                                    'portingId' => $cadbId,
+                                );
+
+                                $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
+
+                                // Update Porting table
+
+                                $portingParams = array(
+                                    'lastChangeDateTime' => date('c'),
+                                    'portingState' => \PortingService\Porting\portingStateType::COMPLETED
+                                );
+
+                                $this->Porting_model->update_porting($cadbId, $portingParams);
+
+                                // Notify Agents/Admin
+
+                                $this->db->trans_complete();
+
+                                if ($this->db->trans_status() === FALSE) {
+
+                                    $emailService->adminErrorReport('PORTING_COMPLETED_FROM_CADB_SYNC_BUT_DB_FILLED_INCOMPLETE', []);
+
+                                }else{
+
+                                }
+
+                            }else{
+
+                                $emailService->cadbPortingStateOffConfirmed([]);
+
+                            }
+
+                        }
+                    }
+
+                    fclose($handle);
+
+                }else{
+
+                    $response['success'] = false;
+                    $response['message'] = 'No file name found';
+
+                }
+
+            }else{
+                $response['success'] = false;
+                $response['message'] = 'Failed opening file';
+            }
+
+        }else{
+            // Mail admin for failure
+            $emailService->cadbSynchronizationFailure([]);
+        }
+
+    }
+
+    /**
+     * Download date data from CADB
+     * @param $date
+     * @throws Exception
+     */
+    private function syncDateData($date){
+
+        $response = [];
+        $response['success'] = true;
+
+        $sftp = new SFTP(sftpParams::HOST);
 
         // Authenticate
         if (!$sftp->login(sftpParams::USERNAME, sftpParams::PASSWORD)) {
-            throw new Exception('Login failed');
+
+            $response['success'] = true;
+            $response['message'] = 'Login failed';
+
+        }else{
+
+            $file = 'ported_numbers-report-' . $date . '.csv';
+            $sftp->get($file, FCPATH . 'uploads/cadb/' . $file);
+            $response['fileName'] = $file;
+
         }
 
-        // Change directory
-        $sftp->chdir(sftpParams::PATH);
-
-        // Retrieve file list
-        $files = $sftp->nlist();
-
-        $sftp->get($files[3], APPPATH . '/logs/temp_file.txt');*/
-
-        $response = "ID=1;ACT=TEKELEC_CREATE_NEW_PORT;MSISDN=694975166;MOBILE_NETWORK=23178;STATUS=COMPLETED;LIBELLE=OK";
-
-        $tmp_responses = explode(';', $response);
-
-        $responses = [];
-
-        foreach ($tmp_responses as $tmp_response){
-            $pieces = explode('=', $tmp_response);
-            $responses[$pieces[0]] = $pieces[1];
-        }
-
-        var_dump($responses);
-
-        //$sftp = new SFTPConnection(sftpParams::HOST);
-
-        // Load CSV file
-
-        // Foreach line in csv file, update porting, rollback or return state
-
-        // If state different, send mail to admin
-
+        return $response;
 
     }
 

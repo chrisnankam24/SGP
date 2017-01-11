@@ -25,7 +25,7 @@ class Portingsubmission_model extends CI_Model
     function get_submissionByPortingId($portingId)
     {
         $query = "SELECT p1.`contractId`, p1.`temporalMSISDN` FROM porting p INNER JOIN portingsubmission p1 ON 
-                  ( p.`portingSubmissionId` = p1.`portingSubmissionId`) AND p.portingId = '" . $portingId . "'";
+                  ( p.`portingSubmissionId` = p1.`portingSubmissionId`) WHERE p.portingId = '" . $portingId . "'";
 
         $response = $this->db->query($query)->row_array();
 

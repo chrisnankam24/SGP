@@ -31,20 +31,89 @@ class Rollback extends CI_Controller
         if(isset($_POST) && count($_POST) > 0) {
 
             $originalPortingId = $this->input->post('originalPortingId');
-
             $temporalNumber = $this->input->post('temporalNumber');
-            $contractId = $this->input->post('contractId');
             $language = $this->input->post('language'); // EN or FR
 
-            $donorSubmissionDateTime = date('c');
-            $preferredRollbackDateTime = date('c', strtotime('+4 hours', strtotime(date('c'))));
-
-            $response = $this->makeOpen($originalPortingId, $contractId, $temporalNumber, $language, $donorSubmissionDateTime, $preferredRollbackDateTime);
+            $response = $this->makeOpen($originalPortingId, $temporalNumber, $language);
 
         }else{
 
             $response['success'] = false;
             $response['message'] = 'No porting id found';
+
+        }
+
+        $this->send_response($response);
+
+    }
+
+    /**
+     * API for performing bulk open request
+     */
+    public function openBulkRollback(){
+
+        $response = [];
+
+        if(isset($_POST)) {
+
+            $file_name = $this->input->post('fileName');
+
+            if($file_name != ''){
+                $row = 1;
+
+                $response['success'] = true;
+                $response['data'] = [];
+
+                if (($handle = fopen(FCPATH . 'uploads/' .$file_name, "r")) !== FALSE) {
+
+                    while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+                        if($row == 1){
+                            // Check if header Ok
+                            $errorFound = false;
+                            if(strtolower($data[0]) != 'originalportingid'){
+                                $errorFound = true;
+                            }
+                            if(strtolower($data[1]) != 'temporalnumber'){
+                                $errorFound = true;
+                            }
+                            if(strtolower($data[1]) != 'language'){
+                                $errorFound = true;
+                            }
+                            if($errorFound){
+                                $response['success'] = false;
+                                $response['message'] = 'Invalid file content format. Columns do not match defined template. If you have difficulties creating file, please contact administrator';
+
+                                $this->send_response($response);
+                                return;
+                            }
+                            $row++;
+                        }else{
+
+                            $tempResponse = [];
+
+                            $originalPortingId = $data[0]; // originalPortingId
+                            $temporalNumber = $data[1]; // temporalNumber
+                            $language = $data[2]; // language
+
+                            $tempResponse = $this->makeOpen($originalPortingId, $temporalNumber, $language);
+
+                            $response['data'][] = $tempResponse;
+
+                        }
+                    }
+
+                    fclose($handle);
+                }
+
+            }else{
+                $response['success'] = false;
+                $response['message'] = 'No file name found';
+            }
+
+        }else{
+
+            $response['success'] = false;
+            $response['message'] = 'No file name found';
 
         }
 
@@ -63,86 +132,44 @@ class Rollback extends CI_Controller
 
             $rollbackId = $this->input->post('rollbackId');
 
-            // Make Accept Rollback Operation
-
-            $rollbackOperationService = new RollbackOperationService();
-            $acceptResponse = $rollbackOperationService->accept($rollbackId);
-
-            // Verify response
-
-            if($acceptResponse->success){
-
-                $this->db->trans_start();
-
-                // Update Rollback table
-
-                $rollbackParams = array(
-                    'preferredRollbackDateTime' => $acceptResponse->rollbackTransaction->preferredRollbackDateTime,
-                    'rollbackDateAndTime' => $acceptResponse->rollbackTransaction->rollbackDateTime,
-                    'lastChangeDateTime' => $acceptResponse->rollbackTransaction->lastChangeDateTime,
-                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::ACCEPTED
-                );
-
-                $this->Rollback_model->update_rollback($rollbackId, $rollbackParams);
-
-                // Insert into Rollback State Evolution table
-
-                $seParams = array(
-                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::ACCEPTED,
-                    'lastChangeDateTime' => $acceptResponse->rollbackTransaction->lastChangeDateTime,
-                    'isAutoReached' => false,
-                    'rollbackId' => $acceptResponse->rollbackTransaction->rollbackId,
-                );
-
-                $this->Rollbackstateevolution_model->add_rollbackstateevolution($seParams);
-
-                $this->db->trans_complete();
-
-                $response['success'] = true;
-
-                if ($this->db->trans_status() === FALSE) {
-
-                    $emailService = new EmailService();
-                    $emailService->adminErrorReport('ROLLBACK_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', []);
-
-                }
-
-                $response['message'] = 'Rollback has been ACCEPTED successfully!';
-
-            }
-
-            else{
-
-                $fault = $acceptResponse->error;
-
-                $emailService = new EmailService();
-
-                $response['success'] = false;
-
-                switch ($fault) {
-                    // Terminal Processes
-                    case Fault::INVALID_OPERATOR_FAULT:
-                        $response['message'] = 'Operator not active. Please try again later';
-                        break;
-
-                    // Terminal Error Processes
-                    case Fault::INVALID_REQUEST_FORMAT:
-                    case Fault::INVALID_ROLLBACK_ID:
-                    case Fault::ROLLBACK_ACTION_NOT_AVAILABLE:
-                        $emailService->adminErrorReport($fault, []);
-                        $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
-                        break;
-
-                    default:
-                        $emailService->adminErrorReport($fault, []);
-                        $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
-                }
-            }
+            $response = $this->makeAccept($rollbackId);
 
         }else{
 
             $response['success'] = false;
             $response['message'] = 'No rollback id found';
+
+        }
+
+        $this->send_response($response);
+
+    }
+
+    /**
+     * API for performing bulk accept
+     */
+    public function acceptBulkRollback(){
+
+        // Receives list of rollback IDs linked to enterprise and perform accept one after the other
+        $response = [];
+
+        if(isset($_POST) && count($_POST) > 0) {
+
+            $rollbackData = $this->input->post('rollbackData'); // Array of rollbackIds
+
+            $response['success'] = true;
+            $response['data'] = [];
+
+            foreach ($rollbackData as $rollbackId){
+
+                $response['data'][] = $this->makeAccept($rollbackId);
+
+            }
+
+        }else{
+
+            $response['success'] = false;
+            $response['message'] = 'No porting id found';
 
         }
 
@@ -163,96 +190,44 @@ class Rollback extends CI_Controller
             $rejectionReason = $this->input->post('rejectionReason');
             $cause = $this->input->post('cause');
 
-            if($rejectionReason != \RollbackService\Rollback\rejectionReasonType::OTHER_REASONS) {
-
-                // Make Reject Rollback Operation
-
-                $rollbackOperationService = new RollbackOperationService();
-                $rejectResponse = $rollbackOperationService->reject($rollbackId, $rejectionReason, $cause);
-
-                // Verify response
-
-                if($rejectResponse->success){
-
-                    $this->db->trans_start();
-
-                    // Update Rollback table
-
-                    $rollbackParams = array(
-                        'preferredRollbackDateTime' => $rejectResponse->rollbackTransaction->preferredRollbackDateTime,
-                        'rollbackDateAndTime' => $rejectResponse->rollbackTransaction->rollbackDateTime,
-                        'lastChangeDateTime' => $rejectResponse->rollbackTransaction->lastChangeDateTime,
-                        'rollbackState' => \RollbackService\Rollback\rollbackStateType::REJECTED
-                    );
-
-                    $this->Rollback_model->update_rollback($rollbackId, $rollbackParams);
-
-                    // Insert into Rollback State Evolution table
-
-                    $seParams = array(
-                        'rollbackState' => \RollbackService\Rollback\rollbackStateType::REJECTED,
-                        'lastChangeDateTime' => $rejectResponse->rollbackTransaction->lastChangeDateTime,
-                        'isAutoReached' => false,
-                        'rollbackId' => $rejectResponse->rollbackTransaction->rollbackId,
-                    );
-
-                    $this->Rollbackstateevolution_model->add_rollbackstateevolution($seParams);
-
-                    $this->db->trans_complete();
-
-                    $response['success'] = true;
-
-                    if ($this->db->trans_status() === FALSE) {
-
-                        $emailService = new EmailService();
-                        $emailService->adminErrorReport('ROLLBACK_REJECTED_BUT_DB_FILLED_INCOMPLETE', []);
-
-                    }
-
-                    $response['message'] = 'Rollback has been REJECTED successfully!';
-
-                }
-
-                else{
-
-                    $fault = $rejectResponse->error;
-
-                    $emailService = new EmailService();
-
-                    $response['success'] = false;
-
-                    switch ($fault) {
-                        // Terminal Processes
-                        case Fault::INVALID_OPERATOR_FAULT:
-                            $response['message'] = 'Operator not active. Please try again later';
-                            break;
-
-                        // Terminal Error Processes
-                        case Fault::INVALID_REQUEST_FORMAT:
-                        case Fault::INVALID_ROLLBACK_ID:
-                        case Fault::CAUSE_MISSING:
-                        case Fault::ROLLBACK_ACTION_NOT_AVAILABLE:
-                            $emailService->adminErrorReport($fault, []);
-                            $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
-                            break;
-
-                        default:
-                            $emailService->adminErrorReport($fault, []);
-                            $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
-                    }
-                }
-
-            }
-            else{
-
-                $response['success'] = false;
-                $response['message'] = 'Invalid rejection reason';
-            }
+            $response = $this->makeReject($rollbackId, $rejectionReason, $cause);
 
         }else{
 
             $response['success'] = false;
             $response['message'] = 'No rollback id found';
+
+        }
+
+        $this->send_response($response);
+
+    }
+
+    /**
+     * API for performing bulk reject
+     */
+    public function rejectBulkRollback(){
+
+        // Receives list of rollback IDs linked to enterprise and perform reject one after the other
+        $response = [];
+
+        if(isset($_POST) && count($_POST) > 0) {
+
+            $rollbackData = $this->input->post('$rollbackData'); // Array of rejection objects i.e (portingId, rejectionReason, cause)
+
+            $response['success'] = true;
+            $response['data'] = [];
+
+            foreach ($rollbackData as $rollbackDatum){
+
+                $response['data'][] = $this->makeReject($rollbackDatum['rollbackId'], $rollbackDatum['rejectionReason'], $rollbackDatum['cause']);
+
+            }
+
+        }else{
+
+            $response['success'] = false;
+            $response['message'] = 'No porting id found';
 
         }
 
@@ -453,7 +428,7 @@ class Rollback extends CI_Controller
     }
 
     /**
-     * Make rollback accept for given portingId
+     * Make rollback open for given portingId
      * @param $originalPortingId
      * @param $contractId
      * @param $temporalNumber
@@ -461,58 +436,206 @@ class Rollback extends CI_Controller
      * @param $donorSubmissionDateTime
      * @param $preferredRollbackDateTime
      */
-    private function makeOpen($originalPortingId, $contractId, $temporalNumber, $language, $donorSubmissionDateTime, $preferredRollbackDateTime){
+    private function makeOpen($originalPortingId, $temporalNumber, $language){
 
         $response = [];
 
-        // Make Open Rollback Operation
+        // Get subscriber contractId from BSCS with temporal MSISDN
+        $bscsOperationService = new BscsOperationService();
+        $contractId = $bscsOperationService->getContractId($temporalNumber);
+
+        if($contractId == -1){
+
+            $tempResponse['success'] = false;
+            $tempResponse['message'] = 'Connection to BSCS Unsuccessful. Please try again later';
+
+        }elseif($contractId == null){
+
+            $tempResponse['success'] = false;
+            $tempResponse['message'] = 'Temporal number not found in BSCS. Please verify number has been identified properly and try again';
+
+        }else{
+
+            $donorSubmissionDateTime = date('c');
+            $preferredRollbackDateTime = date('c', strtotime('+4 hours', strtotime(date('c'))));
+
+            // Make Open Rollback Operation
+
+            $rollbackOperationService = new RollbackOperationService();
+            $openResponse = $rollbackOperationService->open($originalPortingId, $donorSubmissionDateTime, $preferredRollbackDateTime);
+
+            // Verify response
+
+            if($openResponse->success){
+
+                $this->db->trans_start();
+
+                // Insert into Rollback submission table
+
+                $submissionParams = array(
+                    'originalPortingId' => $originalPortingId,
+                    'preferredRollbackDateTime' => $openResponse->rollbackTransaction->preferredRollbackDateTime,
+                    'submissionState' => \RollbackService\Rollback\rollbackSubmissionStateType::OPENED,
+                    'openedDateTime' => date('c'),
+                    'contractId' => $contractId,
+                    'language' => $language,
+                    'temporalMSISDN' => $temporalNumber
+                );
+
+                $rollbacksubmission_id = $this->Rollbacksubmission_model->add_rollbacksubmission($submissionParams);
+
+                // Insert into Rollback table
+
+                $rollbackParams = array(
+                    'rollbackId' => $openResponse->rollbackTransaction->rollbackId,
+                    'originalPortingId' => $openResponse->rollbackTransaction->originalPortingId,
+                    'donorSubmissionDateTime' => $openResponse->rollbackTransaction->donorSubmissionDateTime,
+                    'preferredRollbackDateTime' => $openResponse->rollbackTransaction->preferredRollbackDateTime,
+                    'rollbackDateAndTime' => $openResponse->rollbackTransaction->rollbackDateTime,
+                    'cadbOpenDateTime' => $openResponse->rollbackTransaction->cadbOpenDateTime,
+                    'lastChangeDateTime' => $openResponse->rollbackTransaction->lastChangeDateTime,
+                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::OPENED,
+                    'rollbackSubmissionId' => $rollbacksubmission_id,
+                );
+
+                $this->Rollback_model->add_rollback($rollbackParams);
+
+                // Insert into Rollback State Evolution table
+
+                $seParams = array(
+                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::OPENED,
+                    'lastChangeDateTime' => $openResponse->rollbackTransaction->lastChangeDateTime,
+                    'isAutoReached' => false,
+                    'rollbackId' => $openResponse->rollbackTransaction->rollbackId,
+                );
+
+                $this->Rollbackstateevolution_model->add_rollbackstateevolution($seParams);
+
+                $this->db->trans_complete();
+
+                $response['success'] = true;
+
+                if ($this->db->trans_status() === FALSE) {
+
+                    $emailService = new EmailService();
+                    $emailService->adminErrorReport('ROLLBACK_OPENED_BUT_DB_FILLED_INCOMPLETE', []);
+
+                }
+
+                $response['message'] = 'Rollback has been OPENED successfully!';
+
+            }
+
+            else{
+
+                $fault = $openResponse->error;
+
+                $emailService = new EmailService();
+
+                $response['success'] = false;
+
+                switch ($fault) {
+                    // Terminal Processes
+                    case Fault::INVALID_OPERATOR_FAULT:
+
+                        $this->db->trans_start();
+
+                        // Insert into Rollback submission table
+
+                        $submissionParams = array(
+                            'originalPortingId' => $originalPortingId,
+                            'preferredRollbackDateTime' => $preferredRollbackDateTime,
+                            'submissionState' => \RollbackService\Rollback\rollbackSubmissionStateType::STARTED,
+                            'openedDateTime' => date('c'),
+                            'contractId' => $contractId,
+                            'language' => $language,
+                            'temporalMSISDN' => $temporalNumber
+                        );
+
+                        $this->Rollbacksubmission_model->add_rollbacksubmission($submissionParams);
+
+                        $this->db->trans_complete();
+
+                        $response['success'] = true;
+
+                        if ($this->db->trans_status() === FALSE) {
+
+                            $emailService = new EmailService();
+                            $emailService->adminErrorReport('ROLLBACK_REQUESTED_OPERATOR_INACTIVE_BUT_STARTED_INCOMPLETE', []);
+                            $response['message'] = 'Operator is currently Inactive. We have nonetheless encountered problems saving your request. Please contact Back Office';
+
+                        }else{
+
+                            $response['message'] = 'Operator is currently Inactive. You request has been saved and will be performed as soon as possible';
+
+                        }
+
+                        break;
+
+                    // Terminal Error Processes
+                    case Fault::ROLLBACK_NOT_ALLOWED:
+                        $response['message'] = 'Rollback period of 4 hours has expired';
+                        break;
+
+                    case Fault::UNKNOWN_PORTING_ID:
+                        $response['message'] = 'Cannot match ID of the original Porting to any transaction';
+                        break;
+
+                    case Fault::INVALID_REQUEST_FORMAT:
+                    case Fault::ACTION_NOT_AUTHORIZED:
+                        $emailService->adminErrorReport($fault, []);
+                        $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
+                        break;
+
+                    default:
+                        $emailService->adminErrorReport($fault, []);
+                        $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
+                }
+            }
+
+        }
+
+        return $response;
+
+    }
+
+    /**
+     * Make rollback accept for given rollbackId
+     * @param $rollbackId
+     */
+    private function makeAccept($rollbackId) {
+
+        $response = [];
+
+        // Make Accept Rollback Operation
 
         $rollbackOperationService = new RollbackOperationService();
-        $openResponse = $rollbackOperationService->open($originalPortingId, $donorSubmissionDateTime, $preferredRollbackDateTime);
+        $acceptResponse = $rollbackOperationService->accept($rollbackId);
 
         // Verify response
 
-        if($openResponse->success){
+        if($acceptResponse->success){
 
             $this->db->trans_start();
 
-            // Insert into Rollback submission table
-
-            $submissionParams = array(
-                'originalPortingId' => $originalPortingId,
-                'preferredRollbackDateTime' => $openResponse->rollbackTransaction->preferredRollbackDateTime,
-                'submissionState' => \RollbackService\Rollback\rollbackSubmissionStateType::OPENED,
-                'openedDateTime' => date('c'),
-                'contractId' => $contractId,
-                'language' => $language,
-                'temporalMSISDN' => $temporalNumber
-            );
-
-            $rollbacksubmission_id = $this->Rollbacksubmission_model->add_rollbacksubmission($submissionParams);
-
-            // Insert into Rollback table
+            // Update Rollback table
 
             $rollbackParams = array(
-                'rollbackId' => $openResponse->rollbackTransaction->rollbackId,
-                'originalPortingId' => $openResponse->rollbackTransaction->originalPortingId,
-                'donorSubmissionDateTime' => $openResponse->rollbackTransaction->donorSubmissionDateTime,
-                'preferredRollbackDateTime' => $openResponse->rollbackTransaction->preferredRollbackDateTime,
-                'rollbackDateAndTime' => $openResponse->rollbackTransaction->rollbackDateTime,
-                'cadbOpenDateTime' => $openResponse->rollbackTransaction->cadbOpenDateTime,
-                'lastChangeDateTime' => $openResponse->rollbackTransaction->lastChangeDateTime,
-                'rollbackState' => \RollbackService\Rollback\rollbackStateType::OPENED,
-                'rollbackSubmissionId' => $rollbacksubmission_id,
+                'preferredRollbackDateTime' => $acceptResponse->rollbackTransaction->preferredRollbackDateTime,
+                'rollbackDateAndTime' => $acceptResponse->rollbackTransaction->rollbackDateTime,
+                'lastChangeDateTime' => $acceptResponse->rollbackTransaction->lastChangeDateTime,
+                'rollbackState' => \RollbackService\Rollback\rollbackStateType::ACCEPTED
             );
 
-            $this->Rollback_model->add_rollback($rollbackParams);
+            $this->Rollback_model->update_rollback($rollbackId, $rollbackParams);
 
             // Insert into Rollback State Evolution table
 
             $seParams = array(
-                'rollbackState' => \RollbackService\Rollback\rollbackStateType::OPENED,
-                'lastChangeDateTime' => $openResponse->rollbackTransaction->lastChangeDateTime,
+                'rollbackState' => \RollbackService\Rollback\rollbackStateType::ACCEPTED,
+                'lastChangeDateTime' => $acceptResponse->rollbackTransaction->lastChangeDateTime,
                 'isAutoReached' => false,
-                'rollbackId' => $openResponse->rollbackTransaction->rollbackId,
+                'rollbackId' => $acceptResponse->rollbackTransaction->rollbackId,
             );
 
             $this->Rollbackstateevolution_model->add_rollbackstateevolution($seParams);
@@ -524,17 +647,17 @@ class Rollback extends CI_Controller
             if ($this->db->trans_status() === FALSE) {
 
                 $emailService = new EmailService();
-                $emailService->adminErrorReport('ROLLBACK_OPENED_BUT_DB_FILLED_INCOMPLETE', []);
+                $emailService->adminErrorReport('ROLLBACK_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', []);
 
             }
 
-            $response['message'] = 'Rollback has been OPENED successfully!';
+            $response['message'] = 'Rollback has been ACCEPTED successfully!';
 
         }
 
         else{
 
-            $fault = $openResponse->error;
+            $fault = $acceptResponse->error;
 
             $emailService = new EmailService();
 
@@ -543,63 +666,125 @@ class Rollback extends CI_Controller
             switch ($fault) {
                 // Terminal Processes
                 case Fault::INVALID_OPERATOR_FAULT:
-
-                    $this->db->trans_start();
-
-                    // Insert into Rollback submission table
-
-                    $submissionParams = array(
-                        'originalPortingId' => $originalPortingId,
-                        'preferredRollbackDateTime' => $preferredRollbackDateTime,
-                        'submissionState' => \RollbackService\Rollback\rollbackSubmissionStateType::STARTED,
-                        'openedDateTime' => date('c'),
-                        'contractId' => $contractId,
-                        'language' => $language,
-                        'temporalMSISDN' => $temporalNumber
-                    );
-
-                    $this->Rollbacksubmission_model->add_rollbacksubmission($submissionParams);
-
-                    $this->db->trans_complete();
-
-                    $response['success'] = true;
-
-                    if ($this->db->trans_status() === FALSE) {
-
-                        $emailService = new EmailService();
-                        $emailService->adminErrorReport('ROLLBACK_REQUESTED_OPERATOR_INACTIVE_BUT_STARTED_INCOMPLETE', []);
-                        $response['message'] = 'Operator is currently Inactive. We have nonetheless encountered problems saving your request. Please contact Back Office';
-
-                    }else{
-
-                        $response['message'] = 'Operator is currently Inactive. You request has been saved and will be performed as soon as possible';
-
-                    }
-
+                    $response['message'] = 'Operator not active. Please try again later';
                     break;
 
                 // Terminal Error Processes
-                case Fault::ROLLBACK_NOT_ALLOWED:
-                    $response['message'] = 'Rollback period of 4 hours has expired';
-                    break;
-
-                case Fault::UNKNOWN_PORTING_ID:
-                    $response['message'] = 'Cannot match ID of the original Porting to any transaction';
-                    break;
-
                 case Fault::INVALID_REQUEST_FORMAT:
-                case Fault::ACTION_NOT_AUTHORIZED:
+                case Fault::INVALID_ROLLBACK_ID:
+                case Fault::ROLLBACK_ACTION_NOT_AVAILABLE:
                     $emailService->adminErrorReport($fault, []);
-                    $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
+                    $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
                     break;
 
                 default:
                     $emailService->adminErrorReport($fault, []);
-                    $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
+                    $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
             }
         }
 
-        $this->send_response($response);
+
+        return $response;
+
+    }
+
+    /**
+     * Make rollback reject
+     * @param $rollbackId
+     * @param $rejectionReason
+     * @param $cause
+     */
+    private function makeReject($rollbackId, $rejectionReason, $cause){
+
+        $response = [];
+
+        if($rejectionReason != \RollbackService\Rollback\rejectionReasonType::OTHER_REASONS) {
+
+            // Make Reject Rollback Operation
+
+            $rollbackOperationService = new RollbackOperationService();
+            $rejectResponse = $rollbackOperationService->reject($rollbackId, $rejectionReason, $cause);
+
+            // Verify response
+
+            if($rejectResponse->success){
+
+                $this->db->trans_start();
+
+                // Update Rollback table
+
+                $rollbackParams = array(
+                    'preferredRollbackDateTime' => $rejectResponse->rollbackTransaction->preferredRollbackDateTime,
+                    'rollbackDateAndTime' => $rejectResponse->rollbackTransaction->rollbackDateTime,
+                    'lastChangeDateTime' => $rejectResponse->rollbackTransaction->lastChangeDateTime,
+                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::REJECTED
+                );
+
+                $this->Rollback_model->update_rollback($rollbackId, $rollbackParams);
+
+                // Insert into Rollback State Evolution table
+
+                $seParams = array(
+                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::REJECTED,
+                    'lastChangeDateTime' => $rejectResponse->rollbackTransaction->lastChangeDateTime,
+                    'isAutoReached' => false,
+                    'rollbackId' => $rejectResponse->rollbackTransaction->rollbackId,
+                );
+
+                $this->Rollbackstateevolution_model->add_rollbackstateevolution($seParams);
+
+                $this->db->trans_complete();
+
+                $response['success'] = true;
+
+                if ($this->db->trans_status() === FALSE) {
+
+                    $emailService = new EmailService();
+                    $emailService->adminErrorReport('ROLLBACK_REJECTED_BUT_DB_FILLED_INCOMPLETE', []);
+
+                }
+
+                $response['message'] = 'Rollback has been REJECTED successfully!';
+
+            }
+
+            else{
+
+                $fault = $rejectResponse->error;
+
+                $emailService = new EmailService();
+
+                $response['success'] = false;
+
+                switch ($fault) {
+                    // Terminal Processes
+                    case Fault::INVALID_OPERATOR_FAULT:
+                        $response['message'] = 'Operator not active. Please try again later';
+                        break;
+
+                    // Terminal Error Processes
+                    case Fault::INVALID_REQUEST_FORMAT:
+                    case Fault::INVALID_ROLLBACK_ID:
+                    case Fault::CAUSE_MISSING:
+                    case Fault::ROLLBACK_ACTION_NOT_AVAILABLE:
+                        $emailService->adminErrorReport($fault, []);
+                        $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
+                        break;
+
+                    default:
+                        $emailService->adminErrorReport($fault, []);
+                        $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
+                }
+            }
+
+        }
+        else{
+
+            $response['success'] = false;
+            $response['message'] = 'Invalid rejection reason';
+        }
+
+        return $response;
 
     }
 }

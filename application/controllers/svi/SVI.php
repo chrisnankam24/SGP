@@ -28,7 +28,7 @@ class SVI extends CI_Controller {
     public function index(){
 
         // Create a new soap server in WSDL mode
-        $server = new SoapServer( __DIR__ . '/RIOMock.wsdl');
+        $server = new SoapServer( __DIR__ . '/RIOMock_avec_langue.wsdl');
 
         // Set the object for the soap server
         $server->setObject($this);
@@ -58,7 +58,7 @@ class SVI extends CI_Controller {
             $response->return->rioNumber = $rioWithInfo['rio'];
 
             if($rioWithInfo['language'] != '' ){
-                $response->return->language = $rioWithInfo['language'];
+                $response->return->langue = $rioWithInfo['language'];
             }
 
         }else{
@@ -91,7 +91,7 @@ class RIOInfo {
     /**
      * @var string
      */
-    public $language;
+    public $langue;
 
 }
 

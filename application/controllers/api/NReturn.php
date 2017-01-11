@@ -33,164 +33,95 @@ class NReturn extends CI_Controller
             $returnMSISDN = $this->input->post('returnMSISDN');
             $returnOperator = $this->input->post('returnOperator'); // 0 == MTN, 1 == Nexttel
 
-            // Make Open NR Operation
-
-            $nrOperationService = new ReturnOperationService();
-            $openResponse = $nrOperationService->open($returnOperator, $returnMSISDN);
-
-            // Verify response
-
-            if($openResponse->success){
-
-                $this->db->trans_start();
-
-                // Insert into NR submission table with state OPENED
-
-                $nrsParams = array(
-                    'primaryOwnerNetworkId' => $openResponse->returnTransaction->primaryOwnerNrn->networkId,
-                    'primaryOwnerNetworkNumber' => $openResponse->returnTransaction->primaryOwnerNrn->routingNumber,
-                    'returnMSISDN' => $returnMSISDN,
-                    'submissionState' => \ReturnService\_Return\returnSubmissionStateType::OPENED,
-                    'submissionDateTime' => date('c'),
-                );
-
-                $submissionId = $this->Numberreturnsubmission_model->add_numberreturnsubmission($nrsParams);
-
-                // Insert into NR table
-
-                $nrParams = array(
-                    'returnId' => $openResponse->returnTransaction->returnId,
-                    'openDateTime' => $openResponse->returnTransaction->openDateTime,
-                    'ownerNetworkId' => $openResponse->returnTransaction->ownerNrn->networkId,
-                    'ownerRoutingNumber' => $openResponse->returnTransaction->ownerNrn->routingNumber,
-                    'primaryOwnerNetworkId' => $openResponse->returnTransaction->primaryOwnerNrn->networkId,
-                    'primaryOwnerRoutingNumber' => $openResponse->returnTransaction->primaryOwnerNrn->routingNumber,
-                    'returnMSISDN' => $returnMSISDN,
-                    'returnNumberState' => \ReturnService\_Return\returnSubmissionStateType::OPENED,
-                    'numberReturnSubmissionId' => $submissionId,
-                );
-
-                $this->Numberreturn_model->add_numberreturn($nrParams);
-
-                // Insert into NR state Evolution table
-
-                $nrsParams = array(
-                    'returnNumberState' => \ReturnService\_Return\returnStateType::OPENED,
-                    'lastChangeDateTime' => date('c'),
-                    'isAutoReached' => false,
-                    'returnId' => $openResponse->returnTransaction->returnId,
-                );
-
-                $this->Numberreturnstateevolution_model->add_numberreturnstateevolution($nrsParams);
-
-                $this->db->trans_complete();
-
-                $response['success'] = true;
-
-                if ($this->db->trans_status() === FALSE) {
-
-                    $emailService = new EmailService();
-                    $emailService->adminErrorReport('RETURN_OPENED_BUT_DB_FILLED_INCOMPLETE', []);
-
-                }
-
-                $response['message'] = 'Return has been OPENED successfully!';
-
-            }
-
-            else{
-
-                $fault = $openResponse->error;
-
-                $emailService = new EmailService();
-
-                $response['success'] = false;
-
-                switch ($fault) {
-                    // Terminal Processes
-                    case Fault::INVALID_OPERATOR_FAULT:
-
-                        $this->db->trans_start();
-
-                        // Insert into Return submission table with state STARTED
-
-                        $primaryOwnerNetworkId = '';
-                        $primaryOwnerNetworkNumber = '';
-
-                        if($returnOperator == 0) {
-                            // MTN
-                            $primaryOwnerNetworkId = Operator::MTN_NETWORK_ID;
-                            $primaryOwnerNetworkNumber = Operator::MTN_ROUTING_NUMBER;
-                        }else{
-                            // Orange
-                            $primaryOwnerNetworkId = Operator::NEXTTEL_NETWORK_ID;
-                            $primaryOwnerNetworkNumber = Operator::NEXTTEL_ROUTING_NUMBER;
-                        }
-
-                        $nrsParams = array(
-                            'primaryOwnerNetworkId' => $primaryOwnerNetworkId,
-                            'primaryOwnerNetworkNumber' => $primaryOwnerNetworkNumber,
-                            'returnMSISDN' => $returnMSISDN,
-                            'submissionState' => \ReturnService\_Return\returnSubmissionStateType::STARTED,
-                            'submissionDateTime' => date('c'),
-                        );
-
-                        $this->Numberreturnsubmission_model->add_numberreturnsubmission($nrsParams);
-
-                        $this->db->trans_complete();
-
-                        $response['success'] = true;
-
-                        if ($this->db->trans_status() === FALSE) {
-
-                            $emailService = new EmailService();
-                            $emailService->adminErrorReport('RETURN_REQUESTED_OPERATOR_INACTIVE_BUT_STARTED_INCOMPLETE', []);
-                            $response['message'] = 'Operator is currently Inactive. We have nonetheless encountered problems saving your request. Please contact Back Office';
-
-                        }else{
-
-                            $response['message'] = 'Operator is currently Inactive. You request has been saved and will be performed as soon as possible';
-
-                        }
-
-                        break;
-
-                    // Terminal Error Processes
-                    case Fault::NUMBER_RESERVED_BY_PROCESS:
-                        $response['message'] = 'Number already in transaction';
-                        break;
-                    case Fault::NUMBER_NOT_OWNED_BY_OPERATOR:
-                        $response['message'] = 'Number does not match Donors numeration plan';
-                        break;
-                    case Fault::UNKNOWN_MANAGED_NUMBER:
-                        $response['message'] = 'Number is not managed by CADB';
-                        break;
-                    case Fault::NUMBER_NOT_PORTED:
-                        $response['message'] = 'Number is not ported in the first place';
-                        break;
-                    case Fault::MULTIPLE_PRIMARY_OWNER:
-                        $response['message'] = 'Primary Owner cannot be resolved';
-                        break;
-
-                    case Fault::INVALID_REQUEST_FORMAT:
-                    case Fault::ACTION_NOT_AUTHORIZED:
-                    case Fault::NUMBER_RANGE_QUANTITY_LIMIT_EXCEEDED:
-                    case Fault::NUMBER_QUANTITY_LIMIT_EXCEEDED:
-                    case Fault::NUMBER_RANGES_OVERLAP:
-                        $emailService->adminErrorReport($fault, []);
-                        $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
-                        break;
-
-                    default:
-                        $emailService->adminErrorReport($fault, []);
-                        $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
-                }
-            }
+            $response = $this->openReturn($returnMSISDN, $returnOperator);
 
         }else{
 
             $response['success'] = false;
             $response['message'] = 'No MSISDN found';
+
+        }
+
+        $this->send_response($response);
+
+    }
+
+    /**
+     * API for performing bulk open
+     */
+    public function openBulkNumberReturn(){
+
+        $response = [];
+
+        if(isset($_POST)) {
+
+            $file_name = $this->input->post('fileName');
+
+            if($file_name != ''){
+                $row = 1;
+
+                $response['success'] = true;
+                $response['data'] = [];
+
+                if (($handle = fopen(FCPATH . 'uploads/' .$file_name, "r")) !== FALSE) {
+
+                    while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+                        if($row == 1){
+                            // Check if header Ok
+                            $errorFound = false;
+                            if(strtolower($data[0]) != 'returnmsisdn'){
+                                $errorFound = true;
+                            }
+                            if(strtolower($data[1]) != 'returnoperator'){
+                                $errorFound = true;
+                            }
+
+                            if($errorFound){
+                                $response['success'] = false;
+                                $response['message'] = 'Invalid file content format. Columns do not match defined template. If you have difficulties creating file, please contact administrator';
+
+                                $this->send_response($response);
+                                return;
+                            }
+                            $row++;
+                        }else{
+
+                            $tempResponse = [];
+
+                            $returnMSISDN = $data[0]; // returnMSISDN
+                            $returnOperator = $data[1]; // returnOperator
+
+                            if(strtolower($returnOperator) == 'mtn'){
+                                $returnOperator = 0;
+                            }elseif (strtolower($returnOperator) == 'nexttel'){
+                                $returnOperator = 1;
+                            }else{
+                                $tempResponse['success'] = false;
+                                $tempResponse['message'] = "Invalid return operator. Must be <MTN> or <NEXTTEL>";
+                            }
+
+                            if($returnOperator == 0 || $returnOperator == 1){
+
+                                $tempResponse = $this->openReturn($returnMSISDN, $returnOperator);
+
+                                $response['data'][] = $tempResponse;
+
+                            }
+                        }
+                    }
+
+                    fclose($handle);
+                }
+
+            }else{
+                $response['success'] = false;
+                $response['message'] = 'No file name found';
+            }
+
+        }else{
+
+            $response['success'] = false;
+            $response['message'] = 'No file name found';
 
         }
 
@@ -209,78 +140,44 @@ class NReturn extends CI_Controller
 
             $returnId = $this->input->post('returnId');
 
-            // Make accept NR Operation
-
-            $nrOperationService = new ReturnOperationService();
-            $acceptResponse = $nrOperationService->accept($returnId);
-
-            // Verify response
-
-            if($acceptResponse->success){
-
-                $this->db->trans_start();
-
-                // Update NR table
-
-                $nrParams = array(
-                    'returnNumberState' => \ReturnService\_Return\returnStateType::ACCEPTED,
-                );
-
-                $this->Numberreturn_model->update_numberreturn($returnId, $nrParams);
-
-                // Insert into NR state Evolution table
-
-                $nrsParams = array(
-                    'returnNumberState' => \ReturnService\_Return\returnStateType::ACCEPTED,
-                    'lastChangeDateTime' => date('c'),
-                    'isAutoReached' => false,
-                    'returnId' => $acceptResponse->returnTransaction->returnId,
-                );
-
-                $this->Numberreturnstateevolution_model->add_numberreturnstateevolution($nrsParams);
-
-                $this->db->trans_complete();
-
-                $response['success'] = true;
-
-                if ($this->db->trans_status() === FALSE) {
-
-                    $emailService = new EmailService();
-                    $emailService->adminErrorReport('RETURN_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', []);
-
-                }
-
-                $response['message'] = 'Return has been ACCEPTED successfully!';
-
-            }
-
-            else{
-
-                $fault = $acceptResponse->error;
-
-                $emailService = new EmailService();
-
-                $response['success'] = false;
-
-                switch ($fault) {
-                    // Terminal Error Processes
-                    case Fault::RETURN_ACTION_NOT_AVAILABLE:
-                    case Fault::INVALID_RETURN_ID:
-                    case Fault::INVALID_REQUEST_FORMAT:
-                        $emailService->adminErrorReport($fault, []);
-                        $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
-                        break;
-
-                    default:
-                        $emailService->adminErrorReport($fault, []);
-                        $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
-                }
-            }
+            $response = $this->acceptReturn($returnId);
 
         }else{
 
             $response['success'] = false;
             $response['message'] = 'No ReturnId found';
+
+        }
+
+        $this->send_response($response);
+
+    }
+
+    /**
+     * API for performing bulk accept
+     */
+    public function acceptBulkNumberReturn(){
+
+        // Receives list of return IDs linked to enterprise and perform accept one after the other
+        $response = [];
+
+        if(isset($_POST) && count($_POST) > 0) {
+
+            $returnData = $this->input->post('returnData'); // Array of returnIds
+
+            $response['success'] = true;
+            $response['data'] = [];
+
+            foreach ($returnData as $returnId){
+
+                $response['data'][] = $this->acceptReturn($returnId);
+
+            }
+
+        }else{
+
+            $response['success'] = false;
+            $response['message'] = 'No porting id found';
 
         }
 
@@ -300,83 +197,7 @@ class NReturn extends CI_Controller
             $returnId = $this->input->post('returnId');
             $cause = $this->input->post('cause');
 
-            // Make reject NR Operation
-
-            $nrOperationService = new ReturnOperationService();
-            $rejectResponse = $nrOperationService->reject($returnId, $cause);
-
-            // Verify response
-
-            if($rejectResponse->success){
-
-                $this->db->trans_start();
-
-                // Update NR table
-
-                $nrParams = array(
-                    'returnNumberState' => \ReturnService\_Return\returnStateType::REJECTED,
-                );
-
-                $this->Numberreturn_model->update_numberreturn($returnId, $nrParams);
-
-                // Insert into NR state Evolution table
-
-                $nrsParams = array(
-                    'returnNumberState' => \ReturnService\_Return\returnStateType::REJECTED,
-                    'lastChangeDateTime' => date('c'),
-                    'isAutoReached' => false,
-                    'returnId' => $rejectResponse->returnTransaction->returnId,
-                );
-
-                $this->Numberreturnstateevolution_model->add_numberreturnstateevolution($nrsParams);
-
-                // Insert into Return rejection table
-
-                $rrParams = array(
-                    'cause' => $cause,
-                    'returnId' => $returnId,
-                );
-
-                $this->Returnrejection_model->add_returnrejection($rrParams);
-
-                $this->db->trans_complete();
-
-                $response['success'] = true;
-
-                if ($this->db->trans_status() === FALSE) {
-
-                    $emailService = new EmailService();
-                    $emailService->adminErrorReport('RETURN_REJECTED_BUT_DB_FILLED_INCOMPLETE', []);
-
-                }
-
-                $response['message'] = 'Return has been REJECTED successfully!';
-
-            }
-
-            else{
-
-                $fault = $rejectResponse->error;
-
-                $emailService = new EmailService();
-
-                $response['success'] = false;
-
-                switch ($fault) {
-                    // Terminal Error Processes
-                    case Fault::RETURN_ACTION_NOT_AVAILABLE:
-                    case Fault::INVALID_RETURN_ID:
-                    case Fault::INVALID_REQUEST_FORMAT:
-                    case Fault::UNKNOWN_NUMBER:
-                        $emailService->adminErrorReport($fault, []);
-                        $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
-                        break;
-
-                    default:
-                        $emailService->adminErrorReport($fault, []);
-                        $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
-                }
-            }
+            $response = $this->rejectReturn($returnId, $cause);
 
         }else{
 
@@ -386,6 +207,39 @@ class NReturn extends CI_Controller
         }
 
         $this->send_response($response);
+
+    }
+
+    /**
+     * API for performing bulk reject
+     */
+    public function rejectBulkNumberReturn(){
+
+        // Receives list of reject IDs linked to enterprise and perform reject one after the other
+        $response = [];
+
+        if(isset($_POST) && count($_POST) > 0) {
+
+            $rejectData = $this->input->post('$rejectData'); // Array of rejection objects i.e (portingId, rejectionReason, cause)
+
+            $response['success'] = true;
+            $response['data'] = [];
+
+            foreach ($rejectData as $rejectDatum){
+
+                $response['data'][] = $this->rejectReturn($rejectDatum['returnId'], $rejectDatum['cause']);
+
+            }
+
+        }else{
+
+            $response['success'] = false;
+            $response['message'] = 'No porting id found';
+
+        }
+
+        $this->send_response($response);
+
 
     }
 
@@ -491,7 +345,6 @@ class NReturn extends CI_Controller
         $this->send_response($response);
     }
 
-
     /**
      * @param $response
      */
@@ -500,5 +353,347 @@ class NReturn extends CI_Controller
         header("Content-type: text/json");
         echo json_encode($response);
     }
-    
+
+    /**
+     * Open Return for given number
+     * @param $returnMSISDN
+     * @param $returnOperator
+     * @return array
+     */
+    private function openReturn($returnMSISDN, $returnOperator){
+
+        $response = [];
+
+        // Make Open NR Operation
+
+        $nrOperationService = new ReturnOperationService();
+        $openResponse = $nrOperationService->open($returnOperator, $returnMSISDN);
+
+        // Verify response
+
+        if($openResponse->success){
+
+            $this->db->trans_start();
+
+            // Insert into NR submission table with state OPENED
+
+            $nrsParams = array(
+                'primaryOwnerNetworkId' => $openResponse->returnTransaction->primaryOwnerNrn->networkId,
+                'primaryOwnerNetworkNumber' => $openResponse->returnTransaction->primaryOwnerNrn->routingNumber,
+                'returnMSISDN' => $returnMSISDN,
+                'submissionState' => \ReturnService\_Return\returnSubmissionStateType::OPENED,
+                'submissionDateTime' => date('c'),
+            );
+
+            $submissionId = $this->Numberreturnsubmission_model->add_numberreturnsubmission($nrsParams);
+
+            // Insert into NR table
+
+            $nrParams = array(
+                'returnId' => $openResponse->returnTransaction->returnId,
+                'openDateTime' => $openResponse->returnTransaction->openDateTime,
+                'ownerNetworkId' => $openResponse->returnTransaction->ownerNrn->networkId,
+                'ownerRoutingNumber' => $openResponse->returnTransaction->ownerNrn->routingNumber,
+                'primaryOwnerNetworkId' => $openResponse->returnTransaction->primaryOwnerNrn->networkId,
+                'primaryOwnerRoutingNumber' => $openResponse->returnTransaction->primaryOwnerNrn->routingNumber,
+                'returnMSISDN' => $returnMSISDN,
+                'returnNumberState' => \ReturnService\_Return\returnSubmissionStateType::OPENED,
+                'numberReturnSubmissionId' => $submissionId,
+            );
+
+            $this->Numberreturn_model->add_numberreturn($nrParams);
+
+            // Insert into NR state Evolution table
+
+            $nrsParams = array(
+                'returnNumberState' => \ReturnService\_Return\returnStateType::OPENED,
+                'lastChangeDateTime' => date('c'),
+                'isAutoReached' => false,
+                'returnId' => $openResponse->returnTransaction->returnId,
+            );
+
+            $this->Numberreturnstateevolution_model->add_numberreturnstateevolution($nrsParams);
+
+            $this->db->trans_complete();
+
+            $response['success'] = true;
+
+            if ($this->db->trans_status() === FALSE) {
+
+                $emailService = new EmailService();
+                $emailService->adminErrorReport('RETURN_OPENED_BUT_DB_FILLED_INCOMPLETE', []);
+
+            }
+
+            $response['message'] = 'Return has been OPENED successfully!';
+
+        }
+
+        else{
+
+            $fault = $openResponse->error;
+
+            $emailService = new EmailService();
+
+            $response['success'] = false;
+
+            switch ($fault) {
+                // Terminal Processes
+                case Fault::INVALID_OPERATOR_FAULT:
+
+                    $this->db->trans_start();
+
+                    // Insert into Return submission table with state STARTED
+
+                    $primaryOwnerNetworkId = '';
+                    $primaryOwnerNetworkNumber = '';
+
+                    if($returnOperator == 0) {
+                        // MTN
+                        $primaryOwnerNetworkId = Operator::MTN_NETWORK_ID;
+                        $primaryOwnerNetworkNumber = Operator::MTN_ROUTING_NUMBER;
+                    }else{
+                        // Orange
+                        $primaryOwnerNetworkId = Operator::NEXTTEL_NETWORK_ID;
+                        $primaryOwnerNetworkNumber = Operator::NEXTTEL_ROUTING_NUMBER;
+                    }
+
+                    $nrsParams = array(
+                        'primaryOwnerNetworkId' => $primaryOwnerNetworkId,
+                        'primaryOwnerNetworkNumber' => $primaryOwnerNetworkNumber,
+                        'returnMSISDN' => $returnMSISDN,
+                        'submissionState' => \ReturnService\_Return\returnSubmissionStateType::STARTED,
+                        'submissionDateTime' => date('c'),
+                    );
+
+                    $this->Numberreturnsubmission_model->add_numberreturnsubmission($nrsParams);
+
+                    $this->db->trans_complete();
+
+                    $response['success'] = true;
+
+                    if ($this->db->trans_status() === FALSE) {
+
+                        $emailService = new EmailService();
+                        $emailService->adminErrorReport('RETURN_REQUESTED_OPERATOR_INACTIVE_BUT_STARTED_INCOMPLETE', []);
+                        $response['message'] = 'Operator is currently Inactive. We have nonetheless encountered problems saving your request. Please contact Back Office';
+
+                    }else{
+
+                        $response['message'] = 'Operator is currently Inactive. You request has been saved and will be performed as soon as possible';
+
+                    }
+
+                    break;
+
+                // Terminal Error Processes
+                case Fault::NUMBER_RESERVED_BY_PROCESS:
+                    $response['message'] = 'Number already in transaction';
+                    break;
+                case Fault::NUMBER_NOT_OWNED_BY_OPERATOR:
+                    $response['message'] = 'Number does not match Donors numeration plan';
+                    break;
+                case Fault::UNKNOWN_MANAGED_NUMBER:
+                    $response['message'] = 'Number is not managed by CADB';
+                    break;
+                case Fault::NUMBER_NOT_PORTED:
+                    $response['message'] = 'Number is not ported in the first place';
+                    break;
+                case Fault::MULTIPLE_PRIMARY_OWNER:
+                    $response['message'] = 'Primary Owner cannot be resolved';
+                    break;
+
+                case Fault::INVALID_REQUEST_FORMAT:
+                case Fault::ACTION_NOT_AUTHORIZED:
+                case Fault::NUMBER_RANGE_QUANTITY_LIMIT_EXCEEDED:
+                case Fault::NUMBER_QUANTITY_LIMIT_EXCEEDED:
+                case Fault::NUMBER_RANGES_OVERLAP:
+                    $emailService->adminErrorReport($fault, []);
+                    $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
+                    break;
+
+                default:
+                    $emailService->adminErrorReport($fault, []);
+                    $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
+            }
+        }
+
+        return $response;
+
+    }
+
+    /**
+     * Accept Return for given number
+     * @param $returnId
+     * @return array
+     */
+    private function acceptReturn($returnId){
+
+        $response = [];
+
+        // Make accept NR Operation
+
+        $nrOperationService = new ReturnOperationService();
+        $acceptResponse = $nrOperationService->accept($returnId);
+
+        // Verify response
+
+        if($acceptResponse->success){
+
+            $this->db->trans_start();
+
+            // Update NR table
+
+            $nrParams = array(
+                'returnNumberState' => \ReturnService\_Return\returnStateType::ACCEPTED,
+            );
+
+            $this->Numberreturn_model->update_numberreturn($returnId, $nrParams);
+
+            // Insert into NR state Evolution table
+
+            $nrsParams = array(
+                'returnNumberState' => \ReturnService\_Return\returnStateType::ACCEPTED,
+                'lastChangeDateTime' => date('c'),
+                'isAutoReached' => false,
+                'returnId' => $acceptResponse->returnTransaction->returnId,
+            );
+
+            $this->Numberreturnstateevolution_model->add_numberreturnstateevolution($nrsParams);
+
+            $this->db->trans_complete();
+
+            $response['success'] = true;
+
+            if ($this->db->trans_status() === FALSE) {
+
+                $emailService = new EmailService();
+                $emailService->adminErrorReport('RETURN_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', []);
+
+            }
+
+            $response['message'] = 'Return has been ACCEPTED successfully!';
+
+        }
+
+        else{
+
+            $fault = $acceptResponse->error;
+
+            $emailService = new EmailService();
+
+            $response['success'] = false;
+
+            switch ($fault) {
+                // Terminal Error Processes
+                case Fault::RETURN_ACTION_NOT_AVAILABLE:
+                case Fault::INVALID_RETURN_ID:
+                case Fault::INVALID_REQUEST_FORMAT:
+                    $emailService->adminErrorReport($fault, []);
+                    $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
+                    break;
+
+                default:
+                    $emailService->adminErrorReport($fault, []);
+                    $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
+            }
+        }
+
+        return $response;
+
+    }
+
+    /**
+     * Reject Return for given number
+     * @param $returnId
+     * @param $cause
+     * @return array
+     */
+    private function rejectReturn($returnId, $cause){
+
+        $response = [];
+
+        // Make reject NR Operation
+
+        $nrOperationService = new ReturnOperationService();
+        $rejectResponse = $nrOperationService->reject($returnId, $cause);
+
+        // Verify response
+
+        if($rejectResponse->success){
+
+            $this->db->trans_start();
+
+            // Update NR table
+
+            $nrParams = array(
+                'returnNumberState' => \ReturnService\_Return\returnStateType::REJECTED,
+            );
+
+            $this->Numberreturn_model->update_numberreturn($returnId, $nrParams);
+
+            // Insert into NR state Evolution table
+
+            $nrsParams = array(
+                'returnNumberState' => \ReturnService\_Return\returnStateType::REJECTED,
+                'lastChangeDateTime' => date('c'),
+                'isAutoReached' => false,
+                'returnId' => $rejectResponse->returnTransaction->returnId,
+            );
+
+            $this->Numberreturnstateevolution_model->add_numberreturnstateevolution($nrsParams);
+
+            // Insert into Return rejection table
+
+            $rrParams = array(
+                'cause' => $cause,
+                'returnId' => $returnId,
+            );
+
+            $this->Returnrejection_model->add_returnrejection($rrParams);
+
+            $this->db->trans_complete();
+
+            $response['success'] = true;
+
+            if ($this->db->trans_status() === FALSE) {
+
+                $emailService = new EmailService();
+                $emailService->adminErrorReport('RETURN_REJECTED_BUT_DB_FILLED_INCOMPLETE', []);
+
+            }
+
+            $response['message'] = 'Return has been REJECTED successfully!';
+
+        }
+
+        else{
+
+            $fault = $rejectResponse->error;
+
+            $emailService = new EmailService();
+
+            $response['success'] = false;
+
+            switch ($fault) {
+                // Terminal Error Processes
+                case Fault::RETURN_ACTION_NOT_AVAILABLE:
+                case Fault::INVALID_RETURN_ID:
+                case Fault::INVALID_REQUEST_FORMAT:
+                case Fault::UNKNOWN_NUMBER:
+                    $emailService->adminErrorReport($fault, []);
+                    $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
+                    break;
+
+                default:
+                    $emailService->adminErrorReport($fault, []);
+                    $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
+            }
+        }
+
+
+        return $response;
+
+    }
+
 }

@@ -26,7 +26,21 @@ class Rollbacksubmission_model extends CI_Model
     {
         return $this->db->get_where('RollbackSubmission',array('submissionState'=>$submissionState))->result_array();
     }
-    
+
+    /*
+     * Get rollbacksubmission by rollbackId
+     */
+    function get_submissionByRollbackId($rollbackId)
+    {
+        $query = "SELECT p1.`contractId`, p1.`temporalMSISDN` FROM rollback p INNER JOIN rollbacksubmission p1 ON 
+                  ( p.`rollbackSubmissionId` = p1.`rollbackSubmissionId`) WHERE p.rollbackId = '" . $rollbackId . "'";
+
+        $response = $this->db->query($query)->row_array();
+
+        return $response;
+    }
+
+
     /*
      * Get all rollbacksubmission
      */

@@ -74,16 +74,16 @@ class RioAPI extends CI_Controller {
             if($file_name != ''){
                 $row = 1;
 
-                $msisdns = array();
-
                 if (($handle = fopen(FCPATH . 'uploads/' .$file_name, "r")) !== FALSE) {
+
+                    $msisdns = array();
 
                     while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
                         if($row == 1){
                             // Check if header Ok
                             if(strtolower($data[0]) != 'msisdn'){
                                 $response['success'] = false;
-                                $response['message'] = 'Invalid file content format. First Column must be named <MSISDN>. If you have difficulties creating file, please contact administrator';
+                                $response['message'] = 'Invalid file content format. First Column must be name <MSISDN>. If you have difficulties creating file, please contact administrator';
 
                                 $this->send_response($response);
                                 return;
@@ -95,14 +95,20 @@ class RioAPI extends CI_Controller {
                     }
 
                     fclose($handle);
-                }
 
-                $response['success'] = true;
-                $response['data'] = RIO::getBulkRio($msisdns);
+                    $response['success'] = true;
+                    $response['data'] = RIO::getBulkRio($msisdns);
+
+                }else{
+
+                    $response['success'] = false;
+                    $response['message'] = 'No file name found';
+
+                }
 
             }else{
                 $response['success'] = false;
-                $response['message'] = 'No file name found';
+                $response['message'] = 'Failed opening file';
             }
 
         }else{
