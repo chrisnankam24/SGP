@@ -14,6 +14,7 @@ require_once APPPATH . "controllers/kpsa/KpsaOperationService.php";
 require_once APPPATH . "controllers/cadb/PortingOperationService.php";
 require_once APPPATH . "controllers/cadb/RollbackOperationService.php";
 require_once APPPATH . "controllers/cadb/ReturnOperationService.php";
+require_once APPPATH . "controllers/cadb/ProvisionOperationService.php";
 require_once APPPATH . "controllers/sms/SMS.php";
 
 use PortingService\Porting\portingSubmissionStateType as portingSubmissionStateType;
@@ -860,6 +861,22 @@ class BatchOperationService extends CI_Controller {
 
                 $this->Provisioning_model->update_provisioning($portingId, $prParams);
 
+                // Confirm Routing Data
+                $provisionOperationService = new ProvisionOperationService();
+
+                $prResponse = $provisionOperationService->confirmRoutingData($portingId);
+
+                if($prResponse->success){
+
+                    // Process terminated
+
+                }
+                else{
+
+                    // Who cares, its auto anyway :)
+
+                }
+
                 // Notify Agents/Admin
 
                 $this->db->trans_complete();
@@ -1583,6 +1600,22 @@ class BatchOperationService extends CI_Controller {
 
                 $this->Provisioning_model->update_provisioning($rollbackId, $prParams);
 
+                // Confirm Routing Data
+                $provisionOperationService = new ProvisionOperationService();
+
+                $prResponse = $provisionOperationService->confirmRoutingData($rollbackId);
+
+                if($prResponse->success){
+
+                    // Process terminated
+
+                }
+                else{
+
+                    // Who cares, its auto anyway :)
+
+                }
+
                 // Notify Agents/Admin
 
                 $this->db->trans_complete();
@@ -2196,6 +2229,23 @@ class BatchOperationService extends CI_Controller {
 
                 $this->Provisioning_model->update_provisioning($returnId, $prParams);
 
+                // Confirm Routing Data
+                $provisionOperationService = new ProvisionOperationService();
+
+                $prResponse = $provisionOperationService->confirmRoutingData($returnId);
+
+                if($prResponse->success){
+
+                    // Process terminated
+
+                }
+                else{
+
+                    // Who cares, its auto anyway :)
+
+                }
+
+
                 // Notify Agents/Admin
 
                 $this->db->trans_complete();
@@ -2370,6 +2420,22 @@ class BatchOperationService extends CI_Controller {
                 );
 
                 $this->Provisioning_model->update_provisioning($returnId, $prParams);
+
+                // Confirm Routing Data
+                $provisionOperationService = new ProvisionOperationService();
+
+                $prResponse = $provisionOperationService->confirmRoutingData($returnId);
+
+                if($prResponse->success){
+
+                    // Process terminated
+
+                }
+                else{
+
+                    // Who cares, its auto anyway :)
+
+                }
 
                 // Notify Agents/Admin
 

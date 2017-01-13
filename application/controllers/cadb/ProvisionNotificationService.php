@@ -10,9 +10,10 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once "Fault.php";
 require_once "Common.php";
-require_once APPPATH . "controllers/cadb/Porting.php";
-require_once APPPATH . "controllers/cadb/Rollback.php";
+require_once "Porting.php";
+require_once "Rollback.php";
 require_once "ProvisionNotification.php";
+require_once "ProvisionOperationService.php";
 require_once APPPATH . "controllers/email/EmailService.php";
 
 use ProvisionService\ProvisionNotification as ProvisionNotification;
@@ -166,6 +167,22 @@ class ProvisionNotificationService  extends CI_Controller {
                     $emailService->cadbPortingStateOffConfirmed([]);
 
                 }
+
+            }
+
+            // Confirm Routing Data
+            $provisionOperationService = new ProvisionOperationService();
+
+            $prResponse = $provisionOperationService->confirmRoutingData($processId);
+
+            if($prResponse->success){
+
+                // Process terminated
+
+            }
+            else{
+
+                // Who cares, its auto anyway :)
 
             }
 

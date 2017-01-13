@@ -31,7 +31,6 @@ class ProvisionOperationService extends CI_Controller {
 
         // Define soap client object
         $this->client = new SoapClient(__DIR__ . '/wsdl/ProvisionOperationService.wsdl', array(
-            "location" => 'http://localhost/SGP/index.php/cadb/ProvisionOperationService',
             "trace" => false
         ));
 
