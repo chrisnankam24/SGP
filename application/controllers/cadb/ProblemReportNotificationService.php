@@ -8,8 +8,10 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * Time: 8:57 PM
  */
 
-require_once "ProblemNotification.php";
 require_once "Fault.php";
+require_once "Common.php";
+require_once "ProblemNotification.php";
+require_once APPPATH . "controllers/email/EmailService.php";
 
 use ProblemService\ProblemNotification as ProblemNotification;
 
@@ -19,6 +21,8 @@ class ProblemReportNotificationService extends CI_Controller {
     {
         parent::__construct();
 
+        $this->load->model('Error_model');
+
     }
 
     public function index(){
@@ -26,8 +30,8 @@ class ProblemReportNotificationService extends CI_Controller {
         // Create a new soap server in WSDL mode
         $server = new SoapServer( __DIR__ . '/wsdl/ProblemReportNotificationService.wsdl');
 
-        // Set the class for the soap server
-        $server->setClass("ProblemReportNotificationService");
+        // Set the object for the soap server
+        $server->setObject($this);
 
         // Handle soap operations
         $server->handle();
@@ -35,6 +39,7 @@ class ProblemReportNotificationService extends CI_Controller {
     }
 
     /**
+     * TODO: OK
      * @param $notifyProblemReportedRequest
      * @return ProblemNotification\notifyProblemReportedResponse
      * @throws ldbAdministrationServiceFault

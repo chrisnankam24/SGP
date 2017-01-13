@@ -8,8 +8,12 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * Time: 8:27 AM
  */
 
-require_once "ProvisionNotification.php";
 require_once "Fault.php";
+require_once "Common.php";
+require_once APPPATH . "controllers/cadb/Porting.php";
+require_once APPPATH . "controllers/cadb/Rollback.php";
+require_once "ProvisionNotification.php";
+require_once APPPATH . "controllers/email/EmailService.php";
 
 use ProvisionService\ProvisionNotification as ProvisionNotification;
 
@@ -22,6 +26,18 @@ class ProvisionNotificationService  extends CI_Controller {
     {
         parent::__construct();
 
+        $this->load->model('Porting_model');
+        $this->load->model('Portingsubmission_model');
+        $this->load->model('Portingstateevolution_model');
+        $this->load->model('Portingsmsnotification_model');
+        $this->load->model('Portingdenyrejectionabandon_model');
+
+        $this->load->model('Rollback_model');
+        $this->load->model('Rollbacksubmission_model');
+        $this->load->model('Rollbackstateevolution_model');
+
+        $this->load->model('Provisioning_model');
+
     }
 
     public function index(){
@@ -29,8 +45,8 @@ class ProvisionNotificationService  extends CI_Controller {
         // Create a new soap server in WSDL mode
         $server = new SoapServer( __DIR__ . '/wsdl/ProvisionNotificationService.wsdl');
 
-        // Set the class for the soap server
-        $server->setClass("ProvisionNotificationService");
+        // Set the object for the soap server
+        $server->setObject($this);
 
         // Handle soap operations
         $server->handle();
@@ -38,6 +54,7 @@ class ProvisionNotificationService  extends CI_Controller {
     }
 
     /**
+     * TODO: OK
      * @param $notifyRoutingDataRequest
      * @return ProvisionNotification\notifyRoutingDataResponse
      * @throws ldbAdministrationServiceFault
@@ -52,10 +69,106 @@ class ProvisionNotificationService  extends CI_Controller {
 
         $provisionState = ProvisionNotification\provisionStateType::STARTED;
 
+        $emailService = new EmailService();
+
         if(($processType == processType::PORTING || $processType == processType::ROLLBACK) && $endNetworkId == Operator::ORANGE_NETWORK_ID){
 
             // OPR in porting, OPD in rollback
             $provisionState = ProvisionNotification\provisionStateType::COMPLETED;
+
+            // Update process state from CONFIRMED to COMPLETED or Error if not in CONFIRMED state
+            if($processType == processType::PORTING){
+                $porting = $this->Porting_model->get_porting($processId);
+
+                if($porting['portingState'] == \PortingService\Porting\portingStateType::CONFIRMED) {
+
+                    $this->db->trans_start();
+
+                    // Insert into porting Evolution state table
+
+                    $portingEvolutionParams = array(
+                        'lastChangeDateTime' => date('c'),
+                        'portingState' => \PortingService\Porting\portingStateType::COMPLETED,
+                        'isAutoReached' => false,
+                        'portingId' => $processId,
+                    );
+
+                    $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
+
+                    // Update Porting table
+
+                    $portingParams = array(
+                        'lastChangeDateTime' => date('c'),
+                        'portingState' => \PortingService\Porting\portingStateType::COMPLETED
+                    );
+
+                    $this->Porting_model->update_porting($processId, $portingParams);
+
+                    // Notify Agents/Admin
+
+                    $this->db->trans_complete();
+
+                    if ($this->db->trans_status() === FALSE) {
+
+                        $emailService->adminErrorReport('PORTING_COMPLETED_FROM_PROVISIONING_BUT_DB_FILLED_INCOMPLETE', []);
+
+                    }else{
+
+                    }
+
+                }else{
+
+                    $emailService->cadbPortingStateOffConfirmed([]);
+
+                }
+            }elseif($processType == processType::ROLLBACK){
+
+                $rollback = $this->Rollback_model->get_full_rollback($processId);
+
+                if($rollback['rollbackState'] == \RollbackService\Rollback\rollbackStateType::CONFIRMED) {
+
+                    $this->db->trans_start();
+
+                    // Insert into Rollback Evolution state table
+
+                    $rollbackEvolutionParams = array(
+                        'lastChangeDateTime' => date('c'),
+                        'rollbackState' => \RollbackService\Rollback\rollbackStateType::COMPLETED,
+                        'isAutoReached' => false,
+                        'rollbackId' => $processId,
+                    );
+
+                    $this->Rollbackstateevolution_model->add_rollbackstateevolution($rollbackEvolutionParams);
+
+                    // Update Rollback table
+
+                    $rollbackParams = array(
+                        'lastChangeDateTime' => date('c'),
+                        'rollbackState' => \RollbackService\Rollback\rollbackStateType::COMPLETED
+                    );
+
+                    $this->Rollback_model->update_rollback($processId, $rollbackParams);
+
+                    // Notify Agents/Admin
+
+                    $this->db->trans_complete();
+
+                    if ($this->db->trans_status() === FALSE) {
+
+                        $emailService->adminErrorReport('ROLLBACK_COMPLETED_FROM_PROVISIONING_BUT_DB_FILLED_INCOMPLETE', []);
+
+                    }else{
+                        var_dump($rollbackParams);
+                    }
+
+                }else{
+
+                    $emailService->cadbPortingStateOffConfirmed([]);
+
+                }
+
+            }
+
 
         }
 
@@ -82,11 +195,15 @@ class ProvisionNotificationService  extends CI_Controller {
             $emailService = new EmailService();
             $emailService->adminErrorReport('PROVISION_ROUTING_DATA_RECEIVED_BUT_DB_FILLED_INCOMPLETE', []);
 
+            throw new ldbAdministrationServiceFault();
+
+        }else{
+
+            $response = new ProvisionNotification\notifyRoutingDataResponse();
+
+            return $response;
+
         }
-
-        $response = new ProvisionNotification\notifyRoutingDataResponse();
-
-        return $response;
 
     }
 

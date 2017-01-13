@@ -85,7 +85,7 @@ class POSServerFunctionalities extends CI_Controller  {
 
         return $response;
 
-        //throw new numberRangesOverlapFault();
+        //throw new invalidOperatorFault();
 
     }
 
@@ -100,6 +100,32 @@ class POSServerFunctionalities extends CI_Controller  {
     public function approve($approveRequest){
 
         $response = new Porting\approveResponse();
+
+        $response->portingTransaction = new Porting\portingTransactionType();
+
+        //$orderRequest = new Porting\orderRequest();
+
+        $response->portingTransaction->lastChangeDateTime = date('c');
+        $response->portingTransaction->cadbOrderDateTime = date('c');
+        $response->portingTransaction->donorNrn = new nrnType();
+        $response->portingTransaction->donorNrn->networkId = '02';
+        $response->portingTransaction->donorNrn->routingNumber = '1601';
+
+        $response->portingTransaction->recipientNrn = new nrnType();
+        $response->portingTransaction->recipientNrn->networkId = '02';
+        $response->portingTransaction->recipientNrn->routingNumber = '1601';
+
+        $response->portingTransaction->portingDateTime = date('c');
+        $response->portingTransaction->portingId = $approveRequest->portingId;
+
+        $response->portingTransaction->portingState = Porting\portingStateType::ORDERED;
+        $response->portingTransaction->recipientSubmissionDateTime = date('c');
+        $response->portingTransaction->rio = '02P058M709YS';
+
+        $response->portingTransaction->subscriberInfo = new Porting\subscriberInfoType();
+        $response->portingTransaction->subscriberInfo->physicalPersonFirstName = 'Nankam';
+        $response->portingTransaction->subscriberInfo->physicalPersonLastName = 'Christian';
+        $response->portingTransaction->subscriberInfo->physicalPersonIdNumber = '110328054';
 
         return $response;
 
@@ -119,15 +145,28 @@ class POSServerFunctionalities extends CI_Controller  {
 
         $response->portingTransaction = new Porting\portingTransactionType();
 
-        //$orderRequest = new Porting\orderRequest();
-
         $response->portingTransaction->lastChangeDateTime = date('c');
         $response->portingTransaction->cadbOrderDateTime = date('c');
         $response->portingTransaction->portingDateTime = date('c');
-        $response->portingTransaction->portingId = '20161208-02-237694975166-345';
+        $response->portingTransaction->portingId = $acceptRequest->portingId;
         $response->portingTransaction->portingState = Porting\portingStateType::ACCEPTED;
 
+        $response->portingTransaction->donorNrn = new nrnType();
+        $response->portingTransaction->donorNrn->networkId = '02';
+        $response->portingTransaction->donorNrn->routingNumber = '1601';
+
+        $response->portingTransaction->recipientNrn = new nrnType();
+        $response->portingTransaction->recipientNrn->networkId = '02';
+        $response->portingTransaction->recipientNrn->routingNumber = '1601';
+
+        // numberRange
+        $numRange = new numberRangeType();
+        $numRange->endNumber = '237694975166';
+        $numRange->startNumber = '237694975166';
+        $response->portingTransaction->numberRanges = array($numRange);
+
         return $response;
+        //throw new invalidOperatorFault();
 
     }
 
@@ -161,7 +200,17 @@ class POSServerFunctionalities extends CI_Controller  {
 
         $response = new Porting\rejectResponse();
 
+        $response->portingTransaction = new Porting\portingTransactionType();
+
+        $response->portingTransaction->lastChangeDateTime = date('c');
+        $response->portingTransaction->cadbOrderDateTime = date('c');
+        $response->portingTransaction->portingDateTime = date('c');
+        $response->portingTransaction->portingId = $rejectRequest->portingId;
+        $response->portingTransaction->portingState = Porting\portingStateType::REJECTED;
+
         return $response;
+
+        //throw new invalidOperatorFault();
     }
 
     /**
@@ -176,6 +225,14 @@ class POSServerFunctionalities extends CI_Controller  {
     public function deny($denyRequest){
 
         $response = new Porting\denyResponse();
+
+        $response->portingTransaction = new Porting\portingTransactionType();
+
+        $response->portingTransaction->lastChangeDateTime = date('c');
+        $response->portingTransaction->cadbOrderDateTime = date('c');
+        $response->portingTransaction->portingDateTime = date('c');
+        $response->portingTransaction->portingId = $denyRequest->portingId;
+        $response->portingTransaction->portingState = Porting\portingStateType::DENIED;
 
         return $response;
     }

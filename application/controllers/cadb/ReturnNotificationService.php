@@ -8,9 +8,13 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * Time: 9:35 AM
  */
 
-require_once "ReturnNotification.php";
 require_once "Fault.php";
+require_once "Return.php";
 require_once "Common.php";
+require_once "ReturnNotification.php";
+require_once APPPATH . "controllers/email/EmailService.php";
+require_once APPPATH . "controllers/bscs/BscsOperationService.php";
+require_once APPPATH . "controllers/kpsa/KpsaOperationService.php";
 
 use ReturnService\_ReturnNotification as _ReturnNotification;
 
@@ -32,8 +36,8 @@ class ReturnNotificationService extends CI_Controller {
         // Create a new soap server in WSDL mode
         $server = new SoapServer( __DIR__ . '/wsdl/ReturnNotificationService.wsdl');
 
-        // Set the class for the soap server
-        $server->setClass("ReturnNotificationService");
+        // Set the object for the soap server
+        $server->setObject($this);
 
         // Handle soap operations
         $server->handle();
@@ -41,6 +45,7 @@ class ReturnNotificationService extends CI_Controller {
     }
 
     /**
+     * TODO: OK
      * @param $notifyOpenedRequest
      * @return _ReturnNotification\notifyOpenedResponse
      * @throws ldbAdministrationServiceFault
@@ -71,7 +76,6 @@ class ReturnNotificationService extends CI_Controller {
         $nrsParams = array(
             'returnNumberState' => \ReturnService\_Return\returnStateType::OPENED,
             'lastChangeDateTime' => date('c'),
-            'isAutoReached' => false,
             'returnId' => $notifyOpenedRequest->returnTransaction->returnId,
         );
 
@@ -91,6 +95,7 @@ class ReturnNotificationService extends CI_Controller {
     }
 
     /**
+     * TODO: OK
      * @param $notifyAcceptedRequest
      * @return _ReturnNotification\notifyAcceptedResponse
      * @throws ldbAdministrationServiceFault
@@ -99,83 +104,30 @@ class ReturnNotificationService extends CI_Controller {
 
         $returnId = $notifyAcceptedRequest->returnTransaction->returnId;
 
-        $returnNumber = $notifyAcceptedRequest->returnTransaction->numberRanges->numberRange->startNumber;
+        // Update NR table
 
-        $emailService = new EmailService();
+        $nrParams = array(
+            'returnNumberState' => \ReturnService\_Return\returnStateType::ACCEPTED,
+        );
 
-        // Start Return Current Owner
+        $this->Numberreturn_model->update_numberreturn($returnId, $nrParams);
 
-        $returnStartedResponse = $this->startReturnCO($returnNumber);
+        // Insert into NR state Evolution
 
-        if($returnStartedResponse->success){
+        $nrsParams = array(
+            'returnNumberState' => \ReturnService\_Return\returnStateType::ACCEPTED,
+            'lastChangeDateTime' => date('c'),
+            'returnId' => $returnId,
+        );
 
-            $this->db->trans_start();
+        $this->Numberreturnstateevolution_model->add_numberreturnstateevolution($nrsParams);
 
-            // Update NR table
+        $this->db->trans_complete();
 
-            $nrParams = array(
-                'returnNumberState' => \ReturnService\_Return\returnStateType::MSISDN_RETURN_CONFIRMED,
-            );
+        if ($this->db->trans_status() === FALSE) {
 
-            $this->Numberreturn_model->update_numberreturn($returnId, $nrParams);
-
-            // Insert NR state evolution table
-
-            $nrsParams = array(
-                'returnNumberState' => \ReturnService\_Return\returnStateType::MSISDN_RETURN_CONFIRMED,
-                'lastChangeDateTime' => date('c'),
-                'isAutoReached' => false,
-                'returnId' => $returnId,
-            );
-
-            $this->Numberreturnstateevolution_model->add_numberreturnstateevolution($nrsParams);
-
-            $this->db->trans_complete();
-
-            if ($this->db->trans_status() === FALSE) {
-
-                $emailService = new EmailService();
-                $emailService->adminErrorReport('RETURN_REJECTED_BUT_DB_FILLED_INCOMPLETE', []);
-
-            }
-
-        }else{
-
-            $faultCode = $returnStartedResponse->error;
-
-            $fault = '';
-
-            switch ($faultCode) {
-                // Terminal Processes
-                case Fault::SERVICE_BREAK_DOWN_CODE:
-                    $fault = Fault::SERVICE_BREAK_DOWN;
-                    break;
-                case Fault::SIGNATURE_MISMATCH_CODE:
-                    $fault = Fault::SIGNATURE_MISMATCH;
-                    break;
-                case Fault::DENIED_ACCESS_CODE:
-                    $fault = Fault::DENIED_ACCESS;
-                    break;
-                case Fault::UNKNOWN_COMMAND_CODE:
-                    $fault = Fault::UNKNOWN_COMMAND;
-                    break;
-                case Fault::INVALID_PARAMETER_TYPE_CODE:
-                    $fault = Fault::INVALID_PARAMETER_TYPE;
-                    break;
-
-                case Fault::PARAMETER_LIST_CODE:
-                    $fault = Fault::PARAMETER_LIST;
-                    break;
-
-                case Fault::CMS_EXECUTION_CODE:
-                    $fault = Fault::CMS_EXECUTION;
-                    break;
-
-                default:
-                    $fault = $faultCode;
-            }
-
-            $emailService->adminErrorReport($fault, []);
+            $emailService = new EmailService();
+            $emailService->adminErrorReport('RETURN_REJECTED_BUT_DB_FILLED_INCOMPLETE', []);
 
         }
 
@@ -186,6 +138,7 @@ class ReturnNotificationService extends CI_Controller {
     }
 
     /**
+     * TODO: OK
      * @param $notifyRejectedRequest
      * @return _ReturnNotification\notifyRejectedResponse
      * @throws ldbAdministrationServiceFault
@@ -209,7 +162,6 @@ class ReturnNotificationService extends CI_Controller {
         $nrsParams = array(
             'returnNumberState' => \ReturnService\_Return\returnStateType::REJECTED,
             'lastChangeDateTime' => date('c'),
-            'isAutoReached' => false,
             'returnId' => $returnId,
         );
 
@@ -234,67 +186,6 @@ class ReturnNotificationService extends CI_Controller {
         }
 
         $response = new _ReturnNotification\notifyRejectedResponse();
-
-        return $response;
-
-    }
-
-    private function performReturnCO($portingNumber){
-
-        // BSCS Ops
-
-        // Return Ported MSISDN (ReturnMSISDN)
-
-        // KPSA Ops
-
-        // If OPR = OPA, delete MSISDN in KPSA
-
-        // Else if MSISDN not in KPSA, create MSISDN with routing number Orange
-
-        // Else if MSISND in KPSA, update MSISDN with routing number Orange
-
-    }
-
-    private function performReturnPO($returnNumber){
-
-        // BSCS Ops
-
-        // Retrieve ContractId from BSCS
-
-        // Export MSISDN from BSCS (ExportMSISDN)
-
-        // KPSA Ops
-
-        // If MSISDN not in KPSA, create MSISDN with routing number OPR
-
-        // Else if MSISND in KPSA, update MSISDN with routing number OPR
-
-    }
-
-    private function performReturnOther($returnNumber) {
-
-        // KPSA Ops
-
-        // If MSISDN not in KPSA, create MSISDN with routing number OPR
-
-        // Else if MSISDN in KPSA, update MSISDN with routing number OPR
-
-    }
-
-    private function startReturnCO($returnNumber){
-
-        // Return MSISDN
-        $bscsOperationService = new BscsOperationService();
-
-        $response = $bscsOperationService->ReturnMSISDN($returnNumber);
-
-        // KPSA Ops
-
-        // If OPR = OPA, delete MSISDN in KPSA
-
-        // Else if MSISDN not in KPSA, create MSISDN with routing number Orange
-
-        // Else if MSISND in KPSA, update MSISDN with routing number Orange
 
         return $response;
 

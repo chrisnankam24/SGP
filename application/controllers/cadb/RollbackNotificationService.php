@@ -9,14 +9,14 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * Time: 4:18 PM
  */
 
-require_once "Rollback.php";
-require_once "PortingNotification.php";
-require_once "Common.php";
 require_once "Fault.php";
-
+require_once "Common.php";
+require_once "Rollback.php";
+require_once "RollbackNotification.php";
 require_once APPPATH . "controllers/sms/SMS.php";
 require_once APPPATH . "controllers/email/EmailService.php";
 require_once APPPATH . "controllers/bscs/BscsOperationService.php";
+require_once APPPATH . "controllers/kpsa/KpsaOperationService.php";
 
 use RollbackService\RollbackNotification as RollbackNotification;
 
@@ -33,7 +33,7 @@ class RollbackNotificationService extends CI_Controller {
         $this->load->model('Rollbacksubmission_model');
         $this->load->model('Rollbackstateevolution_model');
         $this->load->model('Rollbacksmsnotification_model');
-        $this->load->model('Portingdenyrejectionabandon_model');
+        $this->load->model('Rollbackrejectionabandon_model');
 
     }
 
@@ -42,8 +42,8 @@ class RollbackNotificationService extends CI_Controller {
         // Create a new soap server in WSDL mode
         $server = new SoapServer( __DIR__ . '/wsdl/RollbackNotificationService.wsdl');
 
-        // Set the class for the soap server
-        $server->setClass("RollbackNotificationService");
+        // Set the object for the soap server
+        $server->setObject($this);
 
         // Handle soap operations
         $server->handle();
@@ -51,6 +51,7 @@ class RollbackNotificationService extends CI_Controller {
     }
 
     /**
+     * TODO: OK
      * @param $notifyOpenedRequest
      * @return RollbackNotification\notifyOpenedResponse
      * @throws ldbAdministrationServiceFault
@@ -60,8 +61,6 @@ class RollbackNotificationService extends CI_Controller {
         $rollbackId = $notifyOpenedRequest->rollbackTransaction->rollbackId;
 
         $subscriberMSISDN = $notifyOpenedRequest->rollbackTransaction->numberRanges->numberRange->startNumber;
-
-        $denom_OPD =  '';
 
         if($notifyOpenedRequest->rollbackTransaction->donorNrn->networkId == Operator::MTN_NETWORK_ID){
             $denom_OPD = SMS::$DENOMINATION_COMMERCIALE_MTN;
@@ -106,7 +105,6 @@ class RollbackNotificationService extends CI_Controller {
             $emailService->adminErrorReport('OPENED_ROLLBACK_RECEIVED_BUT_DB_FILLING_ERROR', []);
         }
 
-        // Send SMS
         // Send SMS to Subscriber
 
         // Get porting Info for language
@@ -116,7 +114,7 @@ class RollbackNotificationService extends CI_Controller {
 
         $smsResponse = SMS::OPR_Inform_Subscriber($language, $subscriberMSISDN, $denom_OPD, $rollbackId);
 
-        if($smsResponse->success){
+        if($smsResponse['success']){
 
             $smsNotificationparams = array(
                 'rollbackId' => $rollbackId,
@@ -148,6 +146,7 @@ class RollbackNotificationService extends CI_Controller {
     }
 
     /**
+     * TODO: OK
      * @param $notifyAcceptedRequest
      * @return RollbackNotification\notifyAcceptedResponse
      * @throws ldbAdministrationServiceFault
@@ -206,7 +205,7 @@ class RollbackNotificationService extends CI_Controller {
 
         $smsResponse = SMS::OPD_Subscriber_OK($language, $subscriberMSISDN, $day, $start_time, $end_time);
 
-        if($smsResponse->success){
+        if($smsResponse['success']){
 
             $smsParams = array(
                 'rollbackId' => $rollbackId,
@@ -238,6 +237,7 @@ class RollbackNotificationService extends CI_Controller {
     }
 
     /**
+     * TODO OK
      * @param $notifyAutoAcceptRequest
      * @return RollbackNotification\notifyAutoAcceptResponse
      * @throws ldbAdministrationServiceFault
@@ -275,11 +275,56 @@ class RollbackNotificationService extends CI_Controller {
 
         $emailService = new EmailService();
 
+        $this->db->trans_complete();
+
         if ($this->db->trans_status() === FALSE) {
 
             $emailService->adminErrorReport('ROLLBACK_AUTO_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', []);
 
         }
+
+        // Send SMS to Subscriber
+
+        $originalPortingId = $notifyAutoAcceptRequest->rollbackTransaction->originalPortingId;
+
+        $portingInfo = $this->Porting_model->get_porting($originalPortingId);
+
+        $language = $portingInfo['language'];
+
+        $subscriberMSISDN = $notifyAutoAcceptRequest->rollbackTransaction->numberRanges->numberRange->startNumber;
+
+        $rollbackDateTime = $notifyAutoAcceptRequest->rollbackTransaction->rollbackDateTime;
+
+        $day = date('d/m/Y', strtotime($rollbackDateTime));
+        $start_time = date('h:i:s', strtotime($rollbackDateTime));
+        $end_time = date('h:i:s', strtotime('+2 hours', strtotime($rollbackDateTime)));
+
+        $smsResponse = SMS::OPD_Subscriber_OK($language, $subscriberMSISDN, $day, $start_time, $end_time);
+
+        if($smsResponse['success']){
+
+            $smsParams = array(
+                'rollbackId' => $rollbackId,
+                'smsType' => SMSType::OPD_ROLLBACK_ACCEPTED,
+                'creationDateTime' => date('c'),
+                'status' => smsState::SENT,
+                'attemptCount' => 1,
+                'sendDateTime' => date('c'),
+            );
+
+        }else{
+
+            $smsParams = array(
+                'rollbackId' => $rollbackId,
+                'smsType' => SMSType::OPD_ROLLBACK_ACCEPTED,
+                'creationDateTime' => date('c'),
+                'status' => smsState::PENDING,
+                'attemptCount' => 1,
+            );
+
+        }
+
+        $this->Rollbacksmsnotification_model->add_rollbacksmsnotification($smsParams);
 
         $emailService->adminErrorReport('ROLLBACK_REACHED_AUTO_ACCEPT', []);
 
@@ -290,6 +335,7 @@ class RollbackNotificationService extends CI_Controller {
     }
 
     /**
+     * TODO: OK
      * @param $notifyAutoConfirmRequest
      * @return RollbackNotification\notifyAutoConfirmResponse
      * @throws ldbAdministrationServiceFault
@@ -305,7 +351,7 @@ class RollbackNotificationService extends CI_Controller {
         // Alert admin
         $emailService->adminErrorReport('ROLLBACK_REACHED_AUTO_CONFIRM', []);
 
-        // Start porting process
+        // Start rollback process
         $rollbackStartedResponse = $this->startRollbackOPD($subscriberMSISDN);
 
         if($rollbackStartedResponse->success){
@@ -391,6 +437,7 @@ class RollbackNotificationService extends CI_Controller {
     }
 
     /**
+     * TODO: OK
      * @param $notifyRejectedRequest
      * @return RollbackNotification\notifyRejectedResponse
      * @throws ldbAdministrationServiceFault
@@ -453,7 +500,7 @@ class RollbackNotificationService extends CI_Controller {
 
         $smsResponse = SMS::OPD_Subscriber_KO($language, $subscriberMSISDN);
 
-        if($smsResponse->success){
+        if($smsResponse['success']){
             $smsParams = array(
                 'rollbackId' => $rollbackId,
                 'smsType' => SMSType::OPD_ROLLBACK_REJECTED,
@@ -484,6 +531,7 @@ class RollbackNotificationService extends CI_Controller {
     }
 
     /**
+     * TODO: Huawei API currently doesnot define this endpoint
      * @param $notifyAbandonedRequest
      * @return RollbackNotification\notifyAbandonedResponse
      */
@@ -537,7 +585,7 @@ class RollbackNotificationService extends CI_Controller {
 
         $smsResponse = SMS::Subscriber_CADB_Abandoned_Rollback($language, $subscriberMSISDN);
 
-        if($smsResponse->success){
+        if($smsResponse['success']){
 
             // Insert Porting SMS Notification
             $params = array(
@@ -582,6 +630,11 @@ class RollbackNotificationService extends CI_Controller {
 
     }
 
+    /**
+     * Starts Rollback of given number
+     * @param $rollbackNumber
+     * @return errorResponse
+     */
     private function startRollbackOPD($rollbackNumber){
 
         // Import MSISDN
@@ -592,5 +645,6 @@ class RollbackNotificationService extends CI_Controller {
         return $response;
 
     }
+
 }
 

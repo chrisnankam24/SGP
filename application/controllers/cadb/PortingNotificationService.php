@@ -62,6 +62,7 @@ class PortingNotificationService extends CI_Controller
     }
 
     /**
+     * TODO: OK
      * @param $notifyOrderedRequest
      * @return PortingNotification\notifyOrderedResponse
      * @throws ldbAdministrationServiceFault
@@ -73,6 +74,8 @@ class PortingNotificationService extends CI_Controller
         $rio = $notifyOrderedRequest->portingTransaction->rio;
 
         $portingId = $notifyOrderedRequest->portingTransaction->portingId;
+
+        $recipientNetworkId =  $notifyOrderedRequest->portingTransaction->recipientNrn->networkId;
 
         $subscriberType = getSubscriberType($rio);
 
@@ -139,15 +142,19 @@ class PortingNotificationService extends CI_Controller
 
             // Send SMS to Subscriber
 
-            if($notifyOrderedRequest->portingTransaction->recipientNrn->networkId == Operator::MTN_NETWORK_ID){
+            if($recipientNetworkId == Operator::MTN_NETWORK_ID){
+
                 $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_MTN;
-            }else{
+
+            }elseif($recipientNetworkId == Operator::NEXTTEL_NETWORK_ID){
+
                 $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_NEXTTEL;
+
             }
 
             $smsResponse = SMS::OPD_Inform_Subcriber($language, $startMSISDN, $denom_OPR, $portingId);
 
-            if($smsResponse->success){
+            if($smsResponse['success'] == true){
 
                 // Insert Porting SMS Notification
                 $smsNotificationparams = array(
@@ -178,15 +185,15 @@ class PortingNotificationService extends CI_Controller
 
                 $emailService = new EmailService();
                 $emailService->adminErrorReport('ORDERED_PORTING_RECEIVED_BUT_DB_FILLING_ERROR', []);
+                throw new ldbAdministrationServiceFault();
 
-            }else {
+            }else{
+
+                $response = new PortingNotification\notifyOrderedResponse();
+
+                return $response;
 
             }
-
-            $response = new PortingNotification\notifyOrderedResponse();
-
-            return $response;
-
 
         }else{
 
@@ -198,6 +205,7 @@ class PortingNotificationService extends CI_Controller
     }
 
     /**
+     * TODO: OK
      * @param $notifyApprovedRequest
      * @return PortingNotification\notifyApprovedResponse
      * @throws ldbAdministrationServiceFault
@@ -206,7 +214,7 @@ class PortingNotificationService extends CI_Controller
 
         $this->db->trans_start();
 
-        // Insert into porting Evolution state table
+        // Fill in portingStateEvolution table with state approved
 
         $portingEvolutionParams = array(
             'lastChangeDateTime' => $notifyApprovedRequest->portingTransaction->lastChangeDateTime,
@@ -214,7 +222,6 @@ class PortingNotificationService extends CI_Controller
             'isAutoReached' => false,
             'portingId' => $notifyApprovedRequest->portingTransaction->portingId,
         );
-
 
         $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
 
@@ -231,20 +238,24 @@ class PortingNotificationService extends CI_Controller
 
         $this->db->trans_complete();
 
-        if ($this->db->trans_status() === FALSE) {
+        if ($this->db->trans_status() === false) {
 
             $emailService = new EmailService();
             $emailService->adminErrorReport('PORTING_APPROVED_BUT_DB_FILLED_INCOMPLETE', []);
+            throw new ldbAdministrationServiceFault();
+
+        }else{
+
+            $response = new PortingNotification\notifyApprovedResponse();
+
+            return $response;
 
         }
-
-        $response = new PortingNotification\notifyApprovedResponse();
-
-        return $response;
 
     }
 
     /**
+     * TODO: OK
      * @param $notifyAutoApproveRequest
      * @return PortingNotification\notifyAutoApproveResponse
      * @throws ldbAdministrationServiceFault
@@ -283,17 +294,21 @@ class PortingNotificationService extends CI_Controller
 
             $emailService->adminErrorReport('PORTING_AUTO_APPROVED_BUT_DB_FILLED_INCOMPLETE', []);
 
+            throw new ldbAdministrationServiceFault();
+
+        }else{
+
+            $emailService->adminErrorReport('PORTING_REACHED_AUTO_APPROVE', []);
+
+            $response = new PortingNotification\notifyAutoApproveResponse();
+
+            return $response;
+
         }
-
-        $emailService->adminErrorReport('PORTING_REACHED_AUTO_APPROVE', []);
-
-        $response = new PortingNotification\notifyAutoApproveResponse();
-
-        return $response;
-
     }
 
     /**
+     * TODO: OK
      * @param $notifyAcceptedRequest
      * @return PortingNotification\notifyAcceptedResponse
      * @throws ldbAdministrationServiceFault
@@ -344,7 +359,7 @@ class PortingNotificationService extends CI_Controller
 
         $smsResponse = SMS::OPR_Subscriber_OK($language, $subscriberMSISDN, $day, $start_time, $end_time);
 
-        if($smsResponse->success){
+        if($smsResponse['success']){
 
             // Insert Porting SMS Notification
             $smsNotificationparams = array(
@@ -356,7 +371,8 @@ class PortingNotificationService extends CI_Controller
                 'sendDateTime' => date('c')
             );
 
-        }else{
+        }
+        else{
 
             $smsNotificationparams = array(
                 'portingId' => $portingId,
@@ -377,15 +393,20 @@ class PortingNotificationService extends CI_Controller
             $emailService = new EmailService();
             $emailService->adminErrorReport('PORTING_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', []);
 
+            throw new ldbAdministrationServiceFault();
+
+        }else{
+
+            $response = new PortingNotification\notifyAcceptedResponse();
+
+            return $response;
+
         }
-
-        $response = new PortingNotification\notifyAcceptedResponse();
-
-        return $response;
 
     }
 
     /**
+     * TODO: OK
      * @param $notifyAutoAcceptRequest
      * @return PortingNotification\notifyAutoAcceptResponse
      * @throws ldbAdministrationServiceFault
@@ -417,6 +438,50 @@ class PortingNotificationService extends CI_Controller
         );
 
         $this->Porting_model->update_porting($portingId, $portingParams);
+
+        // Send SMS to Subscriber
+
+        // Get porting Info for language
+        $portingInfo = $this->Porting_model->get_porting($portingId);
+
+        $language = $portingInfo['language'];
+
+        $subscriberMSISDN = $notifyAutoAcceptRequest->portingTransaction->numberRanges->numberRange->startNumber;
+
+        $portingDateTime = $notifyAutoAcceptRequest->portingTransaction->portingDateTime;
+
+        $day = date('d/m/Y', strtotime($portingDateTime));
+        $start_time = date('h:i:s', strtotime($portingDateTime));
+        $end_time = date('h:i:s', strtotime('+2 hours', strtotime($portingDateTime)));
+
+        $smsResponse = SMS::OPR_Subscriber_OK($language, $subscriberMSISDN, $day, $start_time, $end_time);
+
+        if($smsResponse['success']){
+
+            // Insert Porting SMS Notification
+            $smsNotificationparams = array(
+                'portingId' => $portingId,
+                'smsType' => SMSType::OPR_PORTING_OK,
+                'creationDateTime' => date('c'),
+                'status' => smsState::SENT,
+                'attemptCount' => 1,
+                'sendDateTime' => date('c')
+            );
+
+        }
+        else{
+
+            $smsNotificationparams = array(
+                'portingId' => $portingId,
+                'smsType' => SMSType::OPR_PORTING_OK,
+                'creationDateTime' => date('c'),
+                'status' => smsState::PENDING,
+                'attemptCount' => 1,
+            );
+
+        }
+
+        $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
 
         $this->db->trans_complete();
 
@@ -486,6 +551,13 @@ class PortingNotificationService extends CI_Controller
             if ($this->db->trans_status() === FALSE) {
 
                 $emailService->adminErrorReport('PORTING_AUTO_CONFIRMED_AND_MSISDN_EXPORTED_BUT_DB_FILLED_INCOMPLETE', []);
+                throw new ldbAdministrationServiceFault();
+
+            }else{
+
+                $response = new PortingNotification\notifyAutoConfirmResponse();
+
+                return $response;
 
             }
 
@@ -528,14 +600,15 @@ class PortingNotificationService extends CI_Controller
 
             $emailService->adminErrorReport($fault, []);
 
-        }
-        
-        $response = new PortingNotification\notifyAutoConfirmResponse();
+            $response = new PortingNotification\notifyAutoConfirmResponse();
 
-        return $response;
+            return $response;
+
+        }
     }
 
     /**
+     *
      * @param $notifyDeniedRequest
      * @return PortingNotification\notifyDeniedResponse
      * @throws ldbAdministrationServiceFault
@@ -620,16 +693,20 @@ class PortingNotificationService extends CI_Controller
 
             $emailService = new EmailService();
             $emailService->adminErrorReport('PORTING_REJECTED_BUT_DB_FILLED_INCOMPLETE', []);
+            throw new ldbAdministrationServiceFault();
+
+        }else{
+
+            $response = new PortingNotification\notifyDeniedResponse();
+
+            return $response;
 
         }
-
-        $response = new PortingNotification\notifyDeniedResponse();
-
-        return $response;
 
     }
 
     /**
+     * TODO: OK
      * @param $notifyRejectedRequest
      * @return PortingNotification\notifyRejectedResponse
      * @throws ldbAdministrationServiceFault
@@ -665,7 +742,7 @@ class PortingNotificationService extends CI_Controller
         // Insert into PortingDenyRejectionAbandoned
 
         $pdraParams = array(
-            'denyRejectionReason' => $notifyRejectedRequest->denialReason,
+            'denyRejectionReason' => $notifyRejectedRequest->rejectionReason,
             'cause' => $notifyRejectedRequest->cause,
             'portingId' => $portingId
         );
@@ -683,7 +760,7 @@ class PortingNotificationService extends CI_Controller
 
         $smsResponse = SMS::OPR_Subscriber_KO($language, $subscriberMSISDN);
 
-        if($smsResponse->success){
+        if($smsResponse['success']){
 
             // Insert Porting SMS Notification
             $smsNotificationparams = array(
@@ -715,17 +792,20 @@ class PortingNotificationService extends CI_Controller
 
             $emailService = new EmailService();
             $emailService->adminErrorReport('PORTING_REJECTED_BUT_DB_FILLED_INCOMPLETE', []);
+            throw new ldbAdministrationServiceFault();
+
+        }else{
+
+            $response = new PortingNotification\notifyRejectedResponse();
+
+            return $response;
 
         }
-
-
-        $response = new PortingNotification\notifyRejectedResponse();
-
-        return $response;
 
     }
 
     /**
+     * TODO: OK
      * @param notifyAbandonedRequest
      * @return PortingNotification\notifyAbandonedResponse
      * @throws ldbAdministrationServiceFault
@@ -768,12 +848,15 @@ class PortingNotificationService extends CI_Controller
         $this->Portingdenyrejectionabandon_model->add_portingdenyrejectionabandon($pdraParams);
 
         // Send SMS to Subscriber
+        $portingInfo = $this->Porting_model->get_porting($portingId);
+
+        $language = $portingInfo['language'];
 
         $subscriberMSISDN = $notifyAbandonedRequest->portingTransaction->numberRanges->numberRange->startNumber;
 
-        $smsResponse =  SMS::Subscriber_CADB_Abandoned($subscriberMSISDN);
+        $smsResponse =  SMS::Subscriber_CADB_Abandoned($language, $subscriberMSISDN);
 
-        if($smsResponse->success){
+        if($smsResponse['success']){
 
             // Insert Porting SMS Notification
             $smsNotificationparams = array(
@@ -806,14 +889,17 @@ class PortingNotificationService extends CI_Controller
         if ($this->db->trans_status() === FALSE) {
 
             $emailService->adminErrorReport('PORTING_ABANDONED_BUT_DB_FILLED_INCOMPLETE', []);
+            throw new ldbAdministrationServiceFault();
+
+        }else{
+
+            $emailService->adminAgentsPortingAbandoned([]);
+
+            $response = new PortingNotification\notifyAbandonedResponse();
+
+            return $response;
 
         }
-
-        $emailService->adminAgentsPortingAbandoned([]);
-
-        $response = new PortingNotification\notifyAbandonedResponse();
-
-        return $response;
 
     }
 
@@ -834,6 +920,4 @@ class PortingNotificationService extends CI_Controller
     }
 
 }
-
-
 

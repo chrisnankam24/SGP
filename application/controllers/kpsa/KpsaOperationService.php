@@ -21,8 +21,8 @@ class KpsaOperationService extends CI_Controller {
     }
 
     public function test(){
-        $response = $this->viewSubscriberTEKELEC('694975166');
-        var_dump($response);
+        //$response = $this->viewSubscriberTEKELEC('694975166');
+        var_dump(isOCMNumber('237697475166'));
     }
 
     /**
@@ -39,12 +39,12 @@ class KpsaOperationService extends CI_Controller {
         $response['success'] = true;
 
         // Search for MSISDN in KPSA
-        $searchResponse = $this->viewSubscriberTEKELEC($msisdn);
+       /* $searchResponse = $this->viewSubscriberTEKELEC($msisdn);
 
-        if($searchResponse->success == true){ // MSISDN in KPSA
+        if($searchResponse['success'] == true){ // MSISDN in KPSA
 
             // If OPR = OPA, delete MSISDN in KPSA
-            if($toOperator == Operator::ORANGE_NETWORK_ID && $this->isOCMNumber($msisdn)){ // Orange number coming back
+            if($toOperator == Operator::ORANGE_NETWORK_ID && isOCMNumber($msisdn)){ // Orange number coming back
 
                 // Delete number from KPSA
                 $deleteResponse = $this->deleteSubscriberTEKELEC($msisdn, $searchResponse['routingNumber']);
@@ -72,7 +72,8 @@ class KpsaOperationService extends CI_Controller {
 
             }
 
-        }if($searchResponse->success == false){ // MSISDN not in KPSA
+        }
+        if($searchResponse['success'] == false){ // MSISDN not in KPSA
 
             //create MSISDN with routing number toOperator
 
@@ -93,7 +94,7 @@ class KpsaOperationService extends CI_Controller {
             $response['success'] = false;
             $response['message'] = $searchResponse['message'];
 
-        }
+        }*/
 
         return $response;
 
@@ -111,14 +112,14 @@ class KpsaOperationService extends CI_Controller {
         $response['success'] = true;
 
         // Search for MSISDN in KPSA
-        $searchResponse = $this->viewSubscriberTEKELEC($msisdn);
+        /*$searchResponse = $this->viewSubscriberTEKELEC($msisdn);
 
-        if($searchResponse->success == true){ // MSISDN in KPSA
+        if($searchResponse['success'] == true){ // MSISDN in KPSA
 
             // Update number in KPSA
             $updateResponse = $this->updateSubscriberTEKELEC($msisdn, $returnRoutingNumber);
 
-            if($updateResponse->success == true){
+            if($updateResponse['success'] == true){
                 // Operation successful
                 $response['success'] = true;
             }else{
@@ -126,13 +127,13 @@ class KpsaOperationService extends CI_Controller {
                 $response['message'] = $updateResponse['message'];
             }
 
-        }if($searchResponse->success == false){ // MSISDN not in KPSA
+        }if($searchResponse['success'] == false){ // MSISDN not in KPSA
 
             //create MSISDN with routing number toOperator
 
             $deleteResponse = $this->deleteSubscriberTEKELEC($msisdn, $searchResponse['routingNumber']);
 
-            if($deleteResponse->success == true){
+            if($deleteResponse['success'] == true){
                 // Operation successful
                 $response['success'] = true;
             }else{
@@ -147,7 +148,7 @@ class KpsaOperationService extends CI_Controller {
             $response['success'] = false;
             $response['message'] = $searchResponse['message'];
 
-        }
+        }*/
 
         return $response;
 
@@ -166,14 +167,14 @@ class KpsaOperationService extends CI_Controller {
         $response['success'] = true;
 
         // Search for MSISDN in KPSA
-        $searchResponse = $this->viewSubscriberTEKELEC($msisdn);
+        /*$searchResponse = $this->viewSubscriberTEKELEC($msisdn);
 
-        if($searchResponse->success == true){ // MSISDN in KPSA
+        if($searchResponse['success'] == true){ // MSISDN in KPSA
 
             // Update number in KPSA
             $updateResponse = $this->updateSubscriberTEKELEC($msisdn, $toRoutingNumber);
 
-            if($updateResponse->success == true){
+            if($updateResponse['success'] == true){
                 // Operation successful
                 $response['success'] = true;
             }else{
@@ -181,13 +182,13 @@ class KpsaOperationService extends CI_Controller {
                 $response['message'] = $updateResponse['message'];
             }
 
-        }if($searchResponse->success == false){ // MSISDN not in KPSA
+        }if($searchResponse['success'] == false){ // MSISDN not in KPSA
 
             //create MSISDN with routing number toOperator
 
             $createResponse = $this->creationSubscriberTEKELEC($msisdn, $toRoutingNumber);
 
-            if($createResponse->success == true){
+            if($createResponse['success'] == true){
                 // Operation successful
                 $response['success'] = true;
             }else{
@@ -202,7 +203,7 @@ class KpsaOperationService extends CI_Controller {
             $response['success'] = false;
             $response['message'] = $searchResponse['message'];
 
-        }
+        }*/
 
         return $response;
 
@@ -389,15 +390,6 @@ class KpsaOperationService extends CI_Controller {
 
         return $viewResponse;
 
-    }
-
-    /**
-     * Verifies if MSISDN has Orange as OPA
-     * @param $msisdn
-     * @return bool
-     */
-    private function isOCMNumber($msisdn){
-        return true;
     }
 
 }

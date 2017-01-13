@@ -16,9 +16,9 @@ class Operator {
     const ORANGE_NETWORK_ID = '02';
     const NEXTTEL_NETWORK_ID = '04';
 
-    const MTN_ROUTING_NUMBER = 'ABCDEF01';
-    const ORANGE_ROUTING_NUMBER = 'ABCDEF02';
-    const NEXTTEL_ROUTING_NUMBER = 'ABCDEF03';
+    const MTN_ROUTING_NUMBER = '1601';
+    const ORANGE_ROUTING_NUMBER = '1602';
+    const NEXTTEL_ROUTING_NUMBER = '1603';
 
     const ORANGE_NETWORK_ID_NUMBER = 2;
 }
@@ -212,6 +212,37 @@ function getRecipientPortingDateTime(){
     $date = date('c');
 
     return $date;
+
+}
+
+/**
+ * Verifies if MSISDN has Orange as OPA
+ * @param $msisdn
+ * @return bool
+ */
+function isOCMNumber($msisdn){
+
+    if(strlen($msisdn) == 12){
+        $msisdn = substr($msisdn, 3);
+    }
+
+    if(substr($msisdn, 0, 3) == '655' || substr($msisdn, 0, 3) == '656'){
+
+        return true;
+
+    }elseif($msisdn >= '657000000' && $msisdn <= '657499999'){
+
+        return true;
+
+    }elseif(substr($msisdn, 0, 2) == '69'){
+
+        return true;
+
+    }else{
+
+        return false;
+
+    }
 
 }
 

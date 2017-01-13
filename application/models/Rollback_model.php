@@ -20,6 +20,17 @@ class Rollback_model extends CI_Model
     }
 
     /*
+     * Get rollback by rollbackId
+     */
+    function get_full_rollback($rollbackId)
+    {
+        $sql = "SELECT * FROM Rollback r INNER JOIN Porting p ON (r.originalPortingId = p.portingId) WHERE r.rollbackId = ?";
+        $response = $this->db->query($sql, array($rollbackId))->row_array();
+        return $response;
+    }
+
+
+    /*
      * Get rollback in particular state and for particular donor
      */
     function get_rollback_by_state_and_donor($rollbackState, $donorNetworkId)

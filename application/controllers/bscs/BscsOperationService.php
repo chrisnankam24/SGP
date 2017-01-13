@@ -91,11 +91,16 @@ class BscsOperationService extends CI_Controller  {
      */
     public function loadNumberInfo($msisdn){
 
-        $subscriberInfo = false;
+        /*$subscriberInfo = false;
 
         $subscriberInfo = $this->BSCS_model->get_msisdn_info($msisdn);
 
-        return $subscriberInfo;
+        return $subscriberInfo;*/
+        $numberInfo = array();
+        $numberInfo['CONTRACT_ID'] = '8800092';
+        $numberInfo['LANGUE'] = 'EN';
+
+        return $numberInfo;
 
     }
 
@@ -157,7 +162,8 @@ class BscsOperationService extends CI_Controller  {
 
             try {
 
-                $response = $this->msisdnClient->ChangeImportMSISDN($request);
+                //$response = $this->msisdnClient->ChangeImportMSISDN($request);
+                $response = new stdClass();
 
                 $response->success = true;
 
@@ -208,8 +214,8 @@ class BscsOperationService extends CI_Controller  {
 
             try {
 
-                $response = $this->msisdnClient->ImportMSISDN($request);
-
+                //$response = $this->msisdnClient->ImportMSISDN($request);
+                $response = new stdClass();
                 $response->success = true;
 
                 return $response;
@@ -259,8 +265,8 @@ class BscsOperationService extends CI_Controller  {
 
             try {
 
-                $response = $this->msisdnClient->ReturnMSISDN($request);
-
+                //$response = $this->msisdnClient->ReturnMSISDN($request);
+                $response = new stdClass();
                 $response->success = true;
 
                 return $response;
@@ -311,8 +317,8 @@ class BscsOperationService extends CI_Controller  {
 
             try {
 
-                $response = $this->msisdnClient->ExportMSISDN($request);
-
+                //$response = $this->msisdnClient->ExportMSISDN($request);
+                $response = new stdClass();
                 $response->success = true;
 
                 return $response;
@@ -518,8 +524,8 @@ class BscsOperationService extends CI_Controller  {
 
             try {
 
-                $response = $this->contractClient->deleteContract($request);
-
+                //$response = $this->contractClient->deleteContract($request);
+                $response = new stdClass();
                 $response->success = true;
 
                 return $response;

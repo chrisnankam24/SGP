@@ -348,15 +348,17 @@ class SMS extends CI_Controller {
         $sendResponse = array();
         $sendResponse['success'] = true;
 
-        $response = file_get_contents('http://' . SMSParams::HOST . ':' . SMSParams::PORT . '/cgi-bin/sendsms?&username='
-            . SMSParams::USERNAME . '&password=' . SMSParams::PASSWORD . '&from=' . SMSParams::FROM . '&to=' . $msisdn . '&text=' . urlencode($message)
-            . '&charset=' . SMSParams::CHARSET . '&coding=' . SMSParams::CODING . '&priority=' . SMSParams::PRIORITY);
+        /*try {
 
-        if($response){
+            $response = file_get_contents('http://' . SMSParams::HOST . ':' . SMSParams::PORT . '/cgi-bin/sendsms?&username='
+                . SMSParams::USERNAME . '&password=' . SMSParams::PASSWORD . '&from=' . SMSParams::FROM . '&to=' . $msisdn . '&text=' . urlencode($message)
+                . '&charset=' . SMSParams::CHARSET . '&coding=' . SMSParams::CODING . '&priority=' . SMSParams::PRIORITY);
 
-        }else{
+        }catch (Exception $ex){
+
             $sendResponse['success'] = false;
-        }
+
+        }*/
 
         return $sendResponse;
 

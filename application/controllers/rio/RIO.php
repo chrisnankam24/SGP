@@ -36,7 +36,7 @@ class RIO extends CI_Controller {
      */
     public static function get_rio($msisdn){
 
-        $bscsOperationService = new BscsOperationService();
+        /*$bscsOperationService = new BscsOperationService();
         $subsInfo = $bscsOperationService->loadNumberInfo($msisdn);
 
         if($subsInfo){
@@ -47,7 +47,9 @@ class RIO extends CI_Controller {
 
         }else{
             return false;
-        }
+        }*/
+
+        return '02P058M709YS';
 
     }
 

@@ -27,10 +27,14 @@ class Porting_model extends CI_Model
     {
         $query = "SELECT * FROM Porting WHERE donorNetworkId = ? AND portingState = ?";
 
-        if($personType == 0){ // Personal
+        if($personType == null){
+
+        }elseif($personType == 0){ // Personal
             $query .= " AND legalPersonName IS NULL";
         }else if($personType == 1){ // Enterprise
-            $query .= " AND legalPersonName IS NULL";
+            $query .= " AND physicalPersonLastName IS NULL";
+        }else{
+
         }
 
         $response = $this->db->query($query, array($donorNetworkId, $portingState))->result_array();

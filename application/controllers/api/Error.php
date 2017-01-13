@@ -1,6 +1,10 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+require_once APPPATH . "controllers/cadb/Common.php";
+require_once APPPATH . "controllers/cadb/Problem.php";
+require_once APPPATH . "controllers/cadb/ProblemReportOperationService.php";
+
 /**
  * Created by PhpStorm.
  * User: user
@@ -13,8 +17,6 @@ class Error extends CI_Controller {
     {
         parent::__construct();
 
-        $this->load->model('Error_model');
-
     }
 
     /**
@@ -26,82 +28,14 @@ class Error extends CI_Controller {
 
         if(isset($_POST) && count($_POST) > 0) {
 
-            $reporterNetworkId = Operator::ORANGE_NETWORK_ID;
             $cadbNumber = $this->input->post('problemNumber');
             $problem = $this->input->post('problem');
 
             // Make report problem request
 
             $prOperationService = new ProblemReportOperationService();
-            $prResponse = $prOperationService->reportProblem($reporterNetworkId, $cadbNumber, $problem);
 
-            // Verify response
-
-            if($prResponse->success){
-
-                $prResponse = new \ProblemService\Problem\reportProblemResponse();
-
-                $this->db->trans_start();
-
-                // Insert Error table
-
-                $eParams = array(
-                    'errorReportId' => $prResponse->returnTransaction->errorReportId,
-                    'cadbNumber' => $prResponse->returnTransaction->cadbNumber,
-                    'problem' => $prResponse->returnTransaction->problem,
-                    'reporterNetworkId' => Operator::ORANGE_NETWORK_ID,
-                    'submissionDateTime' => $prResponse->returnTransaction->submissionDateTime
-                );
-
-                $this->Error_model->add_error($eParams);
-
-                $this->db->trans_complete();
-
-                $response['success'] = true;
-
-                if ($this->db->trans_status() === FALSE) {
-
-                    $emailService = new EmailService();
-                    $emailService->adminErrorReport('ERROR_REPORTED_BUT_DB_FILLED_INCOMPLETE', []);
-
-                }
-
-                $response['message'] = 'Error has been REPORTED successfully!';
-
-            }
-
-            else{
-
-                $fault = $prResponse->error;
-
-                $emailService = new EmailService();
-
-                $response['success'] = false;
-
-                switch ($fault) {
-                    // Errors
-                    case Fault::UNKNOWN_NUMBER:
-                        $response['message'] = 'Number in request is not recognized as number';
-                        break;
-                    case Fault::UNKNOWN_MANAGED_NUMBER:
-                        $response['message'] = 'Number in request is not managed by CADB';
-                        break;
-                    case Fault::INVALID_OPERATOR_FAULT:
-                        $response['message'] = 'Operator not active';
-                        break;
-
-                    // Terminal Error Processes
-                    case Fault::INVALID_REQUEST_FORMAT:
-                    case Fault::ACTION_NOT_AUTHORIZED:
-                        $emailService->adminErrorReport($fault, []);
-                        $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
-                        break;
-
-                    default:
-                        $emailService->adminErrorReport($fault, []);
-                        $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
-                }
-            }
+            $response = $prOperationService->makeReport($cadbNumber, $problem);
 
         }else{
 
@@ -111,6 +45,43 @@ class Error extends CI_Controller {
         }
 
         $this->send_response($response);
+
+    }
+
+    /**
+     *
+     * API for performing bulk report
+     */
+    public function reportBulkProblem(){
+
+        $response = [];
+
+        if(isset($_POST) && count($_POST) > 0) {
+
+            $errorData = $this->input->post('errorData'); // Array of error objects i.e (cadbNumber, problem)
+
+            $response['success'] = true;
+            $response['data'] = [];
+
+            $prOperationService = new ProblemReportOperationService();
+
+            foreach ($errorData as $errorDatum){
+
+                $tmpResponse = $prOperationService->makeReport($errorDatum['cadbNumber'], $errorDatum['problem']);
+                $tmpResponse['cadbNumber'] = $errorDatum['cadbNumber'];
+                $response['data'][] = $tmpResponse;
+
+            }
+
+        }else{
+
+            $response['success'] = false;
+            $response['message'] = 'No parameter found';
+
+        }
+
+        $this->send_response($response);
+
 
     }
 

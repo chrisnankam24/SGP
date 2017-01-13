@@ -16,7 +16,7 @@ class Provisioning_model extends CI_Model
      */
     function get_provisioning($proccessId)
     {
-        return $this->db->get_where('Provisioning',array('proccessId'=>$proccessId))->row_array();
+        return $this->db->get_where('Provisioning',array('processId'=>$proccessId))->row_array();
     }
 
     /*
@@ -52,7 +52,7 @@ class Provisioning_model extends CI_Model
      */
     function get_provisioning_other_return()
     {
-        $sql = "SELECT * FROM Provisioning p WHERE p.processType = ? AND p.processId NOT IN (SELECT returnId FROM Return)";
+        $sql = "SELECT * FROM Provisioning p WHERE p.processType = ? AND p.processId NOT IN (SELECT returnId FROM NumberReturn)";
         $response = $this->db->query($sql, array(processType::_RETURN))->result_array();
         return $response;
     }
@@ -63,7 +63,7 @@ class Provisioning_model extends CI_Model
      */
     function get_provisioning_by_process_state($processId, $proccessType, $provisionState)
     {
-        return $this->db->get_where('Provisioning',array('processId' => $processId, 'proccessType'=>$proccessType, 'provisionState' => $provisionState))->row_array();
+        return $this->db->get_where('Provisioning',array('processId' => $processId, 'processType'=>$proccessType, 'provisionState' => $provisionState))->row_array();
     }
     
     /*
@@ -88,7 +88,7 @@ class Provisioning_model extends CI_Model
      */
     function update_provisioning($proccessId,$params)
     {
-        $this->db->where('proccessId',$proccessId);
+        $this->db->where('processId',$proccessId);
         $response = $this->db->update('Provisioning',$params);
         if($response)
         {
@@ -105,7 +105,7 @@ class Provisioning_model extends CI_Model
      */
     function delete_provisioning($proccessId)
     {
-        $response = $this->db->delete('Provisioning',array('proccessId'=>$proccessId));
+        $response = $this->db->delete('Provisioning',array('processId'=>$proccessId));
         if($response)
         {
             return "provisioning deleted successfully";

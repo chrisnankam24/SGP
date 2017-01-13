@@ -56,12 +56,14 @@ class ROSServerFunctionalities extends CI_Controller  {
         $response->rollbackTransaction = new rollback\rollbackTransactionType();
         $response->rollbackTransaction->lastChangeDateTime = date('c');
         $response->rollbackTransaction->donorSubmissionDateTime = date('c');
+        $response->rollbackTransaction->preferredRollbackDateTime = date('c');
         $response->rollbackTransaction->rollbackDateTime = date('c');
-        $response->rollbackTransaction->rollbackId = '20161208-03-237694975166-345';
-        $response->rollbackTransaction->originalPortingId = '20161208-01-237694975166-345';
+        $response->rollbackTransaction->rollbackId = '20161208-03-237694975166-' . mt_rand(100,999);
+        $response->rollbackTransaction->originalPortingId = $openRequest->originalPortingId;
 
         return $response;
 
+        //throw new invalidOperatorFault();
     }
 
     /**
@@ -79,12 +81,13 @@ class ROSServerFunctionalities extends CI_Controller  {
         $response->rollbackTransaction = new rollback\rollbackTransactionType();
         $response->rollbackTransaction->lastChangeDateTime = date('c');
         $response->rollbackTransaction->donorSubmissionDateTime = date('c');
+        $response->rollbackTransaction->preferredRollbackDateTime = date('c');
         $response->rollbackTransaction->rollbackDateTime = date('c');
-        $response->rollbackTransaction->rollbackId = '20161208-03-237694975166-345';
-        $response->rollbackTransaction->originalPortingId = '20161208-01-237694975166-345';
-
+        $response->rollbackTransaction->rollbackId = $acceptRequest->rollbackId;
 
         return $response;
+
+        //throw new invalidOperatorFault();
 
     }
 
@@ -100,6 +103,13 @@ class ROSServerFunctionalities extends CI_Controller  {
     public function reject($rejectRequest){
 
         $response = new rollback\rejectResponse();
+
+        $response->rollbackTransaction = new rollback\rollbackTransactionType();
+        $response->rollbackTransaction->lastChangeDateTime = date('c');
+        $response->rollbackTransaction->donorSubmissionDateTime = date('c');
+        $response->rollbackTransaction->preferredRollbackDateTime = date('c');
+        $response->rollbackTransaction->rollbackDateTime = date('c');
+        $response->rollbackTransaction->rollbackId = $rejectRequest->rollbackId;
 
         return $response;
 

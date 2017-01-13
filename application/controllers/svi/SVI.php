@@ -46,11 +46,19 @@ class SVI extends CI_Controller {
      */
     public function getRio($getRioRequest){
 
-        $msisdn = substr($getRioRequest->phoneNumber, 3);;
+        $msisdn = $getRioRequest->phoneNumber;
+
+        if(strlen($msisdn) == 12){
+
+            $msisdn = substr($msisdn, 3);
+
+        }
 
         $rioWithInfo = RIO::getRIOAndInfo($msisdn);
 
         $response = new getRioResponse();
+
+        $response->return = new RIOInfo();
 
         if($rioWithInfo){
 
@@ -66,10 +74,6 @@ class SVI extends CI_Controller {
             $response->return->returnCode = '2';
 
         }
-
-        $this->FileLog_model->write_log('sdf', 'sdf', json_encode($response));
-
-        // TODO: Send SMS to Client in appropriate language
 
         return $response;
     }

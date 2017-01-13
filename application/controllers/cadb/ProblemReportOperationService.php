@@ -28,12 +28,13 @@ class ProblemReportOperationService  extends CI_Controller {
 
         parent::__construct();
 
+        $this->load->model('Error_model');
+
         // Disable wsdl cache
         ini_set("soap.wsdl_cache_enabled", "0");
 
         // Define soap client object
         $this->client = new SoapClient(__DIR__ . '/wsdl/ProblemReportOperationService.wsdl', array(
-            "location" => 'http://localhost/SGP/index.php/cadb/ProblemReportOperationService',
             "trace" => false
         ));
 
@@ -100,6 +101,90 @@ class ProblemReportOperationService  extends CI_Controller {
 
         }
 
+    }
+
+    /**
+     * TODO: OK
+     * @param $reporterNetworkId
+     * @param $cadbNumber
+     * @param $problem
+     * @return array
+     */
+    public function makeReport($cadbNumber, $problem){
+
+        $response = [];
+
+        $reporterNetworkId = Operator::ORANGE_NETWORK_ID;
+
+        $prResponse = $this->reportProblem($reporterNetworkId, $cadbNumber, $problem);
+
+        // Verify response
+
+        if($prResponse->success){
+
+            $this->db->trans_start();
+
+            // Insert Error table
+
+            $eParams = array(
+                'errorReportId' => $prResponse->returnTransaction->errorReportId,
+                'cadbNumber' => $prResponse->returnTransaction->cadbNumber,
+                'problem' => $prResponse->returnTransaction->problem,
+                'reporterNetworkId' => Operator::ORANGE_NETWORK_ID,
+                'submissionDateTime' => $prResponse->returnTransaction->submissionDateTime
+            );
+
+            $this->Error_model->add_error($eParams);
+
+            $this->db->trans_complete();
+
+            $response['success'] = true;
+
+            if ($this->db->trans_status() === FALSE) {
+
+                $emailService = new EmailService();
+                $emailService->adminErrorReport('ERROR_REPORTED_BUT_DB_FILLED_INCOMPLETE', []);
+
+            }
+
+            $response['message'] = 'Error has been REPORTED successfully!';
+
+        }
+
+        else{
+
+            $fault = $prResponse->error;
+
+            $emailService = new EmailService();
+
+            $response['success'] = false;
+
+            switch ($fault) {
+                // Errors
+                case Fault::UNKNOWN_NUMBER:
+                    $response['message'] = 'Number in request is not recognized as number';
+                    break;
+                case Fault::UNKNOWN_MANAGED_NUMBER:
+                    $response['message'] = 'Number in request is not managed by CADB';
+                    break;
+                case Fault::INVALID_OPERATOR_FAULT:
+                    $response['message'] = 'Operator not active';
+                    break;
+
+                // Terminal Error Processes
+                case Fault::INVALID_REQUEST_FORMAT:
+                case Fault::ACTION_NOT_AUTHORIZED:
+                    $emailService->adminErrorReport($fault, []);
+                    $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
+                    break;
+
+                default:
+                    $emailService->adminErrorReport($fault, []);
+                    $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
+            }
+        }
+
+        return $response;
     }
 
 }

@@ -60,7 +60,16 @@ class ReOSServerFunctionalities extends CI_Controller  {
 
         $response = new _Return\openResponse();
 
+        $response->returnTransaction = new _Return\returnTransactionType();
+
+        $response->returnTransaction->ownerNrn = $openRequest->ownerNrn;
+        $response->returnTransaction->primaryOwnerNrn = $openRequest->primaryOwnerNrn;
+        $response->returnTransaction->openDateTime = date('c');
+        $response->returnTransaction->returnId = '20170113-03-237694975166-' . mt_rand(100,999);
+
         return $response;
+
+        //throw new invalidOperatorFault();
 
     }
 
@@ -75,7 +84,13 @@ class ReOSServerFunctionalities extends CI_Controller  {
 
         $response = new _Return\acceptResponse();
 
+        $response->returnTransaction = new _Return\returnTransactionType();
+
+        $response->returnTransaction->returnId = $acceptRequest->returnId;
+
         return $response;
+
+        //throw new returnActionNotAvailableFault();
 
     }
 
@@ -90,6 +105,10 @@ class ReOSServerFunctionalities extends CI_Controller  {
     public function reject($rejectRequest){
 
         $response = new _Return\rejectResponse();
+
+        $response->returnTransaction = new _Return\returnTransactionType();
+
+        $response->returnTransaction->returnId = $rejectRequest->returnId;
 
         return $response;
 

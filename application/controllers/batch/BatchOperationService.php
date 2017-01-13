@@ -6,16 +6,20 @@ require_once APPPATH . "third_party/vendor/autoload.php";
 require_once APPPATH . "controllers/cadb/Common.php";
 require_once APPPATH . "controllers/cadb/Porting.php";
 require_once APPPATH . "controllers/cadb/Rollback.php";
+require_once APPPATH . "controllers/cadb/ProvisionNotification.php";
 require_once APPPATH . "controllers/cadb/Return.php";
 require_once APPPATH . "controllers/email/EmailService.php";
 require_once APPPATH . "controllers/bscs/BscsOperationService.php";
 require_once APPPATH . "controllers/kpsa/KpsaOperationService.php";
 require_once APPPATH . "controllers/cadb/PortingOperationService.php";
+require_once APPPATH . "controllers/cadb/RollbackOperationService.php";
+require_once APPPATH . "controllers/cadb/ReturnOperationService.php";
 require_once APPPATH . "controllers/sms/SMS.php";
 
 use PortingService\Porting\portingSubmissionStateType as portingSubmissionStateType;
 use \RollbackService\Rollback\rollbackSubmissionStateType as rollbackSubmissionStateType;
 use ReturnService\_Return\returnSubmissionStateType as returnSubmissionStateType;
+use \ProvisionService\ProvisionNotification\provisionStateType as provisionStateType;
 
 use phpseclib\Net\SFTP;
 
@@ -48,6 +52,8 @@ class BatchOperationService extends CI_Controller {
         $this->load->model('Numberreturnsubmission_model');
         $this->load->model('Numberreturnstateevolution_model');
 
+        $this->load->model('Provisioning_model');
+
     }
 
     public function index(){
@@ -55,273 +61,7 @@ class BatchOperationService extends CI_Controller {
     }
 
     /**
-     * Executed as OPD
-     * BATCH_001
-     * Checks for all ports in ORDERED state, performs actions for Approval / Denial
-     */
-    public function portingOrderedToApprovedDenied(){
-
-        // Load ports in Porting table in ORDERED state in which we are OPD
-
-        $orderedPorts = $this->Porting_model->get_porting_by_state_and_donor(\PortingService\Porting\portingStateType::ORDERED, Operator::ORANGE_NETWORK_ID);
-
-        $bscsOperationService = new BscsOperationService();
-
-        $portingOperationService = new PortingOperationService();
-
-        $emailService = new EmailService();
-
-        foreach ($orderedPorts as $orderedPort) {
-
-            $portingId = $orderedPort['portingId'];
-
-            // Load subscriber data from BSCS using MSISDN
-
-            $subscriberMSISDN = $orderedPort['subscriberMSISDN'];
-
-            $subscriberInfo = $bscsOperationService->loadNumberInfo($subscriberMSISDN);
-
-            $portingDenialReason = null;
-            $cause = null;
-
-            if($subscriberInfo != -1 && $subscriberInfo != null){ // Connection to BSCS successful and User found
-
-                // Number Owned by Orange
-
-                $subscriberRIO = RIO::get_rio($subscriberMSISDN);
-
-                if($subscriberRIO == $orderedPort['rio']){
-
-                    // Subscriber RIO Valid
-
-                    /*// Check subscriber type
-                    if($orderedPort['physicalPersonFirstName']){
-
-                        // Physical Person
-                        if(strtolower($subscriberInfo['firstName']) == strtolower($orderedPort['physicalPersonFirstName'])){
-
-                            // Valid First Name
-
-                            if(strtolower($subscriberInfo['lastName']) == strtolower($orderedPort['physicalPersonLastName'])){
-
-                                // Valid Last Name
-                                if(strtolower($subscriberInfo['idNumber']) == strtolower($orderedPort['physicalPersonIdNumber'])){
-
-                                    // Valid ID Number
-
-                                }else{
-                                    // Invalid ID Number
-                                    $portingDenialReason = \PortingService\Porting\denialReasonType::SUBSCRIBER_DATA_DISCREPANCY;
-                                    $cause = 'Invalid ID Number';
-                                }
-
-                                }else{
-                                // Invalid Last Name
-                                $portingDenialReason = \PortingService\Porting\denialReasonType::NUMBER_NOT_OWNED_BY_SUBSCRIBER;
-                                $cause = 'Invalid Last Name';
-                            }
-
-                            }else{
-                            // Invalid First Name
-                            $portingDenialReason = \PortingService\Porting\denialReasonType::NUMBER_NOT_OWNED_BY_SUBSCRIBER;
-                            $cause = 'Invalid First Name';
-                        }
-
-                    }
-                    else{
-                        // Legal Person
-                        if(strtolower($subscriberInfo['personName']) == strtolower($orderedPort['legalPersonName'])){
-
-                            // Valid Person Name
-
-                            if(strtolower($subscriberInfo['personTIN']) == strtolower($orderedPort['legalPersonTin'])){
-
-                                // Valid Person TIN
-                                if(strtolower($subscriberInfo['contactNumber']) == strtolower($orderedPort['contactNumber'])){
-
-                                    // Valid contact Number
-
-                                }else{
-                                    // Invalid contact Number
-                                    $portingDenialReason = \PortingService\Porting\denialReasonType::SUBSCRIBER_DATA_DISCREPANCY;
-                                    $cause = 'Invalid Contact Number';
-                                }
-
-                            }else{
-                                // Invalid Person TIN
-                                $portingDenialReason = \PortingService\Porting\denialReasonType::NUMBER_NOT_OWNED_BY_SUBSCRIBER;
-                                $cause = 'Invalid Person TIN';
-                            }
-
-                        }else{
-                            // Invalid Person Name
-                            $portingDenialReason = \PortingService\Porting\denialReasonType::NUMBER_NOT_OWNED_BY_SUBSCRIBER;
-                            $cause = 'Invalid Person Name';
-                        }
-
-                    }*/
-
-                }else{
-                    // Subscriber RIO Invalid
-                    $portingDenialReason = \PortingService\Porting\denialReasonType::RIO_NOT_VALID;
-                    $cause = 'Invalid RIO';
-                }
-
-            }
-            else if($subscriberInfo == null){ // BSCS returns this in case of in existent user
-                // Number not owned by Orange
-                $portingDenialReason = \PortingService\Porting\denialReasonType::NUMBER_NOT_OWNED_BY_SUBSCRIBER;
-                $cause = 'In existent Number';
-            }else{
-                // Connection to BSCS failed. Wait and try again later
-
-            }
-
-            if($portingDenialReason == null) {
-                // All Checks OK. Approve Port
-                $approveResponse = $portingOperationService->approve($portingId);
-
-                if($approveResponse->success){
-
-                    // Insert into porting state evolution table
-
-                    $this->db->trans_start();
-
-                    // Insert into porting Evolution state table
-
-                    $portingEvolutionParams = array(
-                        'lastChangeDateTime' => $approveResponse->portingTransaction->lastChangeDateTime,
-                        'portingState' => \PortingService\Porting\portingStateType::APPROVED,
-                        'isAutoReached' => false,
-                        'portingId' => $approveResponse->portingTransaction->portingId,
-                    );
-
-
-                    $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
-
-                    // Update Porting table
-
-                    $portingParams = array(
-                        'portingDateTime' => $approveResponse->portingTransaction->portingDateTime,
-                        'cadbOrderDateTime' => $approveResponse->portingTransaction->cadbOrderDateTime,
-                        'lastChangeDateTime' => $approveResponse->portingTransaction->lastChangeDateTime,
-                        'portingState' => \PortingService\Porting\portingStateType::APPROVED
-                    );
-
-                    $this->Porting_model->update_porting($portingId, $portingParams);
-
-                    // Notify Agents/Admin
-
-                    $this->db->trans_complete();
-
-                    if ($this->db->trans_status() === FALSE) {
-                        $emailService = new EmailService();
-                        $emailService->adminErrorReport('PORTING_APPROVED_BUT_DB_FILLED_INCOMPLETE', []);
-                    }else{
-                        $emailService->adminAgentsPortingApprovedDenied([]);
-                    }
-
-                }
-                else{
-
-                    $fault = $approveResponse->error;
-
-                    switch ($fault) {
-                        // Terminal Processes
-                        case Fault::INVALID_OPERATOR_FAULT:
-                        case Fault::INVALID_REQUEST_FORMAT:
-                        case Fault::PORTING_ACTION_NOT_AVAILABLE:
-                        case Fault::INVALID_PORTING_ID:
-                        default:
-                            $emailService->adminErrorReport($fault, []);
-
-                    }
-
-                }
-
-            }
-            else{
-                // Failed Check. Deny Port
-                $denyResponse = $portingOperationService->deny($portingId, $portingDenialReason, $cause);
-
-                if($denyResponse->success){
-
-                    // Insert into porting state evolution table
-
-                    $this->db->trans_start();
-
-                    // Insert into porting Evolution state table
-
-                    $portingEvolutionParams = array(
-                        'lastChangeDateTime' => $denyResponse->portingTransaction->lastChangeDateTime,
-                        'portingState' => \PortingService\Porting\portingStateType::DENIED,
-                        'isAutoReached' => false,
-                        'portingId' => $denyResponse->portingTransaction->portingId,
-                    );
-
-
-                    $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
-
-                    // Update Porting table
-
-                    $portingParams = array(
-                        'portingDateTime' => $denyResponse->portingTransaction->portingDateTime,
-                        'cadbOrderDateTime' => $denyResponse->portingTransaction->cadbOrderDateTime,
-                        'lastChangeDateTime' => $denyResponse->portingTransaction->lastChangeDateTime,
-                        'portingState' => \PortingService\Porting\portingStateType::DENIED
-                    );
-
-                    $this->Porting_model->update_porting($portingId, $portingParams);
-
-                    // Insert into PortingDenyRejectionAbandoned
-
-                    $pdraParams = array(
-                        'denyRejectionReason' => $denyResponse->denialReason,
-                        'cause' => $denyResponse->cause,
-                        'portingId' => $portingId
-                    );
-
-                    $this->Portingdenyrejectionabandon_model->add_portingdenyrejectionabandon($pdraParams);
-
-                    // Notify Agents/Admin
-
-                    $this->db->trans_complete();
-
-                    if ($this->db->trans_status() === FALSE) {
-                        $emailService = new EmailService();
-                        $emailService->adminErrorReport('PORTING_DENIED_BUT_DB_FILLED_INCOMPLETE', []);
-                    }else{
-                        $emailService->adminAgentsPortingApprovedDenied([]);
-                    }
-
-                }
-                else{
-
-                    $fault = $denyResponse->error;
-
-                    switch ($fault) {
-                        // Terminal Processes
-                        case Fault::INVALID_OPERATOR_FAULT:
-                        case Fault::INVALID_REQUEST_FORMAT:
-                        case Fault::PORTING_ACTION_NOT_AVAILABLE:
-                        case Fault::INVALID_PORTING_ID:
-                        case Fault::CAUSE_MISSING:
-                            $emailService->adminErrorReport($fault, []);
-                            break;
-                        default:
-                            $emailService->adminErrorReport($fault, []);
-
-                    }
-
-                }
-
-            }
-
-        }
-
-    }
-
-    /**
+     * TODO: OK
      * Executed as OPR
      * BATCH_002
      * Checks for all ports in Submission table in STARTED state and attempts making Orders for them
@@ -340,21 +80,21 @@ class BatchOperationService extends CI_Controller {
 
             // Retrieve Port params
 
-            $portingSubmissionId = $startedPort('portingSubmissionId');
+            $portingSubmissionId = $startedPort['portingSubmissionId'];
 
-            $donorNetworkId = $startedPort('donorNetworkId');
-            $portingMsisdn = $startedPort('portingMSISDN');
-            $rio = $startedPort('rio');
-            $physicalPersonFirstName = $startedPort('physicalPersonFirstName');
-            $physicalPersonLastName = $startedPort('physicalPersonLastName');
-            $physicalPersonIdNumber = $startedPort('physicalPersonIdNumber');
-            $legalPersonName = $startedPort('legalPersonName');
-            $legalPersonTin = $startedPort('legalPersonTin');
-            $contactNumber = $startedPort('contactNumber');
-            $portingDateTime = $startedPort('portingDateTime');
-            $orderedDateTime = $startedPort('orderedDateTime');
-            $contractId = $startedPort('contractId');
-            $language = $startedPort('language');
+            $donorNetworkId = $startedPort['donorNetworkId'];
+            $portingMsisdn = $startedPort['portingMSISDN'];
+            $rio = $startedPort['rio'];
+            $physicalPersonFirstName = $startedPort['physicalPersonFirstName'];
+            $physicalPersonLastName = $startedPort['physicalPersonLastName'];
+            $physicalPersonIdNumber = $startedPort['physicalPersonIdNumber'];
+            $legalPersonName = $startedPort['legalPersonName'];
+            $legalPersonTin = $startedPort['legalPersonTin'];
+            $contactNumber = $startedPort['contactNumber'];
+            $portingDateTime = $startedPort['portingDateTime'];
+            $orderedDateTime = $startedPort['orderedDateTime'];
+            $contractId = $startedPort['contractId'];
+            $language = $startedPort['language'];
 
             // Construct subscriber info
 
@@ -370,14 +110,18 @@ class BatchOperationService extends CI_Controller {
                 $subscriberInfo->contactNumber = $contactNumber;
             }
 
-            // Set donor Operator
+            // Set donor Operator 0 == MTN, 1 == Nexttel
 
-            $donorOperator = ''; // 0 == MTN, 1 == Nexttel
+            $donorOperator = null;
 
             if($donorNetworkId == Operator::MTN_NETWORK_ID){
+
                 $donorOperator = 0;
-            }else{
+
+            }elseif($donorNetworkId == Operator::NEXTTEL_NETWORK_ID){
+
                 $donorOperator = 1;
+
             }
 
             // Make Order Porting Operation
@@ -388,14 +132,13 @@ class BatchOperationService extends CI_Controller {
 
             if($orderResponse->success){
 
-                $orderResponse = new \PortingService\Porting\orderResponse();
-
                 $this->db->trans_start();
 
                 // Update submission table with submission state ordered
 
                 $submissionParams = array(
-                    'submissionState' => \PortingService\Porting\portingSubmissionStateType::ORDERED
+                    'submissionState' => \PortingService\Porting\portingSubmissionStateType::ORDERED,
+                    'orderedDateTime' => date('c')
                 );
 
                $this->Portingsubmission_model->update_portingsubmission($portingSubmissionId, $submissionParams);
@@ -411,7 +154,8 @@ class BatchOperationService extends CI_Controller {
                     'recipientSubmissionDateTime' => $orderResponse->portingTransaction->recipientSubmissionDateTime,
                     'portingDateTime' => $orderResponse->portingTransaction->portingDateTime,
                     'rio' =>  $orderResponse->portingTransaction->rio,
-                    'subscriberMSISDN' =>  $orderResponse->portingTransaction->numberRanges->numberRange->startNumber,
+                    'startMSISDN' =>  $orderResponse->portingTransaction->numberRanges->numberRange->startNumber,
+                    'endMSISDN' =>  $orderResponse->portingTransaction->numberRanges->numberRange->endNumber,
                     'cadbOrderDateTime' => $orderResponse->portingTransaction->cadbOrderDateTime,
                     'lastChangeDateTime' => $orderResponse->portingTransaction->lastChangeDateTime,
                     'portingState' => \PortingService\Porting\portingStateType::ORDERED,
@@ -511,13 +255,287 @@ class BatchOperationService extends CI_Controller {
 
         }
 
+    }
+
+    /**
+     * TODO: OK
+     * Executed as OPD
+     * BATCH_001
+     * Checks for all ports in ORDERED state, performs actions for Approval / Denial
+     */
+    public function portingOrderedToApprovedDenied(){
+
+        // Load ports in Porting table in ORDERED state in which we are OPD
+
+        $orderedPorts = $this->Porting_model->get_porting_by_state_and_donor(\PortingService\Porting\portingStateType::ORDERED, Operator::ORANGE_NETWORK_ID);
+
+        $bscsOperationService = new BscsOperationService();
+
+        $portingOperationService = new PortingOperationService();
+
+        $emailService = new EmailService();
+
+        foreach ($orderedPorts as $orderedPort) {
+
+            $portingId = $orderedPort['portingId'];
+
+            // Load subscriber data from BSCS using MSISDN
+
+            $subscriberMSISDN = $orderedPort['startMSISDN'];
+
+            $subscriberInfo = $bscsOperationService->loadNumberInfo($subscriberMSISDN);
+
+            $portingDenialReason = null;
+            $cause = null;
+
+            if($subscriberInfo != -1){
+
+                if($subscriberInfo != null){ // Connection to BSCS successful and User found
+
+                    // Number Owned by Orange
+
+                    $subscriberRIO = RIO::get_rio($subscriberMSISDN);
+
+                    if($subscriberRIO == $orderedPort['rio']){
+
+                        // Subscriber RIO Valid
+
+                        /*// Check subscriber type
+                        if($orderedPort['physicalPersonFirstName']){
+
+                            // Physical Person
+                            if(strtolower($subscriberInfo['firstName']) == strtolower($orderedPort['physicalPersonFirstName'])){
+
+                                // Valid First Name
+
+                                if(strtolower($subscriberInfo['lastName']) == strtolower($orderedPort['physicalPersonLastName'])){
+
+                                    // Valid Last Name
+                                    if(strtolower($subscriberInfo['idNumber']) == strtolower($orderedPort['physicalPersonIdNumber'])){
+
+                                        // Valid ID Number
+
+                                    }else{
+                                        // Invalid ID Number
+                                        $portingDenialReason = \PortingService\Porting\denialReasonType::SUBSCRIBER_DATA_DISCREPANCY;
+                                        $cause = 'Invalid ID Number';
+                                    }
+
+                                    }else{
+                                    // Invalid Last Name
+                                    $portingDenialReason = \PortingService\Porting\denialReasonType::NUMBER_NOT_OWNED_BY_SUBSCRIBER;
+                                    $cause = 'Invalid Last Name';
+                                }
+
+                                }else{
+                                // Invalid First Name
+                                $portingDenialReason = \PortingService\Porting\denialReasonType::NUMBER_NOT_OWNED_BY_SUBSCRIBER;
+                                $cause = 'Invalid First Name';
+                            }
+
+                        }
+                        else{
+                            // Legal Person
+                            if(strtolower($subscriberInfo['personName']) == strtolower($orderedPort['legalPersonName'])){
+
+                                // Valid Person Name
+
+                                if(strtolower($subscriberInfo['personTIN']) == strtolower($orderedPort['legalPersonTin'])){
+
+                                    // Valid Person TIN
+                                    if(strtolower($subscriberInfo['contactNumber']) == strtolower($orderedPort['contactNumber'])){
+
+                                        // Valid contact Number
+
+                                    }else{
+                                        // Invalid contact Number
+                                        $portingDenialReason = \PortingService\Porting\denialReasonType::SUBSCRIBER_DATA_DISCREPANCY;
+                                        $cause = 'Invalid Contact Number';
+                                    }
+
+                                }else{
+                                    // Invalid Person TIN
+                                    $portingDenialReason = \PortingService\Porting\denialReasonType::NUMBER_NOT_OWNED_BY_SUBSCRIBER;
+                                    $cause = 'Invalid Person TIN';
+                                }
+
+                            }else{
+                                // Invalid Person Name
+                                $portingDenialReason = \PortingService\Porting\denialReasonType::NUMBER_NOT_OWNED_BY_SUBSCRIBER;
+                                $cause = 'Invalid Person Name';
+                            }
+
+                        }*/
+
+                    }else{
+                        // Subscriber RIO Invalid
+                        $portingDenialReason = \PortingService\Porting\denialReasonType::RIO_NOT_VALID;
+                        $cause = 'Invalid RIO';
+                    }
+
+                }
+                else{ // BSCS returns this in case of in existent user
+                    // Number not owned by Orange
+                    $portingDenialReason = \PortingService\Porting\denialReasonType::NUMBER_NOT_OWNED_BY_SUBSCRIBER;
+                    $cause = 'In existent Number';
+                }
+
+                if($portingDenialReason == null) {
+                    // All Checks OK. Approve Port
+
+                    $approveResponse = $portingOperationService->approve($portingId);
+
+                    if($approveResponse->success){
+
+                        // Insert into porting state evolution table
+
+                        $this->db->trans_start();
+
+                        // Insert into porting Evolution state table
+
+                        $portingEvolutionParams = array(
+                            'lastChangeDateTime' => $approveResponse->portingTransaction->lastChangeDateTime,
+                            'portingState' => \PortingService\Porting\portingStateType::APPROVED,
+                            'isAutoReached' => false,
+                            'portingId' => $approveResponse->portingTransaction->portingId,
+                        );
+
+                        $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
+
+                        // Update Porting table
+
+                        $portingParams = array(
+                            'portingDateTime' => $approveResponse->portingTransaction->portingDateTime,
+                            'cadbOrderDateTime' => $approveResponse->portingTransaction->cadbOrderDateTime,
+                            'lastChangeDateTime' => $approveResponse->portingTransaction->lastChangeDateTime,
+                            'portingState' => \PortingService\Porting\portingStateType::APPROVED
+                        );
+
+                        $this->Porting_model->update_porting($portingId, $portingParams);
+
+                        // Notify Agents/Admin
+
+                        $this->db->trans_complete();
+
+                        if ($this->db->trans_status() === FALSE) {
+                            $emailService = new EmailService();
+                            $emailService->adminErrorReport('PORTING_APPROVED_BUT_DB_FILLED_INCOMPLETE', []);
+                        }else{
+                            $emailService->adminAgentsPortingApprovedDenied([]);
+                        }
+
+                    }
+                    else{
+
+                        $fault = $approveResponse->error;
+
+                        switch ($fault) {
+                            // Terminal Processes
+                            case Fault::INVALID_OPERATOR_FAULT:
+                            case Fault::INVALID_REQUEST_FORMAT:
+                            case Fault::PORTING_ACTION_NOT_AVAILABLE:
+                            case Fault::INVALID_PORTING_ID:
+                            default:
+                                $emailService->adminErrorReport($fault, []);
+
+                        }
+
+                    }
+
+                }
+                else{
+                    // Failed Check. Deny Port
+                    $denyResponse = $portingOperationService->deny($portingId, $portingDenialReason, $cause);
+
+                    if($denyResponse->success){
+
+                        // Insert into porting state evolution table
+
+                        $this->db->trans_start();
+
+                        // Insert into porting Evolution state table
+
+                        $portingEvolutionParams = array(
+                            'lastChangeDateTime' => $denyResponse->portingTransaction->lastChangeDateTime,
+                            'portingState' => \PortingService\Porting\portingStateType::DENIED,
+                            'isAutoReached' => false,
+                            'portingId' => $denyResponse->portingTransaction->portingId,
+                        );
+
+
+                        $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
+
+                        // Update Porting table
+
+                        $portingParams = array(
+                            'portingDateTime' => $denyResponse->portingTransaction->portingDateTime,
+                            'cadbOrderDateTime' => $denyResponse->portingTransaction->cadbOrderDateTime,
+                            'lastChangeDateTime' => $denyResponse->portingTransaction->lastChangeDateTime,
+                            'portingState' => \PortingService\Porting\portingStateType::DENIED
+                        );
+
+                        $this->Porting_model->update_porting($portingId, $portingParams);
+
+                        // Insert into PortingDenyRejectionAbandoned
+
+                        $pdraParams = array(
+                            'denyRejectionReason' => $portingDenialReason,
+                            'cause' => $cause,
+                            'portingId' => $portingId
+                        );
+
+                        $this->Portingdenyrejectionabandon_model->add_portingdenyrejectionabandon($pdraParams);
+
+                        // Notify Agents/Admin
+
+                        $this->db->trans_complete();
+
+                        if ($this->db->trans_status() === FALSE) {
+                            $emailService = new EmailService();
+                            $emailService->adminErrorReport('PORTING_DENIED_BUT_DB_FILLED_INCOMPLETE', []);
+                        }else{
+                            $emailService->adminAgentsPortingApprovedDenied([]);
+                        }
+
+                    }
+                    else{
+
+                        $fault = $denyResponse->error;
+
+                        switch ($fault) {
+                            // Terminal Processes
+                            case Fault::INVALID_OPERATOR_FAULT:
+                            case Fault::INVALID_REQUEST_FORMAT:
+                            case Fault::PORTING_ACTION_NOT_AVAILABLE:
+                            case Fault::INVALID_PORTING_ID:
+                            case Fault::CAUSE_MISSING:
+                                $emailService->adminErrorReport($fault, []);
+                                break;
+                            default:
+                                $emailService->adminErrorReport($fault, []);
+
+                        }
+
+                    }
+
+                }
+
+            }else{
+                // Connection to BSCS failed. Wait and try again later
+
+            }
+
+
+
+        }
 
     }
 
     /**
+     * TODO: OK
      * Executed as OPD
      * BATCH_003
-     * Checks for all ports in APPROVED state and sends mail for their Acceptance / Rejection
+     * Checks for all individual ports in APPROVED state and sends mail for their Acceptance / Rejection
      */
     public function portingApprovedToAcceptedRejected(){
 
@@ -536,6 +554,10 @@ class BatchOperationService extends CI_Controller {
 
     }
 
+    /**
+     * TODO: OK
+     * Checks for all enterprise ports in APPROVED state and sends mail for their Acceptance / Rejection
+     */
     public function portingApprovedToAcceptedRejectedEnterprise(){
 
         // Load ports in Porting table in APPROVED state in which we are OPD AND Enterprise
@@ -550,18 +572,23 @@ class BatchOperationService extends CI_Controller {
 
             $is_added = false;
 
-            foreach ($enterpriseGrouping as $enterprisePort){
+            foreach ($enterpriseGrouping as &$enterprisePort){
 
                 if($enterprisePort['legalPersonTin'] == $approvedPort['legalPersonTin']){
                     $is_added = true;
-                    array_push( $enterprisePort['portingIds'], $approvedPort['portingId']);
+                    $enterprisePort['portingIds'][] = $approvedPort['portingId'];
+                    $enterprisePort['MSISDNs'][] = $approvedPort['startMSISDN'];
                     break;
                 }
 
             }
 
             if(!$is_added){
-                $enterprisePort['portingIds'] = array($approvedPort['portingId']);
+                $tmpPort = $approvedPort;
+                $tmpPort['portingIds'] = [];
+                $tmpPort['portingIds'][] = $approvedPort['portingId'];
+                $tmpPort['MSISDNs'][] = $approvedPort['startMSISDN'];
+                $enterpriseGrouping[] = $tmpPort;
             }
 
         }
@@ -574,6 +601,7 @@ class BatchOperationService extends CI_Controller {
     }
 
     /**
+     * TODO: OK
      * Executed as OPD
      * BATCH_004_{A, B, C}
      * Checks for all ports in ACCEPTED state, if any performs porting to CONTRACT_DELETED_CONFIRMED state
@@ -605,12 +633,11 @@ class BatchOperationService extends CI_Controller {
             $portingId = $acceptedPort['portingId'];
 
             // Check if port in provision table in state STARTED
-            $provisionPort = $this->Provision_model->get_provisioning_by_process_state($portingId, processType::PORTING, \ProvisionService\ProvisionNotification\provisionStateType::STARTED);
+            $provisionPort = $this->Provisioning_model->get_provisioning_by_process_state($portingId, processType::PORTING, provisionStateType::STARTED);
 
             if($provisionPort){
 
                 // Porting already provisioned. Start porting moving to CONTRACT_DELETED_CONFIRMED state
-                $subscriberMSISDN = $acceptedPort['startMSISDN'];
 
                 $contractId = $acceptedPort['contractId'];
 
@@ -801,7 +828,7 @@ class BatchOperationService extends CI_Controller {
             // Perform KPSA Operation
             $kpsaResponse = $kpsaOperationService->performKPSAOperation($subscriberMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
 
-            if($kpsaResponse->success){
+            if($kpsaResponse['success']){
 
                 $this->db->trans_start();
 
@@ -809,7 +836,7 @@ class BatchOperationService extends CI_Controller {
 
                 $portingEvolutionParams = array(
                     'lastChangeDateTime' => date('c'),
-                    'portingState' => \PortingService\Porting\portingStateType::CONFIRMED,
+                    'portingState' => \PortingService\Porting\portingStateType::COMPLETED,
                     'isAutoReached' => false,
                     'portingId' => $portingId,
                 );
@@ -820,7 +847,7 @@ class BatchOperationService extends CI_Controller {
 
                 $portingParams = array(
                     'lastChangeDateTime' => date('c'),
-                    'portingState' => \PortingService\Porting\portingStateType::CONFIRMED
+                    'portingState' => \PortingService\Porting\portingStateType::COMPLETED
                 );
 
                 $this->Porting_model->update_porting($portingId, $portingParams);
@@ -848,7 +875,7 @@ class BatchOperationService extends CI_Controller {
 
             else{
 
-                $emailService->adminKPSAError($kpsaResponse->message, []);
+                $emailService->adminKPSAError($kpsaResponse['message'], []);
 
             }
 
@@ -857,6 +884,7 @@ class BatchOperationService extends CI_Controller {
     }
 
     /**
+     * TODO: OK
      * Executed as OPR
      * BATCH_004_{C, D, E}
      * Checks for all ports in ACCEPTED state, if any check porting date and performs porting to MSISDN_IMPORT_CONFIRMED state
@@ -1063,7 +1091,7 @@ class BatchOperationService extends CI_Controller {
             // Perform KPSA Operation
             $kpsaResponse = $kpsaOperationService->performKPSAOperation($subscriberMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
 
-            if($kpsaResponse->success){
+            if($kpsaResponse['success']){
 
                 // Send confirm request
 
@@ -1130,14 +1158,13 @@ class BatchOperationService extends CI_Controller {
                             $emailService->adminConfirmReport($fault, []);
                     }
 
-
                 }
 
             }
 
             else{
 
-                $emailService->adminKPSAError($kpsaResponse->message, []);
+                $emailService->adminKPSAError($kpsaResponse['message'], []);
 
             }
 
@@ -1146,15 +1173,7 @@ class BatchOperationService extends CI_Controller {
     }
 
     /**
-     * Executed by all
-     * BATCH_005
-     * Uses helper functions to update LDB
-     */
-    public function systemAPIUpdater(){
-
-    }
-
-    /**
+     * TODO: OK
      * Executed as OPD
      * BATCH_005
      * Checks for all rollbacks in Submission table in STARTED state and attempts making open for them
@@ -1175,7 +1194,7 @@ class BatchOperationService extends CI_Controller {
             $rollbackSubmissionId = $startedRollback['rollbackSubmissionId'];
             $donorSubmissionDateTime = date('c');
             $preferredRollbackDateTime = $startedRollback['preferredRollbackDateTime'];
-            $openedDateTime = $startedRollback('openedDateTime');
+            $openedDateTime = $startedRollback['openedDateTime'];
 
             // Make Open Rollback Operation
 
@@ -1240,6 +1259,8 @@ class BatchOperationService extends CI_Controller {
 
                 $fault = $openResponse->error;
 
+                var_dump($fault);
+
                 switch ($fault) {
                     // Terminal Processes
                     case Fault::INVALID_OPERATOR_FAULT:
@@ -1278,6 +1299,7 @@ class BatchOperationService extends CI_Controller {
     }
 
     /**
+     * TODO: OK
      * Executed as OPR
      * BATCH_007
      * Checks for all rollbacks in OPENED state and sends mail for their Acceptance / Rejection
@@ -1293,13 +1315,14 @@ class BatchOperationService extends CI_Controller {
         foreach ($openedPorts as $openedPort){
 
             // Send mail to Back office with Admin in CC for Acceptance / Rejection
-            $emailService->backOfficRollbackAcceptReject([]);
+            //$emailService->backOfficRollbackAcceptReject([]);
 
         }
 
     }
 
     /**
+     * TODO: OK
      * Executed as OPR
      * BATCH_008_{A, B}
      * Checks for all rollbacks in ACCEPTED state, if any performs rollbacks to CONTRACT_DELETED_CONFIRMED state
@@ -1314,11 +1337,11 @@ class BatchOperationService extends CI_Controller {
 
         // Load rollbacks in Rollback table in CONTRACT_DELETED_CONFIRMED state in which we are OPR
 
-        $msisdnContractDeletecRollbacks = $this->Rollback_model->get_rollbacks_by_state_and_recipient(\RollbackService\Rollback\rollbackStateType::CONTRACT_DELETED_CONFIRMED, Operator::ORANGE_NETWORK_ID);
+        $msisdnContractDeletedRollbacks = $this->Rollback_model->get_rollback_by_state_and_recipient(\RollbackService\Rollback\rollbackStateType::CONTRACT_DELETED_CONFIRMED, Operator::ORANGE_NETWORK_ID);
 
         // Load rollbacks in Rollback table in MSISDN_EXPORT_CONFIRMED state in which we are OPR
 
-        $msisdnExportedRollbacks = $this->Rollback_model->get_rollbacks_by_state_and_recipient(\RollbackService\Rollback\rollbackStateType::MSISDN_EXPORT_CONFIRMED, Operator::ORANGE_NETWORK_ID);
+        $msisdnExportedRollbacks = $this->Rollback_model->get_rollback_by_state_and_recipient(\RollbackService\Rollback\rollbackStateType::MSISDN_EXPORT_CONFIRMED, Operator::ORANGE_NETWORK_ID);
 
         $bscsOperationService = new BscsOperationService();
 
@@ -1331,12 +1354,12 @@ class BatchOperationService extends CI_Controller {
             $rollbackId = $acceptedRollback['rollbackId'];
 
             // Check if rollback in provision table in state STARTED
-            $provisionRollback = $this->Provision_model->get_provisioning_by_process_state($rollbackId, processType::ROLLBACK, \ProvisionService\ProvisionNotification\provisionStateType::STARTED);
+            $provisionRollback = $this->Provisioning_model->get_provisioning_by_process_state($rollbackId, processType::ROLLBACK, \ProvisionService\ProvisionNotification\provisionStateType::STARTED);
 
             if($provisionRollback){
 
                 // Rollback already provisioned. Start rollback moving to CONTRACT_DELETED_CONFIRMED state
-                $subscriberMSISDN = $acceptedRollback['subscriberMSISDN'];
+                $subscriberMSISDN = $acceptedRollback['startMSISDN'];
 
                 $contractId = $bscsOperationService->getContractId($subscriberMSISDN);
 
@@ -1424,11 +1447,11 @@ class BatchOperationService extends CI_Controller {
             }
         }
 
-        foreach ($msisdnContractDeletecRollbacks as $msisdnContractDeletecRollback){
+        foreach ($msisdnContractDeletedRollbacks as $msisdnContractDeletedRollback){
 
-            $rollbackId = $msisdnContractDeletecRollback['rollbackId'];
+            $rollbackId = $msisdnContractDeletedRollback['rollbackId'];
 
-            $subscriberMSISDN = $msisdnContractDeletecRollback['subscriberMSISDN'];
+            $subscriberMSISDN = $msisdnContractDeletedRollback['startMSISDN'];
 
             $exportResponse = $bscsOperationService->exportMSISDN($subscriberMSISDN);
 
@@ -1528,7 +1551,7 @@ class BatchOperationService extends CI_Controller {
             // Perform KPSA Operation
             $kpsaResponse = $kpsaOperationService->performKPSAOperation($subscriberMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
 
-            if($kpsaResponse->success){
+            if($kpsaResponse['success']){
 
                 $this->db->trans_start();
 
@@ -1536,7 +1559,7 @@ class BatchOperationService extends CI_Controller {
 
                 $rollbackEvolutionParams = array(
                     'lastChangeDateTime' => date('c'),
-                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_EXPORT_CONFIRMED,
+                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::COMPLETED,
                     'isAutoReached' => false,
                     'rollbackId' => $rollbackId,
                 );
@@ -1547,7 +1570,7 @@ class BatchOperationService extends CI_Controller {
 
                 $rollbackParams = array(
                     'lastChangeDateTime' => date('c'),
-                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_EXPORT_CONFIRMED
+                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::COMPLETED
                 );
 
                 $this->Rollback_model->update_rollback($rollbackId, $rollbackParams);
@@ -1575,7 +1598,7 @@ class BatchOperationService extends CI_Controller {
 
             else{
 
-                $emailService->adminKPSAError($kpsaResponse->message, []);
+                $emailService->adminKPSAError($kpsaResponse['message'], []);
 
             }
 
@@ -1584,6 +1607,7 @@ class BatchOperationService extends CI_Controller {
     }
 
     /**
+     * TODO: OK
      * Executed as OPD
      * BATCH_008_{C, D, E}
      * Checks for all rollbacks in ACCEPTED state, if any perform rollback to MSISDN_IMPORT_CONFIRMED state
@@ -1614,7 +1638,7 @@ class BatchOperationService extends CI_Controller {
 
         foreach ($acceptedRollbacks as $acceptedRollback) {
 
-            $rollbackDateTime = $acceptedRollback['rollbackDateTime'];
+            $rollbackDateTime = $acceptedRollback['preferredRollbackDateTime'];
 
             $rollbackId = $acceptedRollback['rollbackId'];
 
@@ -1629,10 +1653,10 @@ class BatchOperationService extends CI_Controller {
             $diff = date_diff($start_time, $end_time);
 
             // End time >= start time, less than 15minutes difference
-            if($diff->invert == 0 && $diff->i < 15){
+            if(($diff->invert == 0 && $diff->i < 15) || ($diff->invert == 1 && $diff->i < 15)){
 
                 // Start rollback moving to MSISDN_IMPORT_CONFIRMED state. Import rollback MSISDN into BSCS
-                $subscriberMSISDN = $acceptedRollback['subscriberMSISDN'];
+                $subscriberMSISDN = $acceptedRollback['startMSISDN'];
 
                 $importResponse = $bscsOperationService->importMSISDN($subscriberMSISDN);
 
@@ -1713,7 +1737,8 @@ class BatchOperationService extends CI_Controller {
 
                 }
 
-            }else if($diff->invert == 0 && $diff->h > 0){
+            }
+            else if($diff->invert == 1 && $diff->h > 0){
 
                 // More than 1hrs late, alert Admin
 
@@ -1791,7 +1816,7 @@ class BatchOperationService extends CI_Controller {
             // Perform KPSA Operation
             $kpsaResponse = $kpsaOperationService->performKPSAOperation($subscriberMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
 
-            if($kpsaResponse->success){
+            if($kpsaResponse['success']){
 
                 // Send confirm request
 
@@ -1858,14 +1883,13 @@ class BatchOperationService extends CI_Controller {
                             $emailService->adminConfirmReport($fault, []);
                     }
 
-
                 }
 
             }
 
             else{
 
-                $emailService->adminKPSAError($kpsaResponse->message, []);
+                $emailService->adminKPSAError($kpsaResponse['message'], []);
 
             }
 
@@ -1874,6 +1898,7 @@ class BatchOperationService extends CI_Controller {
     }
 
     /**
+     * TODO: OK
      * Executed as CO
      * BATCH_009
      * Checks for all NRs in Submission table in STARTED state and attempts making open for them
@@ -1882,7 +1907,7 @@ class BatchOperationService extends CI_Controller {
 
         // Load number returns in Submission table in STARTED state
 
-        $startedReturns = $this->Numberreturnmission_model->get_submissionByState(returnSubmissionStateType::STARTED);
+        $startedReturns = $this->Numberreturnsubmission_model->get_submissionByState(returnSubmissionStateType::STARTED);
 
         $nrOperationService = new ReturnOperationService();
 
@@ -1890,14 +1915,14 @@ class BatchOperationService extends CI_Controller {
 
         foreach ($startedReturns as $startedReturn){
 
-            $submissionId = $startedReturn('numberReturnSubmissionId');
-            $returnMSISDN = $startedReturn('returnMSISDN');
-            $primaryOwnerNetworkId = $startedReturn('primaryOwnerNetworkId');
+            $submissionId = $startedReturn['numberReturnSubmissionId'];
+            $returnMSISDN = $startedReturn['returnMSISDN'];
+            $primaryOwnerNetworkId = $startedReturn['primaryOwnerNetworkId'];
             $returnOperator = null;
 
-            if(($primaryOwnerNetworkId == Operator::MTN_NETWORK_ID)){
+            if($primaryOwnerNetworkId == Operator::MTN_NETWORK_ID){
                 $returnOperator = 0;
-            }else{
+            }elseif($primaryOwnerNetworkId == Operator::NEXTTEL_NETWORK_ID){
                 $returnOperator = 1;
             }
 
@@ -1917,7 +1942,7 @@ class BatchOperationService extends CI_Controller {
                     'submissionState' => \ReturnService\_Return\returnSubmissionStateType::OPENED,
                 );
 
-                $submissionId = $this->Numberreturnsubmission_model->update_portingsubmission($submissionId, $nrsParams);
+                $this->Numberreturnsubmission_model->update_numberreturnsubmission($submissionId, $nrsParams);
 
                 // Insert into NR table
 
@@ -1940,7 +1965,6 @@ class BatchOperationService extends CI_Controller {
                 $nrsParams = array(
                     'returnNumberState' => \ReturnService\_Return\returnStateType::OPENED,
                     'lastChangeDateTime' => date('c'),
-                    'isAutoReached' => false,
                     'returnId' => $openResponse->returnTransaction->returnId,
                 );
 
@@ -1973,7 +1997,7 @@ class BatchOperationService extends CI_Controller {
                     // Terminal Processes
                     case Fault::INVALID_OPERATOR_FAULT:
 
-                    // Terminal Error Processes
+                        // Terminal Error Processes
                     case Fault::NUMBER_RESERVED_BY_PROCESS:
                     case Fault::NUMBER_NOT_OWNED_BY_OPERATOR:
                     case Fault::UNKNOWN_MANAGED_NUMBER:
@@ -1984,8 +2008,6 @@ class BatchOperationService extends CI_Controller {
                     case Fault::NUMBER_RANGE_QUANTITY_LIMIT_EXCEEDED:
                     case Fault::NUMBER_QUANTITY_LIMIT_EXCEEDED:
                     case Fault::NUMBER_RANGES_OVERLAP:
-                        $emailService->adminSubmissionReport($fault, []);
-                        break;
                     default:
                         $emailService->adminSubmissionReport($fault, []);
                 }
@@ -1996,6 +2018,7 @@ class BatchOperationService extends CI_Controller {
     }
 
     /**
+     * TODO: OK
      * Executed as PO
      * BATCH_010
      * Checks for all NRs in OPENED state and sends mail for their Acceptance / Rejection
@@ -2004,20 +2027,21 @@ class BatchOperationService extends CI_Controller {
 
         // Load NRs in NR table in OPENED state in which we are PO
 
-        $openedReturns = $this->Numberreturnmission_model->get_nr_by_state_and_po(\ReturnService\_Return\returnStateType::OPENED, Operator::ORANGE_NETWORK_ID);
+        $openedReturns = $this->Numberreturn_model->get_nr_by_state_and_po(\ReturnService\_Return\returnStateType::OPENED, Operator::ORANGE_NETWORK_ID);
 
         $emailService = new EmailService();
 
         foreach ($openedReturns as $openedReturn){
 
             // Send mail to Back office with Admin in CC for Acceptance / Rejection
-            $emailService->backOfficReturnAcceptReject([]);
+            //$emailService->backOfficReturnAcceptReject([]);
 
         }
 
     }
 
     /**
+     * TODO: OK
      * Executed as CO
      * BATCH_011_{A, B}
      * Checks for all NRs in ACCEPTED state, if any, perform NR to MSISDN_EXPORT_CONFIRMED state
@@ -2027,11 +2051,11 @@ class BatchOperationService extends CI_Controller {
 
         // Load NRs in Return table in ACCEPTED state in which we are CO
 
-        $acceptedReturns = $this->Numberreturnmission_model->get_nr_by_state_and_co(\ReturnService\_Return\returnStateType::ACCEPTED, Operator::ORANGE_NETWORK_ID);
+        $acceptedReturns = $this->Numberreturn_model->get_nr_by_state_and_co(\ReturnService\_Return\returnStateType::ACCEPTED, Operator::ORANGE_NETWORK_ID);
 
         // Load NRs in Return table in MSISDN_EXPORT_CONFIRMED state in which we are CO
 
-        $msisdnConfirmedReturns = $this->Numberreturnmission_model->get_nr_by_state_and_co(\ReturnService\_Return\returnStateType::MSISDN_EXPORT_CONFIRMED, Operator::ORANGE_NETWORK_ID);
+        $msisdnConfirmedReturns = $this->Numberreturn_model->get_nr_by_state_and_co(\ReturnService\_Return\returnStateType::MSISDN_EXPORT_CONFIRMED, Operator::ORANGE_NETWORK_ID);
 
         $bscsOperationService = new BscsOperationService();
 
@@ -2041,13 +2065,11 @@ class BatchOperationService extends CI_Controller {
 
         foreach ($acceptedReturns as $acceptedReturn){
 
-            // TODO: Verify that return process already provisioned
+            $returnId = $acceptedReturn['returnId'];
 
-            $returnId = $acceptedReturn['rollbackId'];
+            $returnMSISDN = $acceptedReturn['returnMSISDN'];
 
-            $subscriberMSISDN = $acceptedReturn['subscriberMSISDN'];
-
-            $exportResponse = $bscsOperationService->exportMSISDN($subscriberMSISDN);
+            $exportResponse = $bscsOperationService->exportMSISDN($returnMSISDN);
 
             if($exportResponse->success){
 
@@ -2067,11 +2089,10 @@ class BatchOperationService extends CI_Controller {
                 // Update Return table
 
                 $returnParams = array(
-                    'lastChangeDateTime' => date('c'),
                     'returnNumberState' => \ReturnService\_Return\returnStateType::MSISDN_EXPORT_CONFIRMED
                 );
 
-                $this->Numberreturnstateevolution_model->update_numberreturn($returnId, $returnParams);
+                $this->Numberreturn_model->update_numberreturn($returnId, $returnParams);
 
                 // Notify Agents/Admin
 
@@ -2144,7 +2165,7 @@ class BatchOperationService extends CI_Controller {
             // Perform KPSA Operation
             $kpsaResponse = $kpsaOperationService->performKPSAOperation($returnMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
 
-            if($kpsaResponse->success){
+            if($kpsaResponse['success']){
 
                 $this->db->trans_start();
 
@@ -2162,11 +2183,10 @@ class BatchOperationService extends CI_Controller {
                 // Update Return table
 
                 $returnParams = array(
-                    'lastChangeDateTime' => date('c'),
                     'returnNumberState' => \ReturnService\_Return\returnStateType::COMPLETED
                 );
 
-                $this->Numberreturnstateevolution_model->update_numberreturn($returnId, $returnParams);
+                $this->Numberreturn_model->update_numberreturn($returnId, $returnParams);
 
                 // Update Provisioning table
 
@@ -2191,7 +2211,7 @@ class BatchOperationService extends CI_Controller {
 
             else{
 
-                $emailService->adminKPSAError($kpsaResponse->message, []);
+                $emailService->adminKPSAError($kpsaResponse['message'], []);
 
             }
 
@@ -2200,6 +2220,7 @@ class BatchOperationService extends CI_Controller {
     }
 
     /**
+     * TODO: OK
      * Executed as PO
      * BATCH_011_{C, D}
      * Checks for all NRs in ACCEPTED state, if any, perform NR to MSISDN_RETURN_CONFIRMED state
@@ -2209,11 +2230,11 @@ class BatchOperationService extends CI_Controller {
 
         // Load NRs in Return table in ACCEPTED state in which we are PO
 
-        $acceptedReturns = $this->Numberreturnmission_model->get_nr_by_state_and_po(\ReturnService\_Return\returnStateType::ACCEPTED, Operator::ORANGE_NETWORK_ID);
+        $acceptedReturns = $this->Numberreturn_model->get_nr_by_state_and_po(\ReturnService\_Return\returnStateType::ACCEPTED, Operator::ORANGE_NETWORK_ID);
 
         // Load NRs in Return table in MSISDN_RETURN_CONFIRMED state in which we are PO
 
-        $msisdnConfirmedReturns = $this->Numberreturnmission_model->get_nr_by_state_and_po(\ReturnService\_Return\returnStateType::MSISDN_RETURN_CONFIRMED, Operator::ORANGE_NETWORK_ID);
+        $msisdnConfirmedReturns = $this->Numberreturn_model->get_nr_by_state_and_po(\ReturnService\_Return\returnStateType::MSISDN_RETURN_CONFIRMED, Operator::ORANGE_NETWORK_ID);
 
         $bscsOperationService = new BscsOperationService();
 
@@ -2223,13 +2244,11 @@ class BatchOperationService extends CI_Controller {
 
         foreach ($acceptedReturns as $acceptedReturn){
 
-            // TODO: Verify that return process already provisioned
+            $returnId = $acceptedReturn['returnId'];
 
-            $returnId = $acceptedReturn['rollbackId'];
+            $returnMSISDN = $acceptedReturn['returnMSISDN'];
 
-            $subscriberMSISDN = $acceptedReturn['subscriberMSISDN'];
-
-            $returnResponse = $bscsOperationService->returnMSISDN($subscriberMSISDN);
+            $returnResponse = $bscsOperationService->returnMSISDN($returnMSISDN);
 
             if($returnResponse->success){
 
@@ -2249,11 +2268,10 @@ class BatchOperationService extends CI_Controller {
                 // Update Return table
 
                 $returnParams = array(
-                    'lastChangeDateTime' => date('c'),
                     'returnNumberState' => \ReturnService\_Return\returnStateType::MSISDN_RETURN_CONFIRMED
                 );
 
-                $this->Numberreturnstateevolution_model->update_numberreturn($returnId, $returnParams);
+                $this->Numberreturn_model->update_numberreturn($returnId, $returnParams);
 
                 // Notify Agents/Admin
 
@@ -2317,16 +2335,12 @@ class BatchOperationService extends CI_Controller {
 
             $returnMSISDN = $msisdnConfirmedReturn['returnMSISDN'];
 
-            $fromOperator = $msisdnConfirmedReturn['ownerNetworkId'];
-
             $toRoutingNumber = $msisdnConfirmedReturn['primaryOwnerRoutingNumber'];
-
-            $fromRoutingNumber = $msisdnConfirmedReturn['ownerRoutingNumber'];
 
             // Perform KPSA Operation
             $kpsaResponse = $kpsaOperationService->performKPSAReturnOperation($returnMSISDN, $toOperator, $toRoutingNumber);
 
-            if($kpsaResponse->success){
+            if($kpsaResponse['success']){
 
                 $this->db->trans_start();
 
@@ -2344,11 +2358,10 @@ class BatchOperationService extends CI_Controller {
                 // Update Return table
 
                 $returnParams = array(
-                    'lastChangeDateTime' => date('c'),
                     'returnNumberState' => \ReturnService\_Return\returnStateType::COMPLETED
                 );
 
-                $this->Numberreturnstateevolution_model->update_numberreturn($returnId, $returnParams);
+                $this->Numberreturn_model->update_numberreturn($returnId, $returnParams);
 
                 // Update Provisioning table
 
@@ -2373,7 +2386,7 @@ class BatchOperationService extends CI_Controller {
 
             else{
 
-                $emailService->adminKPSAError($kpsaResponse->message, []);
+                $emailService->adminKPSAError($kpsaResponse['success'], []);
 
             }
 
@@ -2382,6 +2395,7 @@ class BatchOperationService extends CI_Controller {
     }
 
     /**
+     * TODO: OK
      * Executed as Other Operator
      * BATCH_012
      * Checks for all Provisions in STARTED state in which we are not end operator nor donor or recipient but
@@ -2420,7 +2434,7 @@ class BatchOperationService extends CI_Controller {
             // Perform KPSA Operation
             $kpsaResponse = $kpsaOperationService->performKPSAOtherOperation($subscriberMSISDN, $toOperator, $toRoutingNumber);
 
-            if($kpsaResponse->success){
+            if($kpsaResponse['success']){
 
                 $this->db->trans_start();
 
@@ -2447,20 +2461,11 @@ class BatchOperationService extends CI_Controller {
 
             else{
 
-                $emailService->adminKPSAError($kpsaResponse->message, []);
+                $emailService->adminKPSAError($kpsaResponse['message'], []);
 
             }
 
         }
-
-    }
-
-    /**
-     * Executed by all
-     * BATCH_013
-     * Checks for all processes at SMS levels and verify if SMS has been sent. If not, send
-     */
-    public function smsUpdater(){
 
     }
 
@@ -2510,48 +2515,11 @@ class BatchOperationService extends CI_Controller {
 
                             $porting = $this->Porting_model->get_porting($cadbId);
 
-                            if($porting['portingState'] == \PortingService\Porting\portingStateType::CONFIRMED) {
+                            if($porting['portingState'] != \PortingService\Porting\portingStateType::COMPLETED) {
 
-                                $this->db->trans_start();
-
-                                // Insert into porting Evolution state table
-
-                                $portingEvolutionParams = array(
-                                    'lastChangeDateTime' => date('c'),
-                                    'portingState' => \PortingService\Porting\portingStateType::COMPLETED,
-                                    'isAutoReached' => false,
-                                    'portingId' => $cadbId,
-                                );
-
-                                $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
-
-                                // Update Porting table
-
-                                $portingParams = array(
-                                    'lastChangeDateTime' => date('c'),
-                                    'portingState' => \PortingService\Porting\portingStateType::COMPLETED
-                                );
-
-                                $this->Porting_model->update_porting($cadbId, $portingParams);
-
-                                // Notify Agents/Admin
-
-                                $this->db->trans_complete();
-
-                                if ($this->db->trans_status() === FALSE) {
-
-                                    $emailService->adminErrorReport('PORTING_COMPLETED_FROM_CADB_SYNC_BUT_DB_FILLED_INCOMPLETE', []);
-
-                                }else{
-
-                                }
-
-                            }else{
-
-                                $emailService->cadbPortingStateOffConfirmed([]);
+                                //$emailService->cadbPortingStateOffCompleted([]);
 
                             }
-
                         }
                     }
 
@@ -2603,6 +2571,24 @@ class BatchOperationService extends CI_Controller {
         }
 
         return $response;
+
+    }
+
+    /**
+     * Executed by all
+     * BATCH_005
+     * Uses helper functions to update LDB
+     */
+    public function systemAPIUpdater(){
+
+    }
+
+    /**
+     * Executed by all
+     * BATCH_013
+     * Checks for all processes at SMS levels and verify if SMS has been sent. If not, send
+     */
+    public function smsUpdater(){
 
     }
 
