@@ -70,7 +70,6 @@ class Porting extends CI_Controller
             $temporalNumber = $this->input->post('temporalNumber');
             $language = $this->input->post('language'); // EN or FR
 
-            // Get subscriber contractId from BSCS with temporal MSISDN
             $bscsOperationService = new BscsOperationService();
             $contractId = $bscsOperationService->getContractId($temporalNumber);
 
