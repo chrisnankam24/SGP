@@ -734,7 +734,7 @@ class PortingOperationService extends CI_Controller  {
      */
     public function orderPort($donorOperator, $portingMsisdn, $subscriberType, $rio, $documentType, $physicalPersonFirstName,
                                $physicalPersonLastName, $physicalPersonIdNumber, $legalPersonName, $legalPersonTin,
-                               $contactNumber, $temporalNumber, $contractId, $language) {
+                               $contactNumber, $temporalNumber, $contractId, $language, $userId) {
 
         // Construct subscriber info
 
@@ -778,7 +778,8 @@ class PortingOperationService extends CI_Controller  {
                 'language' => $language,
                 'temporalMSISDN' => $temporalNumber,
                 'submissionState' => \PortingService\Porting\portingSubmissionStateType::ORDERED,
-                'orderedDateTime' => date('c')
+                'orderedDateTime' => date('c'),
+                'userId' => $userId
             );
 
             if($subscriberType == 0) {
@@ -895,7 +896,8 @@ class PortingOperationService extends CI_Controller  {
                         'contractId' => $contractId,
                         'language' => $language,
                         'temporalMSISDN' => $temporalNumber,
-                        'submissionState' => \PortingService\Porting\portingSubmissionStateType::STARTED
+                        'submissionState' => \PortingService\Porting\portingSubmissionStateType::STARTED,
+                        'userId' => $userId
                     );
 
                     if($subscriberType == 0) {
