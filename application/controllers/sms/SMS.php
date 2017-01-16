@@ -362,7 +362,7 @@ class SMS extends CI_Controller {
         $sendResponse = array();
         $sendResponse['success'] = true;
 
-        /*try {
+        try {
 
             $response = file_get_contents('http://' . SMSParams::HOST . ':' . SMSParams::PORT . '/cgi-bin/sendsms?&username='
                 . SMSParams::USERNAME . '&password=' . SMSParams::PASSWORD . '&from=' . SMSParams::FROM . '&to=' . $msisdn . '&text=' . urlencode($message)
@@ -372,7 +372,7 @@ class SMS extends CI_Controller {
 
             $sendResponse['success'] = false;
 
-        }*/
+        }
 
         return $sendResponse;
 
