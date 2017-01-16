@@ -21,22 +21,13 @@ class RIO extends CI_Controller {
         parent::__construct();
     }
 
-    public function index(){
-        echo self::get_rio('694975166');
-    }
-
-    public static function test()
-    {
-        echo self::get_rio('694975166');
-    }
-
     /**
      * Returns RIO of given subscriber
      * @param $msisdn string|false
      */
     public static function get_rio($msisdn){
 
-        /*$bscsOperationService = new BscsOperationService();
+        $bscsOperationService = new BscsOperationService();
         $subsInfo = $bscsOperationService->loadNumberInfo($msisdn);
 
         if($subsInfo){
@@ -47,9 +38,7 @@ class RIO extends CI_Controller {
 
         }else{
             return false;
-        }*/
-
-        return '02P058M709YS';
+        }
 
     }
 

@@ -21,8 +21,8 @@ class KpsaOperationService extends CI_Controller {
     }
 
     public function test(){
-        //$response = $this->viewSubscriberTEKELEC('694975166');
-        var_dump(isOCMNumber('237697475166'));
+        $response = $this->viewSubscriberTEKELEC('694975166');
+        var_dump($response);
     }
 
     /**
@@ -39,7 +39,7 @@ class KpsaOperationService extends CI_Controller {
         $response['success'] = true;
 
         // Search for MSISDN in KPSA
-       /* $searchResponse = $this->viewSubscriberTEKELEC($msisdn);
+       $searchResponse = $this->viewSubscriberTEKELEC($msisdn);
 
         if($searchResponse['success'] == true){ // MSISDN in KPSA
 
@@ -94,7 +94,7 @@ class KpsaOperationService extends CI_Controller {
             $response['success'] = false;
             $response['message'] = $searchResponse['message'];
 
-        }*/
+        }
 
         return $response;
 
@@ -112,7 +112,7 @@ class KpsaOperationService extends CI_Controller {
         $response['success'] = true;
 
         // Search for MSISDN in KPSA
-        /*$searchResponse = $this->viewSubscriberTEKELEC($msisdn);
+        $searchResponse = $this->viewSubscriberTEKELEC($msisdn);
 
         if($searchResponse['success'] == true){ // MSISDN in KPSA
 
@@ -148,7 +148,7 @@ class KpsaOperationService extends CI_Controller {
             $response['success'] = false;
             $response['message'] = $searchResponse['message'];
 
-        }*/
+        }
 
         return $response;
 
@@ -167,7 +167,7 @@ class KpsaOperationService extends CI_Controller {
         $response['success'] = true;
 
         // Search for MSISDN in KPSA
-        /*$searchResponse = $this->viewSubscriberTEKELEC($msisdn);
+        $searchResponse = $this->viewSubscriberTEKELEC($msisdn);
 
         if($searchResponse['success'] == true){ // MSISDN in KPSA
 
@@ -203,7 +203,7 @@ class KpsaOperationService extends CI_Controller {
             $response['success'] = false;
             $response['message'] = $searchResponse['message'];
 
-        }*/
+        }
 
         return $response;
 

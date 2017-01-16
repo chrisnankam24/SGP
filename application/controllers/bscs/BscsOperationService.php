@@ -91,17 +91,11 @@ class BscsOperationService extends CI_Controller  {
      */
     public function loadNumberInfo($msisdn){
 
-        /*$subscriberInfo = false;
+        $subscriberInfo = false;
 
         $subscriberInfo = $this->BSCS_model->get_msisdn_info($msisdn);
 
-        return $subscriberInfo;*/
-        $numberInfo = array();
-        $numberInfo['CONTRACT_ID'] = '8800092';
-        $numberInfo['LANGUE'] = 'EN';
-
-        return $numberInfo;
-
+        return $subscriberInfo;
     }
 
     /**
@@ -121,14 +115,13 @@ class BscsOperationService extends CI_Controller  {
 
         $contractId = -1;
 
-        /*$subscriberInfo = $this->BSCS_model->get_msisdn_info($msisdn);
+        $subscriberInfo = $this->BSCS_model->get_msisdn_info($msisdn);
 
         if($subscriberInfo != null && $subscriberInfo != -1) {
             $contractId = $subscriberInfo['CONTRACT_ID'];
-        }*/
+        }
 
-        return '8800092';
-        //return $contractId;
+        return $contractId;
 
     }
 
@@ -162,8 +155,7 @@ class BscsOperationService extends CI_Controller  {
 
             try {
 
-                //$response = $this->msisdnClient->ChangeImportMSISDN($request);
-                $response = new stdClass();
+                $response = $this->msisdnClient->ChangeImportMSISDN($request);
 
                 $response->success = true;
 
@@ -214,8 +206,8 @@ class BscsOperationService extends CI_Controller  {
 
             try {
 
-                //$response = $this->msisdnClient->ImportMSISDN($request);
-                $response = new stdClass();
+                $response = $this->msisdnClient->ImportMSISDN($request);
+
                 $response->success = true;
 
                 return $response;
@@ -265,8 +257,8 @@ class BscsOperationService extends CI_Controller  {
 
             try {
 
-                //$response = $this->msisdnClient->ReturnMSISDN($request);
-                $response = new stdClass();
+                $response = $this->msisdnClient->ReturnMSISDN($request);
+
                 $response->success = true;
 
                 return $response;
@@ -317,8 +309,8 @@ class BscsOperationService extends CI_Controller  {
 
             try {
 
-                //$response = $this->msisdnClient->ExportMSISDN($request);
-                $response = new stdClass();
+                $response = $this->msisdnClient->ExportMSISDN($request);
+
                 $response->success = true;
 
                 return $response;
@@ -524,8 +516,8 @@ class BscsOperationService extends CI_Controller  {
 
             try {
 
-                //$response = $this->contractClient->deleteContract($request);
-                $response = new stdClass();
+                $response = $this->contractClient->deleteContract($request);
+
                 $response->success = true;
 
                 return $response;
