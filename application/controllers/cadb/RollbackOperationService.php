@@ -550,7 +550,6 @@ class RollbackOperationService  extends CI_Controller {
 
                         if ($this->db->trans_status() === FALSE) {
 
-                            $emailService = new EmailService();
                             $emailService->adminErrorReport('ROLLBACK_REQUESTED_OPERATOR_INACTIVE_BUT_STARTED_INCOMPLETE', []);
                             $response['message'] = 'Operator is currently Inactive. We have nonetheless encountered problems saving your request. Please contact Back Office';
 
@@ -573,10 +572,6 @@ class RollbackOperationService  extends CI_Controller {
 
                     case Fault::INVALID_REQUEST_FORMAT:
                     case Fault::ACTION_NOT_AUTHORIZED:
-                        $emailService->adminErrorReport($fault, []);
-                        $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
-                        break;
-
                     default:
                         $emailService->adminErrorReport($fault, []);
                         $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
@@ -670,10 +665,6 @@ class RollbackOperationService  extends CI_Controller {
                         case Fault::INVALID_REQUEST_FORMAT:
                         case Fault::INVALID_ROLLBACK_ID:
                         case Fault::ROLLBACK_ACTION_NOT_AVAILABLE:
-                            $emailService->adminErrorReport($fault, []);
-                            $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
-                            break;
-
                         default:
                             $emailService->adminErrorReport($fault, []);
                             $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
@@ -796,10 +787,6 @@ class RollbackOperationService  extends CI_Controller {
                             case Fault::INVALID_ROLLBACK_ID:
                             case Fault::CAUSE_MISSING:
                             case Fault::ROLLBACK_ACTION_NOT_AVAILABLE:
-                                $emailService->adminErrorReport($fault, []);
-                                $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
-                                break;
-
                             default:
                                 $emailService->adminErrorReport($fault, []);
                                 $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
@@ -831,8 +818,6 @@ class RollbackOperationService  extends CI_Controller {
             $response['message'] = 'No process found in LDB with given Id';
 
         }
-
-        return $response;
 
         return $response;
 

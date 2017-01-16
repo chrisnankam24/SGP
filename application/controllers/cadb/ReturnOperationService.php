@@ -384,7 +384,6 @@ class ReturnOperationService extends CI_Controller {
 
                         if ($this->db->trans_status() === FALSE) {
 
-                            $emailService = new EmailService();
                             $emailService->adminErrorReport('RETURN_REQUESTED_OPERATOR_INACTIVE_BUT_STARTED_INCOMPLETE', []);
                             $response['message'] = 'Operator is currently Inactive. We have nonetheless encountered problems saving your request. Please contact Back Office';
 
@@ -653,8 +652,6 @@ class ReturnOperationService extends CI_Controller {
             $response['message'] = 'No process found in LDB with given Id';
 
         }
-
-
 
         return $response;
 

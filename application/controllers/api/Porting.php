@@ -86,26 +86,13 @@ class Porting extends CI_Controller
 
             }else{
 
-                if(strtolower($donorOperator) == 'mtn'){
-                    $donorOperator = 0;
-                }elseif (strtolower($donorOperator) == 'nexttel'){
-                    $donorOperator = 1;
-                }else{
-                    $tempResponse['success'] = false;
-                    $tempResponse['message'] = "Invalid donor operator. Must be <MTN> or <NEXTTEL>";
-                }
+                $portingOperationService = new PortingOperationService();
 
-                if($donorOperator == 0 || $donorOperator == 1){
+                $orderResponse = $portingOperationService->orderPort($donorOperator, $portingMsisdn, $subscriberType, $rio, $documentType, $physicalPersonFirstName,
+                    $physicalPersonLastName, $physicalPersonIdNumber, $legalPersonName, $legalPersonTin,
+                    $contactNumber, $temporalNumber, $contractId, $language);
 
-                    $portingOperationService = new PortingOperationService();
-
-                    $orderResponse = $portingOperationService->orderPort($donorOperator, $portingMsisdn, $subscriberType, $rio, $documentType, $physicalPersonFirstName,
-                        $physicalPersonLastName, $physicalPersonIdNumber, $legalPersonName, $legalPersonTin,
-                        $contactNumber, $temporalNumber, $contractId, $language);
-
-                    $response = $orderResponse;
-                }
-                //
+                $response = $orderResponse;
 
             }
 
