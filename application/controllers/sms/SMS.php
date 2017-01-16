@@ -338,6 +338,20 @@ class SMS extends CI_Controller {
     }
 
     /**
+     * SMS sent by USSD Service to Subscriber after Subscriber demand USSD
+     * @param $message
+     * @param $msisdn
+     * @return array
+     */
+    public static function USSD_SMS($message, $msisdn){
+
+        $response = self::send_response($msisdn, $message);
+
+        return $response;
+
+    }
+
+    /**
      * Sends message to SMS Gateway
      * @param $msisdn
      * @param $message

@@ -163,7 +163,7 @@ class EmailService {
     private function send_mail($to, $cc, $subject, $message)
     {
 
-        /*$this->CI->load->library('email');
+        $this->CI->load->library('email');
 
         $this->CI->email->from('chp.testbed@gmail.com', 'Nankam Happi C.');
         $this->CI->email->to($to);
@@ -172,7 +172,9 @@ class EmailService {
         $this->CI->email->subject($subject);
         $this->CI->email->message($message);
 
-        $this->CI->email->send();*/
+        $response = $this->CI->email->send();
+
+        return $response;
 
     }
 

@@ -60,6 +60,7 @@ class Porting extends CI_Controller
             $portingMsisdn = $this->input->post('portingMsisdn');
             $subscriberType = $this->input->post('subscriberType'); // 0 == Person, 1 == Enterprise
             $rio = $this->input->post('rio');
+            $documentType = $this->input->post('documentType');
             $physicalPersonFirstName = $this->input->post('physicalPersonFirstName');
             $physicalPersonLastName = $this->input->post('physicalPersonLastName');
             $physicalPersonIdNumber = $this->input->post('physicalPersonIdNumber');
@@ -72,7 +73,7 @@ class Porting extends CI_Controller
 
             $portingOperationService = new PortingOperationService();
 
-            $orderResponse = $portingOperationService->orderPort($donorOperator, $portingMsisdn, $subscriberType, $rio, $physicalPersonFirstName,
+            $orderResponse = $portingOperationService->orderPort($donorOperator, $portingMsisdn, $subscriberType, $rio, $documentType, $physicalPersonFirstName,
                 $physicalPersonLastName, $physicalPersonIdNumber, $legalPersonName, $legalPersonTin,
                 $contactNumber, $temporalNumber, $contractId, $language);
 
@@ -125,19 +126,22 @@ class Porting extends CI_Controller
                             if(strtolower($data[2]) != 'rio'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[3]) != 'firstname'){
+                            if(strtolower($data[3]) != 'documentType'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[4]) != 'lastname'){
+                            if(strtolower($data[4]) != 'firstname'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[5]) != 'idnumber'){
+                            if(strtolower($data[5]) != 'lastname'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[6]) != 'temporalnumber'){
+                            if(strtolower($data[6]) != 'idnumber'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[7]) != 'language'){
+                            if(strtolower($data[7]) != 'temporalnumber'){
+                                $errorFound = true;
+                            }
+                            if(strtolower($data[8]) != 'language'){
                                 $errorFound = true;
                             }
                             if($errorFound){
@@ -156,11 +160,12 @@ class Porting extends CI_Controller
                             $donorOperator = $data[0]; // Donor Operator, either MTN or NEXTTEL
                             $portingMSISDN = $data[1]; // MSISDN to port
                             $rio = $data[2]; // RIO
-                            $physicalPersonFirstName = $data[3]; // FirstName
-                            $physicalPersonLastName = $data[4]; // lastName
-                            $physicalPersonIdNumber = $data[5]; // idNumber
-                            $temporalNumber = $data[6]; // temporalNumber
-                            $language = $data[7]; // language
+                            $documentType = $data[3]; // documentType
+                            $physicalPersonFirstName = $data[4]; // FirstName
+                            $physicalPersonLastName = $data[5]; // lastName
+                            $physicalPersonIdNumber = $data[6]; // idNumber
+                            $temporalNumber = $data[7]; // temporalNumber
+                            $language = $data[8]; // language
 
                             $subscriberType = 0; // Physical person
 
@@ -191,7 +196,7 @@ class Porting extends CI_Controller
 
                                 if($donorOperator == 0 || $donorOperator == 1){
 
-                                    $tempResponse = $portingOperationService->orderPort($donorOperator, $portingMSISDN, $subscriberType, $rio, $physicalPersonFirstName,
+                                    $tempResponse = $portingOperationService->orderPort($donorOperator, $portingMSISDN, $subscriberType, $rio, $documentType, $physicalPersonFirstName,
                                         $physicalPersonLastName, $physicalPersonIdNumber, null, null,
                                         null, $temporalNumber, $contractId, $language);
                                     $tempResponse['portingMSISDN'] = $portingMSISDN;
@@ -261,19 +266,22 @@ class Porting extends CI_Controller
                             if(strtolower($data[2]) != 'rio'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[3]) != 'legalname'){
+                            if(strtolower($data[3]) != 'documentType'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[4]) != 'legaltin'){
+                            if(strtolower($data[4]) != 'legalname'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[5]) != 'contactnumber'){
+                            if(strtolower($data[5]) != 'legaltin'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[6]) != 'temporalnumber'){
+                            if(strtolower($data[6]) != 'contactnumber'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[7]) != 'language'){
+                            if(strtolower($data[7]) != 'temporalnumber'){
+                                $errorFound = true;
+                            }
+                            if(strtolower($data[8]) != 'language'){
                                 $errorFound = true;
                             }
                             if($errorFound){
@@ -291,11 +299,12 @@ class Porting extends CI_Controller
                             $donorOperator = $data[0]; // Donor Operator, either MTN or NEXTTEL
                             $portingMSISDN = $data[1]; // MSISDN to port
                             $rio = $data[2]; // RIO
-                            $legalPersonName = $data[3]; // legalName
-                            $legalPersonTin = $data[4]; // legalTIN
-                            $contactNumber = $data[5]; // contactNumber
-                            $temporalNumber = $data[6]; // temporalNumber
-                            $language = $data[7]; // language
+                            $documentType = $data[3]; // Document Type
+                            $legalPersonName = $data[4]; // legalName
+                            $legalPersonTin = $data[5]; // legalTIN
+                            $contactNumber = $data[6]; // contactNumber
+                            $temporalNumber = $data[7]; // temporalNumber
+                            $language = $data[8]; // language
 
                             $subscriberType = 1; // legal person
 
@@ -326,7 +335,7 @@ class Porting extends CI_Controller
 
                                 if($donorOperator == 0 || $donorOperator == 1){
 
-                                    $tempResponse = $portingOperationService->orderPort($donorOperator, $portingMSISDN, $subscriberType, $rio, null,
+                                    $tempResponse = $portingOperationService->orderPort($donorOperator, $portingMSISDN, $subscriberType, $rio, $documentType, null,
                                         null, null,$legalPersonName, $legalPersonTin, $contactNumber,
                                         $temporalNumber, $contractId, $language);
 

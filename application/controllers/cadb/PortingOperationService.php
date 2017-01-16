@@ -732,7 +732,7 @@ class PortingOperationService extends CI_Controller  {
      * @param $temporalNumber
      * @param $contractId
      */
-    public function orderPort($donorOperator, $portingMsisdn, $subscriberType, $rio, $physicalPersonFirstName,
+    public function orderPort($donorOperator, $portingMsisdn, $subscriberType, $rio, $documentType, $physicalPersonFirstName,
                                $physicalPersonLastName, $physicalPersonIdNumber, $legalPersonName, $legalPersonTin,
                                $contactNumber, $temporalNumber, $contractId, $language) {
 
@@ -772,6 +772,7 @@ class PortingOperationService extends CI_Controller  {
                 'subscriberSubmissionDateTime' => date('c'),
                 'portingDateTime' => $orderResponse->portingTransaction->portingDateTime,
                 'rio' => $rio,
+                'documentType' => $documentType,
                 'portingMSISDN' => $portingMsisdn,
                 'contractId' => $contractId,
                 'language' => $language,
@@ -811,6 +812,7 @@ class PortingOperationService extends CI_Controller  {
                 'portingState' => \PortingService\Porting\portingStateType::ORDERED,
                 'contractId' => $contractId,
                 'language' => $language,
+                'notificationMailSendStatus' => smsState::PENDING,
                 'portingSubmissionId' => $portingsubmission_id,
             );
 
@@ -888,6 +890,7 @@ class PortingOperationService extends CI_Controller  {
                         'subscriberSubmissionDateTime' => date('c'),
                         'portingDateTime' => $portingDateTime,
                         'rio' => $rio,
+                        'documentType' => $documentType,
                         'portingMSISDN' => $portingMsisdn,
                         'contractId' => $contractId,
                         'language' => $language,
@@ -1107,9 +1110,7 @@ class PortingOperationService extends CI_Controller  {
                             $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
                     }
 
-
                 }
-
 
             }else{
 
@@ -1238,7 +1239,6 @@ class PortingOperationService extends CI_Controller  {
 
                         }
 
-
                     }
 
                 }
@@ -1264,7 +1264,6 @@ class PortingOperationService extends CI_Controller  {
             $response['message'] = 'No process found in LDB with given Id';
 
         }
-
 
         return $response;
 

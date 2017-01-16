@@ -66,6 +66,7 @@ class ReturnNotificationService extends CI_Controller {
             'primaryOwnerNetworkId' => $notifyOpenedRequest->returnTransaction->primaryOwnerNrn->networkId,
             'primaryOwnerRoutingNumber' => $notifyOpenedRequest->returnTransaction->primaryOwnerNrn->routingNumber,
             'returnMSISDN' => $notifyOpenedRequest->returnTransaction->numberRanges->numberRange->startNumber,
+            'notificationMailSendStatus' => smsState::PENDING,
             'returnNumberState' => \ReturnService\_Return\returnStateType::OPENED,
         );
 

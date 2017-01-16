@@ -107,6 +107,7 @@ class PortingNotificationService extends CI_Controller
                 'rio' =>  $notifyOrderedRequest->portingTransaction->rio,
                 'contractId' =>  $contractId,
                 'language' =>  $language,
+                'notificationMailSendStatus' => smsState::PENDING,
                 'startMSISDN' =>  $startMSISDN,
                 'endMSISDN' =>  $endMSISDN
             );

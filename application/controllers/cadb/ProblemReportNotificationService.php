@@ -80,13 +80,12 @@ class ProblemReportNotificationService extends CI_Controller {
                 'nrnNetworkId' => $notifyProblemReportedRequest->nrn->networkId,
                 'nrnRoutingNumber' => $notifyProblemReportedRequest->nrn->routingNumber,
                 'routingChangeDateTime' => $notifyProblemReportedRequest->routingChangeDateTime,
+                'notificationMailSendStatus' => smsState::PENDING,
                 'processType' => $notifyProblemReportedRequest->processType
             );
 
             $this->Error_model->add_error($params);
 
-            // Notify Admin/Agents
-            $emailService->adminAgentsErrorReport([]);
         }
 
         $this->db->trans_complete();

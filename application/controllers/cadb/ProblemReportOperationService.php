@@ -131,6 +131,7 @@ class ProblemReportOperationService  extends CI_Controller {
                 'cadbNumber' => $prResponse->returnTransaction->cadbNumber,
                 'problem' => $prResponse->returnTransaction->problem,
                 'reporterNetworkId' => Operator::ORANGE_NETWORK_ID,
+                'notificationMailSendStatus' => smsState::PENDING,
                 'submissionDateTime' => $prResponse->returnTransaction->submissionDateTime
             );
 
@@ -174,10 +175,6 @@ class ProblemReportOperationService  extends CI_Controller {
                 // Terminal Error Processes
                 case Fault::INVALID_REQUEST_FORMAT:
                 case Fault::ACTION_NOT_AUTHORIZED:
-                    $emailService->adminErrorReport($fault, []);
-                    $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
-                    break;
-
                 default:
                     $emailService->adminErrorReport($fault, []);
                     $response['message'] = 'Fatal Error Encountered. Please contact Administrator';

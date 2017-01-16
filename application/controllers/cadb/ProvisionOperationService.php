@@ -36,17 +36,6 @@ class ProvisionOperationService extends CI_Controller {
 
     }
 
-    public function index(){
-
-
-    }
-
-    public function test() {
-        $provisionOperationService = new ProvisionOperationService();
-        $response = $provisionOperationService->confirmRoutingData('zerzer');
-        var_dump($response);
-    }
-
     /**
      * @param $processId string process id of porting process to be confirmed
      * @return mixed

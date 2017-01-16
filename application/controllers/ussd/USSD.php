@@ -1,7 +1,9 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+require_once APPPATH . "controllers/cadb/Common.php";
 require_once APPPATH . '/controllers/rio/RIO.php';
+require_once APPPATH . '/controllers/sms/SMS.php';
 
 /**
  * Created by PhpStorm.
@@ -20,6 +22,7 @@ class USSD extends CI_Controller {
         parent::__construct();
 
         $this->load->model('FileLog_model');
+        $this->load->model('Ussdsmsnotification_model');
 
     }
 
@@ -32,15 +35,13 @@ class USSD extends CI_Controller {
 
         $headers = getallheaders();
 
-        $msisdn = substr($headers['User-MSISDN'], 3);;
+        $msisdn = substr($headers['User-MSISDN'], 3);
 
         $language = $headers['User-Language'];
 
         $template = '';
 
         $rio = RIO::getPersonalRIO($msisdn);
-
-        $this->FileLog_model->write_log('USSD_INIT', 'USSD', 'MSISDN received:: ' . $msisdn . ' :: Language :: ' . $language . ' :: rio :: ' . $rio);
 
         if($rio){
 
@@ -59,8 +60,8 @@ class USSD extends CI_Controller {
             $message = str_replace('[rio]', $rio, $template);
 
 
-        }else{
-
+        }
+        else{
 
             if($language == 'fr'){
 
@@ -103,7 +104,43 @@ class USSD extends CI_Controller {
         $frag->appendChild( $txt );
         $page->appendChild($frag);
         $response = $dom->saveXML();
+
         self::send_response($response);
+
+        $this->db->trans_start();
+
+        // Send USSD SMS and save in DB
+        $response = SMS::USSD_SMS($message, $msisdn);
+
+        if($response['success']){
+            // Save SMS in USSDNotificationTable in state SENT
+
+            $smsNotificationparams = array(
+                'message' => $message,
+                'creationDateTime' => date('c'),
+                'status' => smsState::SENT,
+                'msisdn' => '237' . $msisdn,
+                'attemptCount' => 1,
+                'sendDateTime' => date('c')
+            );
+
+        }else{
+            // Save SMS in USSDNotificationTable in state PENDING
+
+            $smsNotificationparams = array(
+                'message' => $message,
+                'creationDateTime' => date('c'),
+                'msisdn' => '237' . $msisdn,
+                'status' => smsState::PENDING,
+                'attemptCount' => 1
+            );
+
+        }
+
+        $this->Ussdsmsnotification_model->add_ussdsmsnotification($smsNotificationparams);
+
+        $this->db->trans_complete();
+
     }
 
     /**

@@ -82,6 +82,7 @@ class RollbackNotificationService extends CI_Controller {
             'rollbackDateAndTime' => $notifyOpenedRequest->rollbackTransaction->rollbackDateTime,
             'cadbOpenDateTime' => $notifyOpenedRequest->rollbackTransaction->cadbOpenDateTime,
             'lastChangeDateTime' => $notifyOpenedRequest->rollbackTransaction->lastChangeDateTime,
+            'notificationMailSendStatus' => smsState::PENDING,
             'rollbackState' => \RollbackService\Rollback\rollbackStateType::OPENED
         );
 

@@ -55,6 +55,9 @@ class BatchOperationService extends CI_Controller {
 
         $this->load->model('Provisioning_model');
 
+        $this->load->model('Ussdsmsnotification_model');
+        $this->load->model('Error_model');
+
     }
 
     public function index(){
@@ -162,6 +165,7 @@ class BatchOperationService extends CI_Controller {
                     'portingState' => \PortingService\Porting\portingStateType::ORDERED,
                     'contractId' => $contractId,
                     'language' => $language,
+                    'notificationMailSendStatus' => smsState::PENDING,
                     'portingSubmissionId' => $portingSubmissionId,
                 );
 
@@ -244,9 +248,6 @@ class BatchOperationService extends CI_Controller {
                     case Fault::INVALID_REQUEST_FORMAT:
                     case Fault::ACTION_NOT_AUTHORIZED:
                     case Fault::SUBSCRIBER_DATA_MISSING:
-                        $emailService->adminSubmissionReport($fault, []);
-                        break;
-
                     default:
                         $emailService->adminSubmissionReport($fault, []);
                 }
@@ -463,7 +464,6 @@ class BatchOperationService extends CI_Controller {
                             'portingId' => $denyResponse->portingTransaction->portingId,
                         );
 
-
                         $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
 
                         // Update Porting table
@@ -526,8 +526,6 @@ class BatchOperationService extends CI_Controller {
 
             }
 
-
-
         }
 
     }
@@ -548,11 +546,26 @@ class BatchOperationService extends CI_Controller {
 
         foreach ($approvedPorts as $approvedPort){
 
-            // Send mail to Back Office with Admin in CC for Acceptance / Rejection
-            $emailService->backOfficePortingAcceptReject($approvedPort);
+            // Verify if mail notification sent
+            if($approvedPort['notificationMailSendStatus'] == smsState::PENDING){
+                // Send mail to Back Office with Admin in CC for Acceptance / Rejection
 
+                $response = $emailService->backOfficePortingAcceptReject($approvedPort);
+
+                if($response){
+
+                    // Update State in DB
+
+                    $portingParams = array(
+                        'notificationMailSendStatus' => smsState::SENT,
+                        'notificationMailSendDateTime' =>  date('c')
+                    );
+
+                    $this->Porting_model->update_porting($approvedPort['portingId'], $portingParams);
+
+                }
+            }
         }
-
     }
 
     /**
@@ -674,8 +687,9 @@ class BatchOperationService extends CI_Controller {
                     $this->db->trans_complete();
 
                     if ($this->db->trans_status() === FALSE) {
-                        $emailService = new EmailService();
+
                         $emailService->adminErrorReport('PORTING_MSISDN_CONTRACT_DELETED_BUT_DB_FILLED_INCOMPLETE', []);
+
                     }else{
 
                     }
@@ -763,8 +777,9 @@ class BatchOperationService extends CI_Controller {
                 $this->db->trans_complete();
 
                 if ($this->db->trans_status() === FALSE) {
-                    $emailService = new EmailService();
+
                     $emailService->adminErrorReport('PORTING_MSISDN_EXPORTED_BUT_DB_FILLED_INCOMPLETE', []);
+
                 }else{
 
                 }
@@ -882,8 +897,9 @@ class BatchOperationService extends CI_Controller {
                 $this->db->trans_complete();
 
                 if ($this->db->trans_status() === FALSE) {
-                    $emailService = new EmailService();
+
                     $emailService->adminErrorReport('PORTING_COMPLETED_BUT_DB_FILLED_INCOMPLETE', []);
+
                 }else{
 
                 }
@@ -983,8 +999,9 @@ class BatchOperationService extends CI_Controller {
                     $this->db->trans_complete();
 
                     if ($this->db->trans_status() === FALSE) {
-                        $emailService = new EmailService();
+
                         $emailService->adminErrorReport('PORTING_MSISDN_IMPORTED_BUT_DB_FILLED_INCOMPLETE', []);
+
                     }else{
 
                     }
@@ -1080,8 +1097,9 @@ class BatchOperationService extends CI_Controller {
                 $this->db->trans_complete();
 
                 if ($this->db->trans_status() === FALSE) {
-                    $emailService = new EmailService();
+
                     $emailService->adminErrorReport('PORTING_MSISDN_CHANGED_BUT_DB_FILLED_INCOMPLETE', []);
+
                 }else{
 
                 }
@@ -1151,8 +1169,9 @@ class BatchOperationService extends CI_Controller {
                     $this->db->trans_complete();
 
                     if ($this->db->trans_status() === FALSE) {
-                        $emailService = new EmailService();
+
                         $emailService->adminErrorReport('PORTING_COMPLETED_BUT_DB_FILLED_INCOMPLETE', []);
+
                     }else{
 
                     }
@@ -1331,9 +1350,25 @@ class BatchOperationService extends CI_Controller {
 
         foreach ($openedPorts as $openedPort){
 
-            // Send mail to Back office with Admin in CC for Acceptance / Rejection
-            //$emailService->backOfficRollbackAcceptReject([]);
+            // Verify if mail notification sent
+            if($openedPort['notificationMailSendStatus'] == smsState::PENDING){
+                // Send mail to Back Office with Admin in CC for Acceptance / Rejection
 
+                $response = $emailService->backOfficRollbackAcceptReject([]);
+
+                if($response){
+
+                    // Update State in DB
+
+                    $rollbackParams = array(
+                        'notificationMailSendStatus' => smsState::SENT,
+                        'notificationMailSendDateTime' =>  date('c')
+                    );
+
+                    $this->Rollback_model->update_rollback($openedPort['rollbackId'], $rollbackParams);
+
+                }
+            }
         }
 
     }
@@ -1412,8 +1447,9 @@ class BatchOperationService extends CI_Controller {
                     $this->db->trans_complete();
 
                     if ($this->db->trans_status() === FALSE) {
-                        $emailService = new EmailService();
+
                         $emailService->adminErrorReport('ROLLBACK_CONTRACT_DELETED_BUT_DB_FILLED_INCOMPLETE', []);
+
                     }else{
 
                     }
@@ -1502,8 +1538,9 @@ class BatchOperationService extends CI_Controller {
                 $this->db->trans_complete();
 
                 if ($this->db->trans_status() === FALSE) {
-                    $emailService = new EmailService();
+
                     $emailService->adminErrorReport('ROLLBACK_MSISDN_EXPORTED_BUT_DB_FILLED_INCOMPLETE', []);
+
                 }else{
 
                 }
@@ -1621,8 +1658,9 @@ class BatchOperationService extends CI_Controller {
                 $this->db->trans_complete();
 
                 if ($this->db->trans_status() === FALSE) {
-                    $emailService = new EmailService();
+
                     $emailService->adminErrorReport('ROLLBACK_COMPLETED_BUT_DB_FILLED_INCOMPLETE', []);
+
                 }else{
 
                 }
@@ -1722,8 +1760,9 @@ class BatchOperationService extends CI_Controller {
                     $this->db->trans_complete();
 
                     if ($this->db->trans_status() === FALSE) {
-                        $emailService = new EmailService();
+
                         $emailService->adminErrorReport('ROLLBACK_MSISDN_IMPORTED_BUT_DB_FILLED_INCOMPLETE', []);
+
                     }else{
 
                     }
@@ -1820,8 +1859,9 @@ class BatchOperationService extends CI_Controller {
                 $this->db->trans_complete();
 
                 if ($this->db->trans_status() === FALSE) {
-                    $emailService = new EmailService();
+
                     $emailService->adminErrorReport('ROLLBACK_MSISDN_CHANGE_IMPORTED_BUT_DB_FILLED_INCOMPLETE', []);
+
                 }else{
 
                 }
@@ -1892,8 +1932,9 @@ class BatchOperationService extends CI_Controller {
                     $this->db->trans_complete();
 
                     if ($this->db->trans_status() === FALSE) {
-                        $emailService = new EmailService();
+
                         $emailService->adminErrorReport('ROLLBACK_COMPLETED_BUT_DB_FILLED_INCOMPLETE', []);
+
                     }else{
 
                     }
@@ -1909,9 +1950,6 @@ class BatchOperationService extends CI_Controller {
                         case Fault::ROLLBACK_ACTION_NOT_AVAILABLE:
                         case Fault::INVALID_ROLLBACK_ID:
                         case Fault::INVALID_REQUEST_FORMAT:
-                            $emailService->adminConfirmReport($fault, []);
-                            break;
-
                         default:
                             $emailService->adminConfirmReport($fault, []);
                     }
@@ -2009,7 +2047,6 @@ class BatchOperationService extends CI_Controller {
 
                 if ($this->db->trans_status() === FALSE) {
 
-                    $emailService = new EmailService();
                     $emailService->adminSubmissionReport('NR_SUBMISSION_OPENED_BUT_DB_FILLED_INCOMPLETE', []);
 
                 }else {
@@ -2023,8 +2060,6 @@ class BatchOperationService extends CI_Controller {
             else{
 
                 $fault = $openResponse->error;
-
-                $emailService = new EmailService();
 
                 switch ($fault) {
                     // Terminal Processes
@@ -2044,6 +2079,7 @@ class BatchOperationService extends CI_Controller {
                     default:
                         $emailService->adminSubmissionReport($fault, []);
                 }
+
             }
 
         }
@@ -2066,8 +2102,24 @@ class BatchOperationService extends CI_Controller {
 
         foreach ($openedReturns as $openedReturn){
 
-            // Send mail to Back office with Admin in CC for Acceptance / Rejection
-            //$emailService->backOfficReturnAcceptReject([]);
+            // Verify if mail notification sent
+            if($openedReturn['notificationMailSendStatus'] == smsState::PENDING){
+                // Send mail to Back Office with Admin in CC for Acceptance / Rejection
+
+                $response = $emailService->backOfficReturnAcceptReject([]);
+
+                if($response){
+
+                    // Update State in DB
+
+                    $returnParams = array(
+                        'notificationMailSendStatus' => smsState::SENT,
+                        'notificationMailSendDateTime' =>  date('c')
+                    );
+
+                    $this->Numberreturn_model->update_numberreturn($openedReturn['returnId'], $returnParams);
+                }
+            }
 
         }
 
@@ -2132,8 +2184,9 @@ class BatchOperationService extends CI_Controller {
                 $this->db->trans_complete();
 
                 if ($this->db->trans_status() === FALSE) {
-                    $emailService = new EmailService();
+
                     $emailService->adminErrorReport('RETURN_MSISDN_EXPORTED_BUT_DB_FILLED_INCOMPLETE', []);
+
                 }else{
 
                 }
@@ -2245,14 +2298,14 @@ class BatchOperationService extends CI_Controller {
 
                 }
 
-
                 // Notify Agents/Admin
 
                 $this->db->trans_complete();
 
                 if ($this->db->trans_status() === FALSE) {
-                    $emailService = new EmailService();
+
                     $emailService->adminErrorReport('RETURN_COMPLETED_BUT_DB_FILLED_INCOMPLETE', []);
+
                 }else{
 
                 }
@@ -2328,8 +2381,9 @@ class BatchOperationService extends CI_Controller {
                 $this->db->trans_complete();
 
                 if ($this->db->trans_status() === FALSE) {
-                    $emailService = new EmailService();
+
                     $emailService->adminErrorReport('RETURN_MSISDN_RETURNED_BUT_DB_FILLED_INCOMPLETE', []);
+
                 }else{
 
                 }
@@ -2402,7 +2456,6 @@ class BatchOperationService extends CI_Controller {
                     'returnId' => $returnId,
                 );
 
-
                 $this->Numberreturnstateevolution_model->add_numberreturnstateevolution($returnEvolutionParams);
 
                 // Update Return table
@@ -2442,8 +2495,9 @@ class BatchOperationService extends CI_Controller {
                 $this->db->trans_complete();
 
                 if ($this->db->trans_status() === FALSE) {
-                    $emailService = new EmailService();
+
                     $emailService->adminErrorReport('RETURN_COMPLETED_BUT_DB_FILLED_INCOMPLETE', []);
+
                 }else{
 
                 }
@@ -2533,6 +2587,38 @@ class BatchOperationService extends CI_Controller {
 
         }
 
+    }
+
+    /**
+     * Notify for error Report
+     */
+    public function errorReportNotification(){
+
+        // Load errors in Error table in mail sent pending state
+
+        $errorReports = $this->Error_model->get_errorbyStatus(smsState::PENDING);
+
+        $emailService = new EmailService();
+
+        foreach ($errorReports as $errorReport){
+
+            // Send mail to Back Office with Admin in CC for Acceptance / Rejection
+
+            $response = $emailService->backOfficePortingAcceptReject($errorReport);
+
+            if($response){
+
+                // Update State in DB
+
+                $errorParams = array(
+                    'notificationMailSendStatus' => smsState::SENT,
+                    'notificationMailSendDateTime' =>  date('c')
+                );
+
+                $this->Error_model->update_error($errorReport['errorId'], $errorParams);
+
+            }
+        }
     }
 
     /**
@@ -2655,6 +2741,47 @@ class BatchOperationService extends CI_Controller {
      * Checks for all processes at SMS levels and verify if SMS has been sent. If not, send
      */
     public function smsUpdater(){
+
+    }
+
+    /**
+     * Executed by all
+     * Checks for all ussd SMS messages for those in pending state and send SMS
+     */
+    public function ussdSmsUpdater(){
+
+        // Get all USSD messages in state pending
+        $ussdMessages = $this->get_ussdsmsnotificationByStatus(smsState::PENDING);
+
+        foreach ($ussdMessages as $ussdMessage){
+
+            $ussdNotificationId = $ussdMessage['ussdSmsNotificationId'];
+            $message = $ussdMessage['message'];
+            $msisdn = $ussdMessage['msisdn'];
+
+            $this->db->trans_start();
+
+            // Send USSD SMS and save in DB
+            $response = SMS::USSD_SMS($message, $msisdn);
+
+            $smsNotificationparams = [];
+
+            if($response['success']){
+
+                // Update SMS in USSDNotificationTable in state SENT
+
+                $smsNotificationparams = array(
+                    'status' => smsState::SENT,
+                    'attemptCount' => $ussdMessage['attemptCount'] + 1,
+                    'sendDateTime' => date('c')
+                );
+
+            }
+
+            $this->Ussdsmsnotification_model->update_ussdsmsnotification($ussdNotificationId, $smsNotificationparams);
+
+            $this->db->trans_complete();
+        }
 
     }
 

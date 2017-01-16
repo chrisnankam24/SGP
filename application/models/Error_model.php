@@ -18,7 +18,16 @@ class Error_model extends CI_Model
     {
         return $this->db->get_where('Error',array('errorReportId'=>$errorReportId))->row_array();
     }
-    
+
+    /*
+     * Get error by status
+     */
+    function get_errorbyStatus($status)
+    {
+            return $this->db->get_where('Error',array('notificationMailSendStatus'=>$status))->result_array();
+    }
+
+
     /*
      * Get all error
      */
