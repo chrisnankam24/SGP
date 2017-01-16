@@ -16,7 +16,7 @@ class ussdsmsnotification_model extends CI_Model
      */
     function get_ussdsmsnotification($ussdsmsnotificationId)
     {
-        return $this->db->get_where('ussdsmsnotification',array('ussdsmsnotificationId'=>$ussdsmsnotificationId))->row_array();
+        return $this->db->get_where('USSDSmsNotification',array('ussdsmsnotificationId'=>$ussdsmsnotificationId))->row_array();
     }
 
     /*
@@ -24,7 +24,7 @@ class ussdsmsnotification_model extends CI_Model
      */
     function get_ussdsmsnotificationByStatus($status)
     {
-        return $this->db->get_where('ussdsmsnotification',array('status'=>$status))->row_array();
+        return $this->db->get_where('USSDSmsNotification',array('status'=>$status))->row_array();
     }
 
 
@@ -33,7 +33,7 @@ class ussdsmsnotification_model extends CI_Model
      */
     function get_all_ussdsmsnotification()
     {
-        return $this->db->get('ussdsmsnotification')->result_array();
+        return $this->db->get('USSDSmsNotification')->result_array();
     }
     
     /*
@@ -41,7 +41,7 @@ class ussdsmsnotification_model extends CI_Model
      */
     function add_ussdsmsnotification($params)
     {
-        $this->db->insert('ussdsmsnotification',$params);
+        $this->db->insert('USSDSmsNotification',$params);
         return $this->db->insert_id();
     }
     
@@ -51,7 +51,7 @@ class ussdsmsnotification_model extends CI_Model
     function update_ussdsmsnotification($ussdsmsnotificationId,$params)
     {
         $this->db->where('ussdsmsnotificationId',$ussdsmsnotificationId);
-        $response = $this->db->update('ussdsmsnotification',$params);
+        $response = $this->db->update('USSDSmsNotification',$params);
         if($response)
         {
             return "ussdsmsnotification updated successfully";
@@ -67,7 +67,7 @@ class ussdsmsnotification_model extends CI_Model
      */
     function delete_ussdsmsnotification($ussdsmsnotificationId)
     {
-        $response = $this->db->delete('ussdsmsnotification',array('ussdsmsnotificationId'=>$ussdsmsnotificationId));
+        $response = $this->db->delete('USSDSmsNotification',array('ussdsmsnotificationId'=>$ussdsmsnotificationId));
         if($response)
         {
             return "ussdsmsnotification deleted successfully";
