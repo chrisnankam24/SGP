@@ -68,16 +68,45 @@ class Porting extends CI_Controller
             $legalPersonTin = $this->input->post('legalPersonTin');
             $contactNumber = $this->input->post('contactNumber');
             $temporalNumber = $this->input->post('temporalNumber');
-            $contractId = $this->input->post('contractId');
             $language = $this->input->post('language'); // EN or FR
 
-            $portingOperationService = new PortingOperationService();
+            // Get subscriber contractId from BSCS with temporal MSISDN
+            $bscsOperationService = new BscsOperationService();
+            $contractId = $bscsOperationService->getContractId($temporalNumber);
 
-            $orderResponse = $portingOperationService->orderPort($donorOperator, $portingMsisdn, $subscriberType, $rio, $documentType, $physicalPersonFirstName,
-                $physicalPersonLastName, $physicalPersonIdNumber, $legalPersonName, $legalPersonTin,
-                $contactNumber, $temporalNumber, $contractId, $language);
+            if($contractId == -1){
 
-            $response = $orderResponse;
+                $tempResponse['success'] = false;
+                $tempResponse['message'] = 'Connection to BSCS Unsuccessful. Please try again later';
+
+            }elseif($contractId == null){
+
+                $tempResponse['success'] = false;
+                $tempResponse['message'] = 'Temporal number not found in BSCS. Please verify number has been identified properly and try again';
+
+            }else{
+
+                if(strtolower($donorOperator) == 'mtn'){
+                    $donorOperator = 0;
+                }elseif (strtolower($donorOperator) == 'nexttel'){
+                    $donorOperator = 1;
+                }else{
+                    $tempResponse['success'] = false;
+                    $tempResponse['message'] = "Invalid donor operator. Must be <MTN> or <NEXTTEL>";
+                }
+
+                if($donorOperator == 0 || $donorOperator == 1){
+
+                    $portingOperationService = new PortingOperationService();
+
+                    $orderResponse = $portingOperationService->orderPort($donorOperator, $portingMsisdn, $subscriberType, $rio, $documentType, $physicalPersonFirstName,
+                        $physicalPersonLastName, $physicalPersonIdNumber, $legalPersonName, $legalPersonTin,
+                        $contactNumber, $temporalNumber, $contractId, $language);
+
+                    $response = $orderResponse;
+                }
+
+            }
 
         }else{
 
