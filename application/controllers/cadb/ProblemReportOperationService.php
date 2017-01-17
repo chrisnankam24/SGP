@@ -110,7 +110,7 @@ class ProblemReportOperationService  extends CI_Controller {
      * @param $problem
      * @return array
      */
-    public function makeReport($cadbNumber, $problem){
+    public function makeReport($cadbNumber, $problem, $userId){
 
         $response = [];
 
@@ -126,27 +126,35 @@ class ProblemReportOperationService  extends CI_Controller {
 
             // Insert Error table
 
+            $errorReportId = $prResponse->returnTransaction->errorReportId;
+
             $eParams = array(
-                'errorReportId' => $prResponse->returnTransaction->errorReportId,
+                'errorReportId' => $errorReportId,
                 'cadbNumber' => $prResponse->returnTransaction->cadbNumber,
                 'problem' => $prResponse->returnTransaction->problem,
                 'reporterNetworkId' => Operator::ORANGE_NETWORK_ID,
                 'notificationMailSendStatus' => smsState::PENDING,
-                'submissionDateTime' => $prResponse->returnTransaction->submissionDateTime
+                'submissionDateTime' => $prResponse->returnTransaction->submissionDateTime,
+                'userId' => $userId
             );
 
             $this->Error_model->add_error($eParams);
-
-            $this->db->trans_complete();
 
             $response['success'] = true;
 
             if ($this->db->trans_status() === FALSE) {
 
+                $error = $this->db->error();
+                fileLogAction($error['code'], 'ProblemReportOperationService', $error['message']);
+
                 $emailService = new EmailService();
                 $emailService->adminErrorReport('ERROR_REPORTED_BUT_DB_FILLED_INCOMPLETE', []);
 
             }
+
+            $this->db->trans_complete();
+
+            logAction($userId, "Problem Report [$errorReportId] reported Successfully");
 
             $response['message'] = 'Error has been REPORTED successfully!';
 
@@ -179,6 +187,9 @@ class ProblemReportOperationService  extends CI_Controller {
                     $emailService->adminErrorReport($fault, []);
                     $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
             }
+
+            logAction($userId, "Error Report Failed with [$fault] Fault");
+
         }
 
         return $response;

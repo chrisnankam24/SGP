@@ -180,15 +180,16 @@ class PortingNotificationService extends CI_Controller
 
             $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
 
-            $this->db->trans_complete();
-
             if ($this->db->trans_status() === FALSE) {
 
                 $emailService = new EmailService();
                 $emailService->adminErrorReport('ORDERED_PORTING_RECEIVED_BUT_DB_FILLING_ERROR', []);
+                $this->db->trans_complete();
                 throw new ldbAdministrationServiceFault();
 
             }else{
+
+                $this->db->trans_complete();
 
                 $response = new PortingNotification\notifyOrderedResponse();
 
@@ -237,15 +238,16 @@ class PortingNotificationService extends CI_Controller
 
         $this->Porting_model->update_porting($notifyApprovedRequest->portingTransaction->portingId, $portingParams);
 
-        $this->db->trans_complete();
-
         if ($this->db->trans_status() === false) {
 
             $emailService = new EmailService();
             $emailService->adminErrorReport('PORTING_APPROVED_BUT_DB_FILLED_INCOMPLETE', []);
+            $this->db->trans_complete();
             throw new ldbAdministrationServiceFault();
 
         }else{
+
+            $this->db->trans_complete();
 
             $response = new PortingNotification\notifyApprovedResponse();
 
@@ -287,17 +289,17 @@ class PortingNotificationService extends CI_Controller
 
         $this->Porting_model->update_porting($notifyAutoApproveRequest->portingTransaction->portingId, $portingParams);
 
-        $this->db->trans_complete();
-
         $emailService = new EmailService();
 
         if ($this->db->trans_status() === FALSE) {
 
             $emailService->adminErrorReport('PORTING_AUTO_APPROVED_BUT_DB_FILLED_INCOMPLETE', []);
-
+            $this->db->trans_complete();
             throw new ldbAdministrationServiceFault();
 
         }else{
+
+            $this->db->trans_complete();
 
             $emailService->adminErrorReport('PORTING_REACHED_AUTO_APPROVE', []);
 
@@ -387,16 +389,16 @@ class PortingNotificationService extends CI_Controller
 
         $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
 
-        $this->db->trans_complete();
-
         if ($this->db->trans_status() === FALSE) {
 
             $emailService = new EmailService();
             $emailService->adminErrorReport('PORTING_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', []);
-
+            $this->db->trans_complete();
             throw new ldbAdministrationServiceFault();
 
         }else{
+
+            $this->db->trans_complete();
 
             $response = new PortingNotification\notifyAcceptedResponse();
 
@@ -484,8 +486,6 @@ class PortingNotificationService extends CI_Controller
 
         $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
 
-        $this->db->trans_complete();
-
         $emailService = new EmailService();
 
         if ($this->db->trans_status() === FALSE) {
@@ -493,6 +493,8 @@ class PortingNotificationService extends CI_Controller
             $emailService->adminErrorReport('PORTING_AUTO_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', []);
 
         }
+
+        $this->db->trans_complete();
 
         $emailService->adminErrorReport('PORTING_REACHED_AUTO_ACCEPT', []);
 
@@ -547,14 +549,15 @@ class PortingNotificationService extends CI_Controller
 
             $this->Porting_model->update_porting($portingId, $portingParams);
 
-            $this->db->trans_complete();
-
             if ($this->db->trans_status() === FALSE) {
 
                 $emailService->adminErrorReport('PORTING_AUTO_CONFIRMED_AND_MSISDN_EXPORTED_BUT_DB_FILLED_INCOMPLETE', []);
+                $this->db->trans_complete();
                 throw new ldbAdministrationServiceFault();
 
             }else{
+
+                $this->db->trans_complete();
 
                 $response = new PortingNotification\notifyAutoConfirmResponse();
 
@@ -688,15 +691,16 @@ class PortingNotificationService extends CI_Controller
 
         $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
 
-        $this->db->trans_complete();
-
         if ($this->db->trans_status() === FALSE) {
 
             $emailService = new EmailService();
             $emailService->adminErrorReport('PORTING_REJECTED_BUT_DB_FILLED_INCOMPLETE', []);
+            $this->db->trans_complete();
             throw new ldbAdministrationServiceFault();
 
         }else{
+
+            $this->db->trans_complete();
 
             $response = new PortingNotification\notifyDeniedResponse();
 
@@ -787,15 +791,16 @@ class PortingNotificationService extends CI_Controller
 
         $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
 
-        $this->db->trans_complete();
-
         if ($this->db->trans_status() === FALSE) {
 
             $emailService = new EmailService();
             $emailService->adminErrorReport('PORTING_REJECTED_BUT_DB_FILLED_INCOMPLETE', []);
+            $this->db->trans_complete();
             throw new ldbAdministrationServiceFault();
 
         }else{
+
+            $this->db->trans_complete();
 
             $response = new PortingNotification\notifyRejectedResponse();
 
@@ -883,16 +888,19 @@ class PortingNotificationService extends CI_Controller
 
         $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
 
-        $this->db->trans_complete();
-
         $emailService = new EmailService();
 
         if ($this->db->trans_status() === FALSE) {
 
             $emailService->adminErrorReport('PORTING_ABANDONED_BUT_DB_FILLED_INCOMPLETE', []);
+
+            $this->db->trans_complete();
+
             throw new ldbAdministrationServiceFault();
 
         }else{
+
+            $this->db->trans_complete();
 
             $emailService->adminAgentsPortingAbandoned([]);
 

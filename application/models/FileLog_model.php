@@ -23,11 +23,11 @@ class FileLog_Model extends CI_Model
     }
 
     
-    public function write_log($level, $class, $message){
+    public function write_log($code, $class, $message){
         
-        $timestamp = date('y/m/d  H:i:s');
+        $timestamp = date('H:i:s');
 
-        $data = $timestamp . '  ' . $level . '  ' . $class . ': ' . $message . "\r\n";
+        $data = $timestamp . '  ' . $class . '  ' . $code . ': ' . $message . "\r\n";
 
         if ( ! write_file(APPPATH . 'logs/' . date('d-m-y') . '.txt', $data, 'ab'))
         {

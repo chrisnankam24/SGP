@@ -88,13 +88,13 @@ class ProblemReportNotificationService extends CI_Controller {
 
         }
 
-        $this->db->trans_complete();
-
         if ($this->db->trans_status() === FALSE) {
 
             $emailService->adminErrorReport('ERROR_REPORT_RECEIVED_BUT_DB_FILLED_INCOMPLETE', []);
 
         }
+
+        $this->db->trans_complete();
 
         $response = new ProblemNotification\notifyProblemReportedResponse();
 

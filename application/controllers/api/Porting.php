@@ -402,10 +402,11 @@ class Porting extends CI_Controller
         if(isset($_POST) && count($_POST) > 0) {
 
             $portingId = $this->input->post('portingId');
+            $userId = $this->input->post('userId');
 
             $portingOperationService = new PortingOperationService();
 
-            $response = $portingOperationService->acceptPort($portingId);
+            $response = $portingOperationService->acceptPort($portingId, $userId);
 
         }else{
 
@@ -430,6 +431,7 @@ class Porting extends CI_Controller
         if(isset($_POST) && count($_POST) > 0) {
 
             $portingData = $this->input->post('portingData'); // Array of portingIds
+            $userId = $this->input->post('userId');
 
             $portingOperationService = new PortingOperationService();
 
@@ -438,7 +440,7 @@ class Porting extends CI_Controller
 
             foreach ($portingData as $portingId){
 
-                $tmpResponse = $portingOperationService->acceptPort($portingId);
+                $tmpResponse = $portingOperationService->acceptPort($portingId, $userId);
                 $tmpResponse['portingId'] = $portingId;
                 $response['data'][] = $tmpResponse;
 
@@ -467,10 +469,11 @@ class Porting extends CI_Controller
             $portingId = $this->input->post('portingId');
             $rejectionReason = $this->input->post('rejectionReason');
             $cause = $this->input->post('cause');
+            $userId = $this->input->post('userId');
 
             $portingOperationService = new PortingOperationService();
 
-            $response = $portingOperationService->rejectPort($portingId, $rejectionReason, $cause);
+            $response = $portingOperationService->rejectPort($portingId, $rejectionReason, $cause, $userId);
 
         }else{
 
@@ -494,6 +497,7 @@ class Porting extends CI_Controller
         if(isset($_POST) && count($_POST) > 0) {
 
             $portingData = $this->input->post('portingData'); // Array of rejection objects i.e (portingId, rejectionReason, cause)
+            $userId = $this->input->post('userId');
 
             $response['success'] = true;
             $response['data'] = [];
@@ -502,7 +506,7 @@ class Porting extends CI_Controller
 
             foreach ($portingData as $portingDatum){
 
-                $tmpResponse = $portingOperationService->rejectPort($portingDatum['portingId'], $portingDatum['rejectionReason'], $portingDatum['cause']);
+                $tmpResponse = $portingOperationService->rejectPort($portingDatum['portingId'], $portingDatum['rejectionReason'], $portingDatum['cause'], $userId);
                 $tmpResponse['portingId'] = $portingDatum['portingId'];
                 $response['data'][] = $tmpResponse;
 

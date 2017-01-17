@@ -25,10 +25,11 @@ class NReturn extends CI_Controller
 
             $returnMSISDN = $this->input->post('returnMSISDN');
             $returnOperator = $this->input->post('returnOperator'); // 0 == MTN, 1 == Nexttel
+            $userId = $this->input->post('userId');
 
             $nrOperationService = new ReturnOperationService();
 
-            $response = $nrOperationService->openReturn($returnMSISDN, $returnOperator);
+            $response = $nrOperationService->openReturn($returnMSISDN, $returnOperator, $userId);
 
         }else{
 
@@ -52,6 +53,7 @@ class NReturn extends CI_Controller
         if(isset($_POST)) {
 
             $file_name = $this->input->post('fileName');
+            $userId = $this->input->post('userId');
 
             if($file_name != ''){
                 $row = 1;
@@ -102,7 +104,7 @@ class NReturn extends CI_Controller
 
                             if($returnOperator == 0 || $returnOperator == 1){
 
-                                $tempResponse = $nrOperationService->openReturn($returnMSISDN, $returnOperator);
+                                $tempResponse = $nrOperationService->openReturn($returnMSISDN, $returnOperator, $userId);
                                 $tempResponse['returnMSISDN'] = $returnMSISDN;
 
                                 $tmpData[] = $tempResponse;
@@ -143,10 +145,11 @@ class NReturn extends CI_Controller
         if(isset($_POST) && count($_POST) > 0) {
 
             $returnId = $this->input->post('returnId');
+            $userId = $this->input->post('userId');
 
             $nrOperationService = new ReturnOperationService();
 
-            $response = $nrOperationService->acceptReturn($returnId);
+            $response = $nrOperationService->acceptReturn($returnId, $userId);
 
         }else{
 
@@ -171,6 +174,7 @@ class NReturn extends CI_Controller
         if(isset($_POST) && count($_POST) > 0) {
 
             $returnData = $this->input->post('returnData'); // Array of returnIds
+            $userId = $this->input->post('userId');
 
             $response['success'] = true;
             $response['data'] = [];
@@ -179,7 +183,7 @@ class NReturn extends CI_Controller
 
             foreach ($returnData as $returnId){
 
-                $tmpResponse = $nrOperationService->acceptReturn($returnId);
+                $tmpResponse = $nrOperationService->acceptReturn($returnId, $userId);
                 $tmpResponse['returnId'] = $returnId;
                 $response['data'][] = $tmpResponse;
 
@@ -208,10 +212,11 @@ class NReturn extends CI_Controller
 
             $returnId = $this->input->post('returnId');
             $cause = $this->input->post('cause');
+            $userId = $this->input->post('userId');
 
             $nrOperationService = new ReturnOperationService();
 
-            $response = $nrOperationService->rejectReturn($returnId, $cause);
+            $response = $nrOperationService->rejectReturn($returnId, $cause, $userId);
 
         }else{
 
@@ -236,6 +241,7 @@ class NReturn extends CI_Controller
         if(isset($_POST) && count($_POST) > 0) {
 
             $rejectData = $this->input->post('rejectData'); // Array of rejection objects i.e (portingId, rejectionReason, cause)
+            $userId = $this->input->post('userId');
 
             $response['success'] = true;
             $response['data'] = [];
@@ -244,7 +250,7 @@ class NReturn extends CI_Controller
 
             foreach ($rejectData as $rejectDatum){
 
-                $tmpResponse = $nrOperationService->rejectReturn($rejectDatum['returnId'], $rejectDatum['cause']);
+                $tmpResponse = $nrOperationService->rejectReturn($rejectDatum['returnId'], $rejectDatum['cause'], $userId);
                 $tmpResponse['returnId'] = $rejectDatum['returnId'];
                 $response['data'][] = $tmpResponse;
 

@@ -62,6 +62,56 @@ class BatchOperationService extends CI_Controller {
 
     public function index(){
 
+        $emailService = new EmailService();
+
+        //var_dump($emailService->test());
+
+        $this->db->trans_start();
+
+        // Fill in submission table with submission state ordered
+
+        $subscriberType = 0;
+
+        $submissionParams = array(
+            'donorNetworkId' => "02",
+            'donorRoutingNumber' => "1602",
+            'subscriberSubmissionDateTime' => date('c'),
+            'portingDateTime' => date('c'),
+            'rio' => "123123123123",
+            'documentType' => "CNI",
+            'portingMSISDN' => "234234234",
+            'contractId' => "234234",
+            'language' => "EN",
+            'temporalMSISDN' => "693435345",
+            'submissionState' => "ORDERED",
+            'orderedDateTime' => date('c'),
+            'userId' => "WLJD8431"
+        );
+
+        if($subscriberType == 0) {
+            $submissionParams['physicalPersonFirstName'] = "Nankam";
+            $submissionParams['physicalPersonLastName'] = "Happi";
+            $submissionParams['physicalPersonIdNumber'] = '234239234';
+        }
+
+        $portingsubmission_id = $this->Portingsubmission_model->add_portingsubmission($submissionParams);
+
+        $response['success'] = true;
+
+        if ($this->db->trans_status() === FALSE) {
+
+            $error = $this->db->error();
+            fileLogAction($error['code'], 'BatchOperationService', $error['message']);
+            //$emailService = new EmailService();
+            //$emailService->adminErrorReport('PORTING_ORDERED_BUT_DB_FILLED_INCOMPLETE', []);
+
+        }else {
+
+        }
+
+        $this->db->trans_complete();
+
+
     }
 
     /**
@@ -195,10 +245,10 @@ class BatchOperationService extends CI_Controller {
 
                 $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
 
-                $this->db->trans_complete();
-
                 if ($this->db->trans_status() === FALSE) {
 
+                    $error = $this->db->error();
+                    fileLogAction($error['code'], 'BatchOperationService', $error['message']);
                     $emailService->adminSubmissionReport('PORTING_SUBMISSION_ORDERED_BUT_DB_FILLED_INCOMPLETE', []);
 
                 }else{
@@ -206,6 +256,8 @@ class BatchOperationService extends CI_Controller {
                     $emailService->adminAgentsBatchPortingSubmission([]);
 
                 }
+
+                $this->db->trans_complete();
 
             }
 
@@ -417,14 +469,19 @@ class BatchOperationService extends CI_Controller {
 
                         // Notify Agents/Admin
 
-                        $this->db->trans_complete();
-
                         if ($this->db->trans_status() === FALSE) {
+
+                            $error = $this->db->error();
+                            fileLogAction($error['code'], 'BatchOperationService', $error['message']);
+
                             $emailService = new EmailService();
                             $emailService->adminErrorReport('PORTING_APPROVED_BUT_DB_FILLED_INCOMPLETE', []);
+
                         }else{
                             $emailService->adminAgentsPortingApprovedDenied([]);
                         }
+
+                        $this->db->trans_complete();
 
                     }
                     else{
@@ -489,14 +546,19 @@ class BatchOperationService extends CI_Controller {
 
                         // Notify Agents/Admin
 
-                        $this->db->trans_complete();
-
                         if ($this->db->trans_status() === FALSE) {
+
+                            $error = $this->db->error();
+                            fileLogAction($error['code'], 'BatchOperationService', $error['message']);
+
                             $emailService = new EmailService();
                             $emailService->adminErrorReport('PORTING_DENIED_BUT_DB_FILLED_INCOMPLETE', []);
+
                         }else{
                             $emailService->adminAgentsPortingApprovedDenied([]);
                         }
+
+                        $this->db->trans_complete();
 
                     }
                     else{
@@ -684,15 +746,18 @@ class BatchOperationService extends CI_Controller {
 
                     // Notify Agents/Admin
 
-                    $this->db->trans_complete();
-
                     if ($this->db->trans_status() === FALSE) {
+
+                        $error = $this->db->error();
+                        fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
                         $emailService->adminErrorReport('PORTING_MSISDN_CONTRACT_DELETED_BUT_DB_FILLED_INCOMPLETE', []);
 
                     }else{
 
                     }
+
+                    $this->db->trans_complete();
 
                 }
                 else{
@@ -774,15 +839,18 @@ class BatchOperationService extends CI_Controller {
 
                 // Notify Agents/Admin
 
-                $this->db->trans_complete();
-
                 if ($this->db->trans_status() === FALSE) {
+
+                    $error = $this->db->error();
+                    fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
                     $emailService->adminErrorReport('PORTING_MSISDN_EXPORTED_BUT_DB_FILLED_INCOMPLETE', []);
 
                 }else{
 
                 }
+
+                $this->db->trans_complete();
 
             }
             else{
@@ -894,15 +962,18 @@ class BatchOperationService extends CI_Controller {
 
                 // Notify Agents/Admin
 
-                $this->db->trans_complete();
-
                 if ($this->db->trans_status() === FALSE) {
+
+                    $error = $this->db->error();
+                    fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
                     $emailService->adminErrorReport('PORTING_COMPLETED_BUT_DB_FILLED_INCOMPLETE', []);
 
                 }else{
 
                 }
+
+                $this->db->trans_complete();
 
             }
 
@@ -996,15 +1067,18 @@ class BatchOperationService extends CI_Controller {
 
                     // Notify Agents/Admin
 
-                    $this->db->trans_complete();
-
                     if ($this->db->trans_status() === FALSE) {
+
+                        $error = $this->db->error();
+                        fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
                         $emailService->adminErrorReport('PORTING_MSISDN_IMPORTED_BUT_DB_FILLED_INCOMPLETE', []);
 
                     }else{
 
                     }
+
+                    $this->db->trans_complete();
 
                 }
                 else{
@@ -1094,15 +1168,16 @@ class BatchOperationService extends CI_Controller {
 
                 // Notify Agents/Admin
 
-                $this->db->trans_complete();
-
                 if ($this->db->trans_status() === FALSE) {
+
+                    $error = $this->db->error();
+                    fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
                     $emailService->adminErrorReport('PORTING_MSISDN_CHANGED_BUT_DB_FILLED_INCOMPLETE', []);
 
-                }else{
-
                 }
+
+                $this->db->trans_complete();
 
             }else{
 
@@ -1166,15 +1241,18 @@ class BatchOperationService extends CI_Controller {
 
                     // Notify Agents/Admin
 
-                    $this->db->trans_complete();
-
                     if ($this->db->trans_status() === FALSE) {
+
+                        $error = $this->db->error();
+                        fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
                         $emailService->adminErrorReport('PORTING_COMPLETED_BUT_DB_FILLED_INCOMPLETE', []);
 
                     }else{
 
                     }
+
+                    $this->db->trans_complete();
 
                 }
                 else{
@@ -1187,9 +1265,6 @@ class BatchOperationService extends CI_Controller {
                         case Fault::PORTING_ACTION_NOT_AVAILABLE:
                         case Fault::INVALID_PORTING_ID:
                         case Fault::INVALID_PORTING_DATE_AND_TIME:
-                            $emailService->adminConfirmReport($fault, []);
-                            break;
-
                         default:
                             $emailService->adminConfirmReport($fault, []);
                     }
@@ -1277,9 +1352,10 @@ class BatchOperationService extends CI_Controller {
 
                 $this->Rollbackstateevolution_model->add_rollbackstateevolution($seParams);
 
-                $this->db->trans_complete();
-
                 if ($this->db->trans_status() === FALSE) {
+
+                    $error = $this->db->error();
+                    fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
                     $emailService->adminSubmissionReport('ROLLBACK_SUBMISSION_OPENED_BUT_DB_FILLED_INCOMPLETE', []);
 
@@ -1289,13 +1365,13 @@ class BatchOperationService extends CI_Controller {
 
                 }
 
+                $this->db->trans_complete();
+
             }
 
             else{
 
                 $fault = $openResponse->error;
-
-                var_dump($fault);
 
                 switch ($fault) {
                     // Terminal Processes
@@ -1444,15 +1520,18 @@ class BatchOperationService extends CI_Controller {
 
                     // Notify Agents/Admin
 
-                    $this->db->trans_complete();
-
                     if ($this->db->trans_status() === FALSE) {
+
+                        $error = $this->db->error();
+                        fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
                         $emailService->adminErrorReport('ROLLBACK_CONTRACT_DELETED_BUT_DB_FILLED_INCOMPLETE', []);
 
                     }else{
 
                     }
+
+                    $this->db->trans_complete();
 
                 }
                 else{
@@ -1535,15 +1614,18 @@ class BatchOperationService extends CI_Controller {
 
                 // Notify Agents/Admin
 
-                $this->db->trans_complete();
-
                 if ($this->db->trans_status() === FALSE) {
+
+                    $error = $this->db->error();
+                    fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
                     $emailService->adminErrorReport('ROLLBACK_MSISDN_EXPORTED_BUT_DB_FILLED_INCOMPLETE', []);
 
                 }else{
 
                 }
+
+                $this->db->trans_complete();
 
             }
             else{
@@ -1655,15 +1737,18 @@ class BatchOperationService extends CI_Controller {
 
                 // Notify Agents/Admin
 
-                $this->db->trans_complete();
-
                 if ($this->db->trans_status() === FALSE) {
+
+                    $error = $this->db->error();
+                    fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
                     $emailService->adminErrorReport('ROLLBACK_COMPLETED_BUT_DB_FILLED_INCOMPLETE', []);
 
                 }else{
 
                 }
+
+                $this->db->trans_complete();
 
             }
 
@@ -1757,15 +1842,18 @@ class BatchOperationService extends CI_Controller {
 
                     // Notify Agents/Admin
 
-                    $this->db->trans_complete();
-
                     if ($this->db->trans_status() === FALSE) {
+
+                        $error = $this->db->error();
+                        fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
                         $emailService->adminErrorReport('ROLLBACK_MSISDN_IMPORTED_BUT_DB_FILLED_INCOMPLETE', []);
 
                     }else{
 
                     }
+
+                    $this->db->trans_complete();
 
                 }
                 else{
@@ -1856,15 +1944,18 @@ class BatchOperationService extends CI_Controller {
 
                 // Notify Agents/Admin
 
-                $this->db->trans_complete();
-
                 if ($this->db->trans_status() === FALSE) {
+
+                    $error = $this->db->error();
+                    fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
                     $emailService->adminErrorReport('ROLLBACK_MSISDN_CHANGE_IMPORTED_BUT_DB_FILLED_INCOMPLETE', []);
 
                 }else{
 
                 }
+
+                $this->db->trans_complete();
 
             }else{
 
@@ -1929,15 +2020,18 @@ class BatchOperationService extends CI_Controller {
 
                     // Notify Agents/Admin
 
-                    $this->db->trans_complete();
-
                     if ($this->db->trans_status() === FALSE) {
+
+                        $error = $this->db->error();
+                        fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
                         $emailService->adminErrorReport('ROLLBACK_COMPLETED_BUT_DB_FILLED_INCOMPLETE', []);
 
                     }else{
 
                     }
+
+                    $this->db->trans_complete();
 
                 }
                 else{
@@ -2041,11 +2135,12 @@ class BatchOperationService extends CI_Controller {
 
                 $this->Numberreturnstateevolution_model->add_numberreturnstateevolution($nrsParams);
 
-                $this->db->trans_complete();
-
                 $response['success'] = true;
 
                 if ($this->db->trans_status() === FALSE) {
+
+                    $error = $this->db->error();
+                    fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
                     $emailService->adminSubmissionReport('NR_SUBMISSION_OPENED_BUT_DB_FILLED_INCOMPLETE', []);
 
@@ -2054,6 +2149,8 @@ class BatchOperationService extends CI_Controller {
                     $emailService->adminAgentsBatchNRSubmission([]);
 
                 }
+
+                $this->db->trans_complete();
 
             }
 
@@ -2181,15 +2278,18 @@ class BatchOperationService extends CI_Controller {
 
                 // Notify Agents/Admin
 
-                $this->db->trans_complete();
-
                 if ($this->db->trans_status() === FALSE) {
+
+                    $error = $this->db->error();
+                    fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
                     $emailService->adminErrorReport('RETURN_MSISDN_EXPORTED_BUT_DB_FILLED_INCOMPLETE', []);
 
                 }else{
 
                 }
+
+                $this->db->trans_complete();
 
             }
             else{
@@ -2300,15 +2400,18 @@ class BatchOperationService extends CI_Controller {
 
                 // Notify Agents/Admin
 
-                $this->db->trans_complete();
-
                 if ($this->db->trans_status() === FALSE) {
+
+                    $error = $this->db->error();
+                    fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
                     $emailService->adminErrorReport('RETURN_COMPLETED_BUT_DB_FILLED_INCOMPLETE', []);
 
                 }else{
 
                 }
+
+                $this->db->trans_complete();
 
             }
 
@@ -2378,15 +2481,18 @@ class BatchOperationService extends CI_Controller {
 
                 // Notify Agents/Admin
 
-                $this->db->trans_complete();
-
                 if ($this->db->trans_status() === FALSE) {
+
+                    $error = $this->db->error();
+                    fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
                     $emailService->adminErrorReport('RETURN_MSISDN_RETURNED_BUT_DB_FILLED_INCOMPLETE', []);
 
                 }else{
 
                 }
+
+                $this->db->trans_complete();
 
             }
             else{
@@ -2492,15 +2598,16 @@ class BatchOperationService extends CI_Controller {
 
                 // Notify Agents/Admin
 
-                $this->db->trans_complete();
-
                 if ($this->db->trans_status() === FALSE) {
+
+                    $error = $this->db->error();
+                    fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
                     $emailService->adminErrorReport('RETURN_COMPLETED_BUT_DB_FILLED_INCOMPLETE', []);
 
-                }else{
-
                 }
+
+                $this->db->trans_complete();
 
             }
 
@@ -2568,14 +2675,17 @@ class BatchOperationService extends CI_Controller {
 
                 // Notify Agents/Admin
 
-                $this->db->trans_complete();
-
                 if ($this->db->trans_status() === FALSE) {
+
+                    $error = $this->db->error();
+                    fileLogAction($error['code'], 'BatchOperationService', $error['message']);
+
                     $emailService = new EmailService();
                     $emailService->adminErrorReport('PROVISION_COMPLETED_BUT_DB_FILLED_INCOMPLETE', []);
-                }else{
 
                 }
+
+                $this->db->trans_complete();
 
             }
 

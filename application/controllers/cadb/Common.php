@@ -261,6 +261,40 @@ function getSubscriberType($rio){
 
 }
 
+/**
+ * Log User action to DB
+ * @param $userId
+ * @param $actionPerformed
+ */
+function logAction($userId, $actionPerformed){
+
+    $logParams = array(
+        'userId' => $userId,
+        'actionPerformed' => $actionPerformed,
+        'actionDateTime' => date('c')
+    );
+
+    $CI =& get_instance();
+
+    $CI->load->model('Log_model');
+
+    $CI->Log_model->add_log($logParams);
+
+}
+
+/**
+ * Log action/error to file
+ */
+function fileLogAction($code, $class, $message){
+
+    $CI =& get_instance();
+
+    $CI->load->model('FileLog_model');
+
+    $CI->FileLog_model->write_log($code, $class, $message);
+
+}
+
 // Turn all errors into exceptions
 set_error_handler(function($errno, $errstr, $errfile, $errline, array $errcontext) {
     // error was suppressed with the @-operator
@@ -270,7 +304,6 @@ set_error_handler(function($errno, $errstr, $errfile, $errline, array $errcontex
 
     throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
 });
-
 
 /////////////// Complex Types Class Implementations
 

@@ -82,12 +82,12 @@ class ReturnNotificationService extends CI_Controller {
 
         $this->Numberreturnstateevolution_model->add_numberreturnstateevolution($nrsParams);
 
-        $this->db->trans_complete();
-
         if ($this->db->trans_status() === FALSE) {
             $emailService = new EmailService();
             $emailService->adminErrorReport('OPENED_RETURN_RECEIVED_BUT_DB_FILLING_ERROR', []);
         }
+
+        $this->db->trans_complete();
 
         $response = new _ReturnNotification\notifyOpenedResponse();
 
@@ -123,14 +123,14 @@ class ReturnNotificationService extends CI_Controller {
 
         $this->Numberreturnstateevolution_model->add_numberreturnstateevolution($nrsParams);
 
-        $this->db->trans_complete();
-
         if ($this->db->trans_status() === FALSE) {
 
             $emailService = new EmailService();
             $emailService->adminErrorReport('RETURN_REJECTED_BUT_DB_FILLED_INCOMPLETE', []);
 
         }
+
+        $this->db->trans_complete();
 
         $response = new _ReturnNotification\notifyAcceptedResponse();
 
@@ -177,14 +177,14 @@ class ReturnNotificationService extends CI_Controller {
 
         $this->Returnrejection_model->add_returnrejection($rrParams);
 
-        $this->db->trans_complete();
-
         if ($this->db->trans_status() === FALSE) {
 
             $emailService = new EmailService();
             $emailService->adminErrorReport('RETURN_REJECTED_BUT_DB_FILLED_INCOMPLETE', []);
 
         }
+
+        $this->db->trans_complete();
 
         $response = new _ReturnNotification\notifyRejectedResponse();
 

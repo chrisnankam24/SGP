@@ -272,7 +272,7 @@ class ReturnOperationService extends CI_Controller {
      * @param $returnOperator
      * @return array
      */
-    public function openReturn($returnMSISDN, $returnOperator){
+    public function openReturn($returnMSISDN, $returnOperator, $userId){
 
         $response = [];
 
@@ -296,9 +296,11 @@ class ReturnOperationService extends CI_Controller {
                     'returnMSISDN' => $returnMSISDN,
                     'submissionState' => \ReturnService\_Return\returnSubmissionStateType::OPENED,
                     'submissionDateTime' => date('c'),
+                    'userId' => $userId
                 );
 
                 $submissionId = $this->Numberreturnsubmission_model->add_numberreturnsubmission($nrsParams);
+                $returnId = $openResponse->returnTransaction->returnId;
 
                 // Insert into NR table
 
@@ -327,16 +329,21 @@ class ReturnOperationService extends CI_Controller {
 
                 $this->Numberreturnstateevolution_model->add_numberreturnstateevolution($nrsParams);
 
-                $this->db->trans_complete();
-
                 $response['success'] = true;
 
                 if ($this->db->trans_status() === FALSE) {
+
+                    $error = $this->db->error();
+                    fileLogAction($error['code'], 'ReturnOperationService', $error['message']);
 
                     $emailService = new EmailService();
                     $emailService->adminErrorReport('RETURN_OPENED_BUT_DB_FILLED_INCOMPLETE', []);
 
                 }
+
+                $this->db->trans_complete();
+
+                logAction($userId, "Number Return [$returnId] opening Successfully");
 
                 $response['message'] = 'Return has been OPENED successfully!';
 
@@ -374,15 +381,17 @@ class ReturnOperationService extends CI_Controller {
                             'returnMSISDN' => $returnMSISDN,
                             'submissionState' => \ReturnService\_Return\returnSubmissionStateType::STARTED,
                             'submissionDateTime' => date('c'),
+                            'userId' => $userId
                         );
 
                         $this->Numberreturnsubmission_model->add_numberreturnsubmission($nrsParams);
 
-                        $this->db->trans_complete();
-
                         $response['success'] = true;
 
                         if ($this->db->trans_status() === FALSE) {
+
+                            $error = $this->db->error();
+                            fileLogAction($error['code'], 'ReturnOperationService', $error['message']);
 
                             $emailService->adminErrorReport('RETURN_REQUESTED_OPERATOR_INACTIVE_BUT_STARTED_INCOMPLETE', []);
                             $response['message'] = 'Operator is currently Inactive. We have nonetheless encountered problems saving your request. Please contact Back Office';
@@ -392,6 +401,8 @@ class ReturnOperationService extends CI_Controller {
                             $response['message'] = 'Operator is currently Inactive. You request has been saved and will be performed as soon as possible';
 
                         }
+
+                        $this->db->trans_complete();
 
                         break;
 
@@ -417,14 +428,13 @@ class ReturnOperationService extends CI_Controller {
                     case Fault::NUMBER_RANGE_QUANTITY_LIMIT_EXCEEDED:
                     case Fault::NUMBER_QUANTITY_LIMIT_EXCEEDED:
                     case Fault::NUMBER_RANGES_OVERLAP:
-                        $emailService->adminErrorReport($fault, []);
-                        $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
-                        break;
-
                     default:
                         $emailService->adminErrorReport($fault, []);
                         $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
                 }
+
+                logAction($userId, "Number Return Open Failed with [$fault] Fault");
+
             }
 
         }else{
@@ -445,7 +455,7 @@ class ReturnOperationService extends CI_Controller {
      * @param $returnId
      * @return array
      */
-    public function acceptReturn($returnId){
+    public function acceptReturn($returnId, $userId){
 
         $response = [];
 
@@ -484,16 +494,21 @@ class ReturnOperationService extends CI_Controller {
 
                     $this->Numberreturnstateevolution_model->add_numberreturnstateevolution($nrsParams);
 
-                    $this->db->trans_complete();
-
                     $response['success'] = true;
 
                     if ($this->db->trans_status() === FALSE) {
+
+                        $error = $this->db->error();
+                        fileLogAction($error['code'], 'ReturnOperationService', $error['message']);
 
                         $emailService = new EmailService();
                         $emailService->adminErrorReport('RETURN_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', []);
 
                     }
+
+                    $this->db->trans_complete();
+
+                    logAction($userId, "Number Return [$returnId] acceptance Successfully");
 
                     $response['message'] = 'Return has been ACCEPTED successfully!';
 
@@ -512,14 +527,13 @@ class ReturnOperationService extends CI_Controller {
                         case Fault::RETURN_ACTION_NOT_AVAILABLE:
                         case Fault::INVALID_RETURN_ID:
                         case Fault::INVALID_REQUEST_FORMAT:
-                            $emailService->adminErrorReport($fault, []);
-                            $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
-                            break;
-
                         default:
                             $emailService->adminErrorReport($fault, []);
                             $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
                     }
+
+                    logAction($userId, "Number Return Acceptance Failed with [$fault] Fault");
+
                 }
 
             }else{
@@ -550,7 +564,7 @@ class ReturnOperationService extends CI_Controller {
      * @param $cause
      * @return array
      */
-    public function rejectReturn($returnId, $cause){
+    public function rejectReturn($returnId, $cause, $userId){
 
         $response = [];
 
@@ -598,16 +612,21 @@ class ReturnOperationService extends CI_Controller {
 
                     $this->Returnrejection_model->add_returnrejection($rrParams);
 
-                    $this->db->trans_complete();
-
                     $response['success'] = true;
 
                     if ($this->db->trans_status() === FALSE) {
+
+                        $error = $this->db->error();
+                        fileLogAction($error['code'], 'ReturnOperationService', $error['message']);
 
                         $emailService = new EmailService();
                         $emailService->adminErrorReport('RETURN_REJECTED_BUT_DB_FILLED_INCOMPLETE', []);
 
                     }
+
+                    $this->db->trans_complete();
+
+                    logAction($userId, "Number Return [$returnId] rejection Successfully");
 
                     $response['message'] = 'Return has been REJECTED successfully!';
 
@@ -627,14 +646,13 @@ class ReturnOperationService extends CI_Controller {
                         case Fault::INVALID_RETURN_ID:
                         case Fault::INVALID_REQUEST_FORMAT:
                         case Fault::UNKNOWN_NUMBER:
-                            $emailService->adminErrorReport($fault, []);
-                            $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
-                            break;
-
                         default:
                             $emailService->adminErrorReport($fault, []);
                             $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
                     }
+
+                    logAction($userId, "Number Return Rejection Failed with [$fault] Fault");
+
                 }
 
             }else{

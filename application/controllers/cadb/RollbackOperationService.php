@@ -426,7 +426,7 @@ class RollbackOperationService  extends CI_Controller {
      * @param $donorSubmissionDateTime
      * @param $preferredRollbackDateTime
      */
-    public function makeOpen($originalPortingId, $temporalNumber, $language){
+    public function makeOpen($originalPortingId, $temporalNumber, $language, $userId){
 
         $response = [];
 
@@ -468,15 +468,17 @@ class RollbackOperationService  extends CI_Controller {
                     'openedDateTime' => date('c'),
                     'contractId' => $contractId,
                     'language' => $language,
-                    'temporalMSISDN' => $temporalNumber
+                    'temporalMSISDN' => $temporalNumber,
+                    'userId' => $userId
                 );
 
                 $rollbacksubmission_id = $this->Rollbacksubmission_model->add_rollbacksubmission($submissionParams);
+                $rollbackId = $openResponse->rollbackTransaction->rollbackId;
 
                 // Insert into Rollback table
 
                  $rollbackParams = array(
-                     'rollbackId' => $openResponse->rollbackTransaction->rollbackId,
+                     'rollbackId' => $rollbackId,
                      'originalPortingId' => $openResponse->rollbackTransaction->originalPortingId,
                      'donorSubmissionDateTime' => $openResponse->rollbackTransaction->donorSubmissionDateTime,
                      'preferredRollbackDateTime' => $openResponse->rollbackTransaction->preferredRollbackDateTime,
@@ -501,16 +503,21 @@ class RollbackOperationService  extends CI_Controller {
 
                  $this->Rollbackstateevolution_model->add_rollbackstateevolution($seParams);
 
-                $this->db->trans_complete();
-
                 $response['success'] = true;
 
                 if ($this->db->trans_status() === FALSE) {
+
+                    $error = $this->db->error();
+                    fileLogAction($error['code'], 'RollbackOperationService', $error['message']);
 
                     $emailService = new EmailService();
                     $emailService->adminErrorReport('ROLLBACK_OPENED_BUT_DB_FILLED_INCOMPLETE', []);
 
                 }
+
+                $this->db->trans_complete();
+
+                logAction($userId, "Rollback [$rollbackId] Opened Successfully");
 
                 $response['message'] = 'Rollback has been OPENED successfully!';
 
@@ -539,16 +546,18 @@ class RollbackOperationService  extends CI_Controller {
                             'openedDateTime' => date('c'),
                             'contractId' => $contractId,
                             'language' => $language,
-                            'temporalMSISDN' => $temporalNumber
+                            'temporalMSISDN' => $temporalNumber,
+                            'userId' => $userId
                         );
 
                         $this->Rollbacksubmission_model->add_rollbacksubmission($submissionParams);
 
-                        $this->db->trans_complete();
-
                         $response['success'] = true;
 
                         if ($this->db->trans_status() === FALSE) {
+
+                            $error = $this->db->error();
+                            fileLogAction($error['code'], 'RollbackOperationService', $error['message']);
 
                             $emailService->adminErrorReport('ROLLBACK_REQUESTED_OPERATOR_INACTIVE_BUT_STARTED_INCOMPLETE', []);
                             $response['message'] = 'Operator is currently Inactive. We have nonetheless encountered problems saving your request. Please contact Back Office';
@@ -558,6 +567,8 @@ class RollbackOperationService  extends CI_Controller {
                             $response['message'] = 'Operator is currently Inactive. You request has been saved and will be performed as soon as possible';
 
                         }
+
+                        $this->db->trans_complete();
 
                         break;
 
@@ -576,6 +587,9 @@ class RollbackOperationService  extends CI_Controller {
                         $emailService->adminErrorReport($fault, []);
                         $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
                 }
+
+                logAction($userId, "Rollback Open Failed with [$fault] Fault");
+
             }
 
         }
@@ -589,7 +603,7 @@ class RollbackOperationService  extends CI_Controller {
      * Make rollback accept for given rollbackId
      * @param $rollbackId
      */
-    public function makeAccept($rollbackId) {
+    public function makeAccept($rollbackId, $userId) {
 
         $response = [];
 
@@ -632,16 +646,21 @@ class RollbackOperationService  extends CI_Controller {
 
                     $this->Rollbackstateevolution_model->add_rollbackstateevolution($seParams);
 
-                    $this->db->trans_complete();
-
                     $response['success'] = true;
 
                     if ($this->db->trans_status() === FALSE) {
+
+                        $error = $this->db->error();
+                        fileLogAction($error['code'], 'RollbackOperationService', $error['message']);
 
                         $emailService = new EmailService();
                         $emailService->adminErrorReport('ROLLBACK_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', []);
 
                     }
+
+                    $this->db->trans_complete();
+
+                    logAction($userId, "Rollback [$rollbackId] Accepted Successfully");
 
                     $response['message'] = 'Rollback has been ACCEPTED successfully!';
 
@@ -669,6 +688,9 @@ class RollbackOperationService  extends CI_Controller {
                             $emailService->adminErrorReport($fault, []);
                             $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
                     }
+
+                    logAction($userId, "Rollback Acceptance Failed with [$fault] Fault");
+
                 }
 
             }else{
@@ -698,7 +720,7 @@ class RollbackOperationService  extends CI_Controller {
      * @param $rejectionReason
      * @param $cause
      */
-    public function makeReject($rollbackId, $rejectionReason, $cause){
+    public function makeReject($rollbackId, $rejectionReason, $cause, $userId){
 
         $response = [];
 
@@ -753,16 +775,21 @@ class RollbackOperationService  extends CI_Controller {
 
                         $this->Rollbackrejectionabandon_model->add_rollbackrejectionabandon($rjParams);
 
-                        $this->db->trans_complete();
-
                         $response['success'] = true;
 
                         if ($this->db->trans_status() === FALSE) {
+
+                            $error = $this->db->error();
+                            fileLogAction($error['code'], 'RollbackOperationService', $error['message']);
 
                             $emailService = new EmailService();
                             $emailService->adminErrorReport('ROLLBACK_REJECTED_BUT_DB_FILLED_INCOMPLETE', []);
 
                         }
+
+                        $this->db->trans_complete();
+
+                        logAction($userId, "Rollback [$rollbackId] Rejected Successfully");
 
                         $response['message'] = 'Rollback has been REJECTED successfully!';
 
@@ -791,6 +818,9 @@ class RollbackOperationService  extends CI_Controller {
                                 $emailService->adminErrorReport($fault, []);
                                 $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
                         }
+
+                        logAction($userId, "Rollback Rejection Failed with [$fault] Fault");
+
                     }
 
                 }

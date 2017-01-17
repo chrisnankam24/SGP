@@ -32,7 +32,6 @@ class PortingOperationService extends CI_Controller  {
         parent::__construct();
 
         $this->load->model('Porting_model');
-        $this->load->model('FileLog_model');
         $this->load->model('Portingsubmission_model');
         $this->load->model('Portingstateevolution_model');
         $this->load->model('Portingsmsnotification_model');
@@ -794,11 +793,12 @@ class PortingOperationService extends CI_Controller  {
             }
 
             $portingsubmission_id = $this->Portingsubmission_model->add_portingsubmission($submissionParams);
+            $portingId = $orderResponse->portingTransaction->portingId;
 
             // Fill in porting table with state ordered
 
             $portingParams = array(
-                'portingId' => $orderResponse->portingTransaction->portingId,
+                'portingId' => $portingId,
                 'recipientNetworkId' => $orderResponse->portingTransaction->recipientNrn->networkId,
                 'recipientRoutingNumber' => $orderResponse->portingTransaction->recipientNrn->routingNumber,
                 'donorNetworkId' => $orderResponse->portingTransaction->donorNrn->networkId,
@@ -842,12 +842,12 @@ class PortingOperationService extends CI_Controller  {
 
             $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
 
-            $this->db->trans_complete();
-
-
             $response['success'] = true;
 
             if ($this->db->trans_status() === FALSE) {
+
+                $error = $this->db->error();
+                fileLogAction($error['code'], 'PortingOperationService', $error['message']);
 
                 $emailService = new EmailService();
                 $emailService->adminErrorReport('PORTING_ORDERED_BUT_DB_FILLED_INCOMPLETE', []);
@@ -855,6 +855,10 @@ class PortingOperationService extends CI_Controller  {
             }else {
 
             }
+
+            $this->db->trans_complete();
+
+            logAction($userId, "Porting [$portingId] Ordered Successfully");
 
             $response['message'] = 'Porting has been ORDERED successfully!';
 
@@ -913,11 +917,12 @@ class PortingOperationService extends CI_Controller  {
 
                     $this->Portingsubmission_model->add_portingsubmission($submissionParams);
 
-                    $this->db->trans_complete();
-
                     $response['success'] = true;
 
                     if ($this->db->trans_status() === FALSE) {
+
+                        $error = $this->db->error();
+                        fileLogAction($error['code'], 'PortingOperationService', $error['message']);
 
                         $response['success'] = false;
                         $emailService = new EmailService();
@@ -929,6 +934,8 @@ class PortingOperationService extends CI_Controller  {
                         $response['message'] = 'Operator is currently Inactive. You request has been saved and will be performed as soon as possible';
 
                     }
+
+                    $this->db->trans_complete();
 
                     break;
 
@@ -972,6 +979,8 @@ class PortingOperationService extends CI_Controller  {
 
             }
 
+            logAction($userId, "Porting Order Failed with [$fault] Fault");
+
         }
 
         return $response;
@@ -984,7 +993,7 @@ class PortingOperationService extends CI_Controller  {
      * @param $portingId
      * @return array
      */
-    public function acceptPort($portingId){
+    public function acceptPort($portingId, $userId){
 
         $response = [];
 
@@ -1074,16 +1083,21 @@ class PortingOperationService extends CI_Controller  {
 
                     $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
 
-                    $this->db->trans_complete();
-
                     $response['success'] = true;
 
                     if ($this->db->trans_status() === FALSE) {
+
+                        $error = $this->db->error();
+                        fileLogAction($error['code'], 'PortingOperationService', $error['message']);
 
                         $emailService = new EmailService();
                         $emailService->adminErrorReport('PORTING_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', []);
 
                     }
+
+                    $this->db->trans_complete();
+
+                    logAction($userId, "Porting [$portingId] Accepted Successfully");
 
                     $response['message'] = 'Porting has been ACCEPTED successfully!';
 
@@ -1111,6 +1125,8 @@ class PortingOperationService extends CI_Controller  {
                             $emailService->adminErrorReport($fault, []);
                             $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
                     }
+
+                    logAction($userId, "Porting [$portingId] Acceptance Failed with [$fault] Fault");
 
                 }
 
@@ -1142,7 +1158,7 @@ class PortingOperationService extends CI_Controller  {
      * @param $cause
      * @return array
      */
-    public function rejectPort($portingId, $rejectionReason, $cause){
+    public function rejectPort($portingId, $rejectionReason, $cause, $userId){
 
         $response = [];
 
@@ -1199,11 +1215,12 @@ class PortingOperationService extends CI_Controller  {
 
                         $this->Portingdenyrejectionabandon_model->add_portingdenyrejectionabandon($pdraParams);
 
-                        $this->db->trans_complete();
-
                         $response['success'] = true;
 
                         if ($this->db->trans_status() === FALSE) {
+
+                            $error = $this->db->error();
+                            fileLogAction($error['code'], 'PortingOperationService', $error['message']);
 
                             $emailService = new EmailService();
                             $emailService->adminErrorReport('PORTING_REJECTED_BUT_DB_FILLED_INCOMPLETE', []);
@@ -1211,6 +1228,10 @@ class PortingOperationService extends CI_Controller  {
                         }else {
 
                         }
+
+                        $this->db->trans_complete();
+
+                        logAction($userId, "Porting [$portingId] Rejected Successfully");
 
                         $response['message'] = 'Porting has been REJECTED successfully!';
 
@@ -1240,6 +1261,8 @@ class PortingOperationService extends CI_Controller  {
                                 $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
 
                         }
+
+                        logAction($userId, "Porting [$portingId] Rejection Failed with [$fault] Fault");
 
                     }
 

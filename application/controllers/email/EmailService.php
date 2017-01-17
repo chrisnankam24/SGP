@@ -26,7 +26,7 @@ class EmailService {
 
     public function test(){
 
-        $mail = new PHPMailer;
+        /*$mail = new PHPMailer;
 
         $mail->isSMTP();                                      // Set mailer to use SMTP
         $mail->Host = '172.21.55.12';  // Specify main and backup SMTP servers
@@ -45,7 +45,17 @@ class EmailService {
             echo 'Mailer Error: ' . $mail->ErrorInfo;
         } else {
             echo 'Message has been sent';
-        }
+        }*/
+
+        // Load template
+        //$template = file_get_contents(__DIR__ . '/templates/process_error_template.html');
+        $template = file_get_contents(__DIR__ . '/semantic/email.html');
+
+        $to = array('chp.testbed@gmail.com');
+        $cc = array();
+        $subject = 'Great';
+
+        $this->send_mail($to, $cc, $subject, $template);
 
     }
 
@@ -173,6 +183,8 @@ class EmailService {
         $this->CI->email->message($message);
 
         $response = $this->CI->email->send();
+
+        $this->CI->email->print_debugger();
 
         return $response;
 

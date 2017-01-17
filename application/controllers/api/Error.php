@@ -30,12 +30,13 @@ class Error extends CI_Controller {
 
             $cadbNumber = $this->input->post('problemNumber');
             $problem = $this->input->post('problem');
+            $userId = $this->input->post('userId');
 
             // Make report problem request
 
             $prOperationService = new ProblemReportOperationService();
 
-            $response = $prOperationService->makeReport($cadbNumber, $problem);
+            $response = $prOperationService->makeReport($cadbNumber, $problem, $userId);
 
         }else{
 
@@ -59,6 +60,7 @@ class Error extends CI_Controller {
         if(isset($_POST) && count($_POST) > 0) {
 
             $errorData = $this->input->post('errorData'); // Array of error objects i.e (cadbNumber, problem)
+            $userId = $this->input->post('userId');
 
             $response['success'] = true;
             $response['data'] = [];
@@ -67,7 +69,7 @@ class Error extends CI_Controller {
 
             foreach ($errorData as $errorDatum){
 
-                $tmpResponse = $prOperationService->makeReport($errorDatum['cadbNumber'], $errorDatum['problem']);
+                $tmpResponse = $prOperationService->makeReport($errorDatum['cadbNumber'], $errorDatum['problem'], $userId);
                 $tmpResponse['cadbNumber'] = $errorDatum['cadbNumber'];
                 $response['data'][] = $tmpResponse;
 

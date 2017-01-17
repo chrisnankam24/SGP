@@ -99,12 +99,12 @@ class RollbackNotificationService extends CI_Controller {
 
         $this->Rollbackstateevolution_model->add_rollbackstateevolution($seParams);
 
-        $this->db->trans_complete();
-
         if ($this->db->trans_status() === FALSE) {
             $emailService = new EmailService();
             $emailService->adminErrorReport('OPENED_ROLLBACK_RECEIVED_BUT_DB_FILLING_ERROR', []);
         }
+
+        $this->db->trans_complete();
 
         // Send SMS to Subscriber
 
@@ -181,12 +181,12 @@ class RollbackNotificationService extends CI_Controller {
 
         $this->Rollbackstateevolution_model->add_rollbackstateevolution($seParams);
 
-        $this->db->trans_complete();
-
         if ($this->db->trans_status() === FALSE) {
             $emailService = new EmailService();
             $emailService->adminErrorReport('ACCEPTED_ROLLBACK_RECEIVED_BUT_DB_FILLING_ERROR', []);
         }
+
+        $this->db->trans_complete();
 
         // Send SMS to Subscriber
 
@@ -276,13 +276,13 @@ class RollbackNotificationService extends CI_Controller {
 
         $emailService = new EmailService();
 
-        $this->db->trans_complete();
-
         if ($this->db->trans_status() === FALSE) {
 
             $emailService->adminErrorReport('ROLLBACK_AUTO_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', []);
 
         }
+
+        $this->db->trans_complete();
 
         // Send SMS to Subscriber
 
@@ -382,13 +382,13 @@ class RollbackNotificationService extends CI_Controller {
 
             $this->Rollbackstateevolution_model->add_rollbackstateevolution($seParams);
 
-            $this->db->trans_complete();
-
             if ($this->db->trans_status() === FALSE) {
 
                 $emailService->adminErrorReport('ROLLBACK_AUTO_CONFIRMED_BUT_DB_FILLED_INCOMPLETE', []);
 
             }
+
+            $this->db->trans_complete();
 
         }
         else {
@@ -482,12 +482,12 @@ class RollbackNotificationService extends CI_Controller {
 
         $this->Rollbackrejectionabandon_model->add_rollbackrejectionabandon($rjParams);
 
-        $this->db->trans_complete();
-
         if ($this->db->trans_status() === FALSE) {
             $emailService = new EmailService();
             $emailService->adminErrorReport('REJECTED_ROLLBACK_RECEIVED_BUT_DB_FILLING_ERROR', []);
         }
+
+        $this->db->trans_complete();
 
         // Send SMS to Subscriber
 
@@ -612,9 +612,6 @@ class RollbackNotificationService extends CI_Controller {
 
         $this->Rollbacksmsnotification_model->add_rollbacksmsnotification($params);
 
-
-        $this->db->trans_complete();
-
         $emailService = new EmailService();
 
         if ($this->db->trans_status() === FALSE) {
@@ -622,6 +619,8 @@ class RollbackNotificationService extends CI_Controller {
             $emailService->adminErrorReport('ROLLBACK_ABANDONED_BUT_DB_FILLED_INCOMPLETE', []);
 
         }
+
+        $this->db->trans_complete();
 
         $emailService->adminAgentsPortingAbandoned([]);
 

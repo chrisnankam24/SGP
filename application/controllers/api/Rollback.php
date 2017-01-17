@@ -26,10 +26,11 @@ class Rollback extends CI_Controller
             $originalPortingId = $this->input->post('originalPortingId');
             $temporalNumber = $this->input->post('temporalNumber');
             $language = $this->input->post('language'); // EN or FR
+            $userId = $this->input->post('userId');
 
             $rollbackOperationService = new RollbackOperationService();
 
-            $response = $rollbackOperationService->makeOpen($originalPortingId, $temporalNumber, $language);
+            $response = $rollbackOperationService->makeOpen($originalPortingId, $temporalNumber, $language, $userId);
 
         }else{
 
@@ -53,6 +54,7 @@ class Rollback extends CI_Controller
         if(isset($_POST)) {
 
             $file_name = $this->input->post('fileName');
+            $userId = $this->input->post('userId');
 
             if($file_name != ''){
                 $row = 1;
@@ -92,7 +94,7 @@ class Rollback extends CI_Controller
                             $temporalNumber = $data[1]; // temporalNumber
                             $language = $data[2]; // language
 
-                            $tempResponse = $rollbackOperationService->makeOpen($originalPortingId, $temporalNumber, $language);
+                            $tempResponse = $rollbackOperationService->makeOpen($originalPortingId, $temporalNumber, $language, $userId);
                             $tempResponse['temporalNumber'] = $temporalNumber;
 
                             $tmpData[] = $tempResponse;
@@ -132,10 +134,11 @@ class Rollback extends CI_Controller
         if(isset($_POST) && count($_POST) > 0) {
 
             $rollbackId = $this->input->post('rollbackId');
+            $userId = $this->input->post('userId');
 
             $rollbackOperationService = new RollbackOperationService();
 
-            $response = $rollbackOperationService->makeAccept($rollbackId);
+            $response = $rollbackOperationService->makeAccept($rollbackId, $userId);
 
         }else{
 
@@ -160,6 +163,7 @@ class Rollback extends CI_Controller
         if(isset($_POST) && count($_POST) > 0) {
 
             $rollbackData = $this->input->post('rollbackData'); // Array of rollbackIds
+            $userId = $this->input->post('userId');
 
             $response['success'] = true;
             $response['data'] = [];
@@ -168,7 +172,7 @@ class Rollback extends CI_Controller
 
             foreach ($rollbackData as $rollbackId){
 
-                $tmpResponse = $rollbackOperationService->makeAccept($rollbackId);
+                $tmpResponse = $rollbackOperationService->makeAccept($rollbackId, $userId);
                 $tmpResponse['rollbackId'] = $rollbackId;
                 $response['data'][] = $tmpResponse;
 
@@ -198,10 +202,11 @@ class Rollback extends CI_Controller
             $rollbackId = $this->input->post('rollbackId');
             $rejectionReason = $this->input->post('rejectionReason');
             $cause = $this->input->post('cause');
+            $userId = $this->input->post('userId');
 
             $rollbackOperationService = new RollbackOperationService();
 
-            $response = $rollbackOperationService->makeReject($rollbackId, $rejectionReason, $cause);
+            $response = $rollbackOperationService->makeReject($rollbackId, $rejectionReason, $cause, $userId);
 
         }else{
 
@@ -226,6 +231,7 @@ class Rollback extends CI_Controller
         if(isset($_POST) && count($_POST) > 0) {
 
             $rollbackData = $this->input->post('rollbackData'); // Array of rejection objects i.e (rollbackId, rejectionReason, cause)
+            $userId = $this->input->post('userId');
 
             $response['success'] = true;
             $response['data'] = [];
@@ -234,7 +240,7 @@ class Rollback extends CI_Controller
 
             foreach ($rollbackData as $rollbackDatum){
 
-                $tmpResponse = $rollbackOperationService->makeReject($rollbackDatum['rollbackId'], $rollbackDatum['rejectionReason'], $rollbackDatum['cause']);
+                $tmpResponse = $rollbackOperationService->makeReject($rollbackDatum['rollbackId'], $rollbackDatum['rejectionReason'], $rollbackDatum['cause'], $userId);
                 $tmpResponse['rollbackId'] = $rollbackDatum['rollbackId'];
                 $response['data'][] = $tmpResponse;
 
