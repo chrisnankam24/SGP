@@ -41,8 +41,10 @@ class ussdsmsnotification_model extends CI_Model
      */
     function add_ussdsmsnotification($params)
     {
+
         $this->db->insert('USSDSmsNotification',$params);
         return $this->db->insert_id();
+
     }
     
     /*

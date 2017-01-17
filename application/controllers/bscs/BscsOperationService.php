@@ -18,18 +18,23 @@ use BscsService\BscsTypes as BscsTypes;
  * Simulating Controller for PortingOperationService made by CADB
  * Class PortingOperationService
  */
-class BscsOperationService extends CI_Controller  {
+class BscsOperationService {
 
     // Declare client
     private $contractClient = null;
 
     private $msisdnClient = null;
 
+    private $BSCS_model = null;
+
     public function __construct()
     {
-        parent::__construct();
 
-        $this->load->model('BSCS_model');
+        $CI =& get_instance();
+
+        $CI->load->model('BSCS_model');
+
+        $this->BSCS_model = $CI->BSCS_model;
 
         // Disable wsdl cache
         ini_set("soap.wsdl_cache_enabled", "0");
