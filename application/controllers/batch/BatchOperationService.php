@@ -64,53 +64,7 @@ class BatchOperationService extends CI_Controller {
 
         $emailService = new EmailService();
 
-        //var_dump($emailService->test());
-
-        $this->db->trans_start();
-
-        // Fill in submission table with submission state ordered
-
-        $subscriberType = 0;
-
-        $submissionParams = array(
-            'donorNetworkId' => "02",
-            'donorRoutingNumber' => "1602",
-            'subscriberSubmissionDateTime' => date('c'),
-            'portingDateTime' => date('c'),
-            'rio' => "123123123123",
-            'documentType' => "CNI",
-            'portingMSISDN' => "234234234",
-            'contractId' => "234234",
-            'language' => "EN",
-            'temporalMSISDN' => "693435345",
-            'submissionState' => "ORDERED",
-            'orderedDateTime' => date('c'),
-            'userId' => "WLJD8431"
-        );
-
-        if($subscriberType == 0) {
-            $submissionParams['physicalPersonFirstName'] = "Nankam";
-            $submissionParams['physicalPersonLastName'] = "Happi";
-            $submissionParams['physicalPersonIdNumber'] = '234239234';
-        }
-
-        $portingsubmission_id = $this->Portingsubmission_model->add_portingsubmission($submissionParams);
-
-        $response['success'] = true;
-
-        if ($this->db->trans_status() === FALSE) {
-
-            $error = $this->db->error();
-            fileLogAction($error['code'], 'BatchOperationService', $error['message']);
-            //$emailService = new EmailService();
-            //$emailService->adminErrorReport('PORTING_ORDERED_BUT_DB_FILLED_INCOMPLETE', []);
-
-        }else {
-
-        }
-
-        $this->db->trans_complete();
-
+        var_dump($emailService->test());
 
     }
 

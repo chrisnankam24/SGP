@@ -29,7 +29,6 @@ class BscsOperationService extends CI_Controller  {
     {
         parent::__construct();
 
-        $this->load->model('FileLog_model');
         $this->load->model('BSCS_model');
 
         // Disable wsdl cache

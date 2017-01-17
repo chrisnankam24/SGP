@@ -49,9 +49,9 @@ class EmailService {
 
         // Load template
         //$template = file_get_contents(__DIR__ . '/templates/process_error_template.html');
-        $template = file_get_contents(__DIR__ . '/semantic/email.html');
+        $template = file_get_contents(__DIR__ . '/templates/email.html');
 
-        $to = array('chp.testbed@gmail.com');
+        $to = array('christian.nankam@orange.com');
         $cc = array();
         $subject = 'Great';
 
@@ -61,30 +61,20 @@ class EmailService {
 
     /**
      * Reports Error to Admin via mail
-     * @param $faultCode
+     * @param $errorCode
      * @param $params
      */
-    public function adminErrorReport($faultCode, $params){
+    public function adminErrorReport($errorCode, $params, $processType){
 
-        // Load template
-        $template = file_get_contents(__DIR__ . '/templates/process_error_template.html');
 
-        // Set Fault Code
-        $template = str_replace('[faultCode]', $faultCode, $template);
-
-        $to = array('chp.testbed@gmail.com');
-        $cc = array();
-        $subject = 'Great';
-
-        //$this->send_mail($to, $cc, $subject, $template);
 
     }
 
-    public function adminSubmissionReport($faultcode, $params){
+    public function adminSubmissionReport($faultcode, $params, $processType){
 
     }
 
-    public function adminConfirmReport($faultcode, $params){
+    public function adminConfirmReport($faultcode, $params, $processType){
 
     }
 
@@ -140,7 +130,7 @@ class EmailService {
     /**
      * @param $params
      */
-    public function adminAgentsErrorReport($params){
+    public function adminAgentsErrorReport($params, $processType){
 
     }
 
