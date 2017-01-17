@@ -144,32 +144,47 @@ class BscsOperationService extends CI_Controller  {
 
         if($this->msisdnClient) {
 
-            // Make ChangeImportMSISDN request
-            $request = new BscsTypes\ChangeImportMSISDN();
+            $logonResponse = $this->logonMSISDN();
 
-            $request->autoCommit = true;
-            $request->MSISDN = $portingMSISDN;
-            $request->MSISDN_TMP = $temporalMSISDN;
-            $request->endUserName = '?';
-            $request->CO_ID = '?';
+            if($logonResponse->success){
 
-            try {
+                // Make ChangeImportMSISDN request
+                $request = new BscsTypes\ChangeImportMSISDN();
 
-                $response = $this->msisdnClient->ChangeImportMSISDN($request);
+                $request->autoCommit = true;
+                $request->MSISDN = $portingMSISDN;
+                $request->MSISDN_TMP = $temporalMSISDN;
+                $request->endUserName = '?';
+                $request->CO_ID = '?';
 
-                $response->success = true;
+                try {
 
-                return $response;
+                    $response = $this->msisdnClient->ChangeImportMSISDN($request);
 
-            }catch (SoapFault $e){
+                    $response->success = true;
 
-                $response = new errorResponse();
+                    $this->logoutMSISDN();
 
-                $fault = key($e->detail);
+                    return $response;
 
-                $response->error = $fault;
+                }
+                catch (SoapFault $e){
 
-                return $response;
+                    $response = new errorResponse();
+
+                    $fault = key($e->detail);
+
+                    $response->error = $fault;
+
+                    $this->logoutMSISDN();
+
+                    return $response;
+
+                }
+
+            }else{
+
+                return $logonResponse;
 
             }
 
@@ -195,32 +210,47 @@ class BscsOperationService extends CI_Controller  {
 
         if($this->msisdnClient) {
 
-            // Make ChangeImportMSISDN request
-            $request = new BscsTypes\ImportMSISDN();
+            $logonResponse = $this->logonMSISDN();
 
-            $request->autoCommit = true;
-            $request->MSISDN = $portingMSISDN;
-            $request->endUserName = '?';
-            $request->SRC_PLCODE = '?';
-            $request->CO_ID = '?';
+            if($logonResponse->success){
 
-            try {
+                // Make ChangeImportMSISDN request
+                $request = new BscsTypes\ImportMSISDN();
 
-                $response = $this->msisdnClient->ImportMSISDN($request);
+                $request->autoCommit = true;
+                $request->MSISDN = $portingMSISDN;
+                $request->endUserName = '?';
+                $request->SRC_PLCODE = '?';
+                $request->CO_ID = '?';
 
-                $response->success = true;
+                try {
 
-                return $response;
+                    $response = $this->msisdnClient->ImportMSISDN($request);
 
-            }catch (SoapFault $e){
+                    $response->success = true;
 
-                $response = new errorResponse();
+                    $this->logoutMSISDN();
 
-                $fault = key($e->detail);
+                    return $response;
 
-                $response->error = $fault;
+                }
+                catch (SoapFault $e){
 
-                return $response;
+                    $response = new errorResponse();
+
+                    $fault = key($e->detail);
+
+                    $response->error = $fault;
+
+                    $this->logoutMSISDN();
+
+                    return $response;
+
+                }
+
+            }else{
+
+                return $logonResponse;
 
             }
 
@@ -246,32 +276,47 @@ class BscsOperationService extends CI_Controller  {
 
         if($this->msisdnClient) {
 
-            // Make ChangeImportMSISDN request
-            $request = new BscsTypes\ReturnMSISDN();
+            $logonResponse = $this->logonMSISDN();
 
-            $request->autoCommit = true;
-            $request->endUserName = '?';
-            $request->PHONE_NUMBER = $returnMSISDN;
-            $request->NPCODE = '?';
-            $request->SRC_PLCODE = '?';
+            if($logonResponse->success){
 
-            try {
+                // Make ChangeImportMSISDN request
+                $request = new BscsTypes\ReturnMSISDN();
 
-                $response = $this->msisdnClient->ReturnMSISDN($request);
+                $request->autoCommit = true;
+                $request->endUserName = '?';
+                $request->PHONE_NUMBER = $returnMSISDN;
+                $request->NPCODE = '?';
+                $request->SRC_PLCODE = '?';
 
-                $response->success = true;
+                try {
 
-                return $response;
+                    $response = $this->msisdnClient->ReturnMSISDN($request);
 
-            }catch (SoapFault $e){
+                    $response->success = true;
 
-                $response = new errorResponse();
+                    $this->logoutMSISDN();
 
-                $fault = key($e->detail);
+                    return $response;
 
-                $response->error = $fault;
+                }
+                catch (SoapFault $e){
 
-                return $response;
+                    $response = new errorResponse();
+
+                    $fault = key($e->detail);
+
+                    $response->error = $fault;
+
+                    $this->logoutMSISDN();
+
+                    return $response;
+
+                }
+
+            }else{
+
+                return $logonResponse;
 
             }
 
@@ -298,32 +343,47 @@ class BscsOperationService extends CI_Controller  {
 
         if($this->msisdnClient) {
 
-            // Make ExportMSISDN request
-            $request = new BscsTypes\ExportMSISDN();
+            $logonResponse = $this->logonMSISDN();
 
-            $request->autoCommit = true;
-            $request->PHONE_NUMBER = $MSISDN;
-            $request->endUserName = '?';
-            $request->DEST_PLCODE = '?';
-            $request->NPCODE = '?';
+            if($logonResponse->success){
 
-            try {
+                // Make ExportMSISDN request
+                $request = new BscsTypes\ExportMSISDN();
 
-                $response = $this->msisdnClient->ExportMSISDN($request);
+                $request->autoCommit = true;
+                $request->PHONE_NUMBER = $MSISDN;
+                $request->endUserName = '?';
+                $request->DEST_PLCODE = '?';
+                $request->NPCODE = '?';
 
-                $response->success = true;
+                try {
 
-                return $response;
+                    $response = $this->msisdnClient->ExportMSISDN($request);
 
-            }catch (SoapFault $e){
+                    $response->success = true;
 
-                $response = new errorResponse();
+                    $this->logoutMSISDN();
 
-                $fault = key($e->detail);
+                    return $response;
 
-                $response->error = $fault;
+                }
+                catch (SoapFault $e){
 
-                return $response;
+                    $response = new errorResponse();
+
+                    $fault = key($e->detail);
+
+                    $response->error = $fault;
+
+                    $this->logoutMSISDN();
+
+                    return $response;
+
+                }
+
+            }else{
+
+                return $logonResponse;
 
             }
 
@@ -333,6 +393,63 @@ class BscsOperationService extends CI_Controller  {
             $response = new errorResponse();
 
             $response->error = Fault::CLIENT_INIT_FAULT;
+
+            return $response;
+
+        }
+
+    }
+
+    private function logonMSISDN(){
+
+        // Make logon request
+        $request = new BscsTypes\logon();
+
+        $request->cmsUserName = BscsParams::cmsUserName;
+        $request->cmsPassword = BscsParams::cmsPassword;
+        $request->endUserName = BscsParams::endUserName;
+
+        try {
+
+            $response = $this->msisdnClient->logon($request);
+
+            $response->success = true;
+
+            return $response;
+
+        }catch (SoapFault $e){
+
+            $response = new errorResponse();
+
+            $fault = key($e->detail);
+
+            $response->error = $fault;
+
+            return $response;
+
+        }
+    }
+
+    private function logoutMSISDN(){
+
+        // Make logon request
+        $request = new BscsTypes\logout();
+
+        try {
+
+            $response = $this->msisdnClient->logout($request);
+
+            $response->success = true;
+
+            return $response;
+
+        }catch (SoapFault $e){
+
+            $response = new errorResponse();
+
+            $fault = key($e->detail);
+
+            $response->error = $fault;
 
             return $response;
 
@@ -509,28 +626,43 @@ class BscsOperationService extends CI_Controller  {
 
         if($this->contractClient) {
 
-            // Make deleteContract request
-            $request = new BscsTypes\deleteContract();
+            $logonResponse = $this->logonContract();
 
-            $request->contractId = $contractId;
+            if($logonResponse->success){
 
-            try {
+                // Make deleteContract request
+                $request = new BscsTypes\deleteContract();
 
-                $response = $this->contractClient->deleteContract($request);
+                $request->contractId = $contractId;
 
-                $response->success = true;
+                try {
 
-                return $response;
+                    $response = $this->contractClient->deleteContract($request);
 
-            }catch (SoapFault $e){
+                    $response->success = true;
 
-                $response = new errorResponse();
+                    $this->logoutContract();
 
-                $fault = key($e->detail);
+                    return $response;
 
-                $response->error = $fault;
+                }
+                catch (SoapFault $e){
 
-                return $response;
+                    $response = new errorResponse();
+
+                    $fault = key($e->detail);
+
+                    $response->error = $fault;
+
+                    $this->logoutContract();
+
+                    return $response;
+
+                }
+
+            }else{
+
+                return $logonResponse;
 
             }
 
@@ -540,6 +672,63 @@ class BscsOperationService extends CI_Controller  {
             $response = new errorResponse();
 
             $response->error = Fault::CLIENT_INIT_FAULT;
+
+            return $response;
+
+        }
+
+    }
+
+    private function logonContract(){
+
+        // Make logon request
+        $request = new BscsTypes\logon();
+
+        $request->cmsUserName = BscsParams::cmsUserName;
+        $request->cmsPassword = BscsParams::cmsPassword;
+        $request->endUserName = BscsParams::endUserName;
+
+        try {
+
+            $response = $this->contractClient->logon($request);
+
+            $response->success = true;
+
+            return $response;
+
+        }catch (SoapFault $e){
+
+            $response = new errorResponse();
+
+            $fault = key($e->detail);
+
+            $response->error = $fault;
+
+            return $response;
+
+        }
+    }
+
+    private function logoutContract(){
+
+        // Make logon request
+        $request = new BscsTypes\logout();
+
+        try {
+
+            $response = $this->contractClient->logout($request);
+
+            $response->success = true;
+
+            return $response;
+
+        }catch (SoapFault $e){
+
+            $response = new errorResponse();
+
+            $fault = key($e->detail);
+
+            $response->error = $fault;
 
             return $response;
 

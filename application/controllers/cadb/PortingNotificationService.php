@@ -33,7 +33,6 @@ class PortingNotificationService extends CI_Controller
         parent::__construct();
 
         // Load required models
-        $this->load->model('FileLog_model');
         $this->load->model('Porting_model');
         $this->load->model('Portingsubmission_model');
         $this->load->model('Portingstateevolution_model');
@@ -182,6 +181,9 @@ class PortingNotificationService extends CI_Controller
 
             if ($this->db->trans_status() === FALSE) {
 
+                $error = $this->db->error();
+                fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
+
                 $emailService = new EmailService();
                 $emailService->adminErrorReport('ORDERED_PORTING_RECEIVED_BUT_DB_FILLING_ERROR', []);
                 $this->db->trans_complete();
@@ -240,6 +242,9 @@ class PortingNotificationService extends CI_Controller
 
         if ($this->db->trans_status() === false) {
 
+            $error = $this->db->error();
+            fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
+
             $emailService = new EmailService();
             $emailService->adminErrorReport('PORTING_APPROVED_BUT_DB_FILLED_INCOMPLETE', []);
             $this->db->trans_complete();
@@ -292,6 +297,9 @@ class PortingNotificationService extends CI_Controller
         $emailService = new EmailService();
 
         if ($this->db->trans_status() === FALSE) {
+
+            $error = $this->db->error();
+            fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
             $emailService->adminErrorReport('PORTING_AUTO_APPROVED_BUT_DB_FILLED_INCOMPLETE', []);
             $this->db->trans_complete();
@@ -390,6 +398,9 @@ class PortingNotificationService extends CI_Controller
         $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
 
         if ($this->db->trans_status() === FALSE) {
+
+            $error = $this->db->error();
+            fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
             $emailService = new EmailService();
             $emailService->adminErrorReport('PORTING_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', []);
@@ -490,6 +501,9 @@ class PortingNotificationService extends CI_Controller
 
         if ($this->db->trans_status() === FALSE) {
 
+            $error = $this->db->error();
+            fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
+
             $emailService->adminErrorReport('PORTING_AUTO_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', []);
 
         }
@@ -550,6 +564,9 @@ class PortingNotificationService extends CI_Controller
             $this->Porting_model->update_porting($portingId, $portingParams);
 
             if ($this->db->trans_status() === FALSE) {
+
+                $error = $this->db->error();
+                fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
                 $emailService->adminErrorReport('PORTING_AUTO_CONFIRMED_AND_MSISDN_EXPORTED_BUT_DB_FILLED_INCOMPLETE', []);
                 $this->db->trans_complete();
@@ -693,6 +710,9 @@ class PortingNotificationService extends CI_Controller
 
         if ($this->db->trans_status() === FALSE) {
 
+            $error = $this->db->error();
+            fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
+
             $emailService = new EmailService();
             $emailService->adminErrorReport('PORTING_REJECTED_BUT_DB_FILLED_INCOMPLETE', []);
             $this->db->trans_complete();
@@ -793,6 +813,9 @@ class PortingNotificationService extends CI_Controller
 
         if ($this->db->trans_status() === FALSE) {
 
+            $error = $this->db->error();
+            fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
+
             $emailService = new EmailService();
             $emailService->adminErrorReport('PORTING_REJECTED_BUT_DB_FILLED_INCOMPLETE', []);
             $this->db->trans_complete();
@@ -891,6 +914,9 @@ class PortingNotificationService extends CI_Controller
         $emailService = new EmailService();
 
         if ($this->db->trans_status() === FALSE) {
+
+            $error = $this->db->error();
+            fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
             $emailService->adminErrorReport('PORTING_ABANDONED_BUT_DB_FILLED_INCOMPLETE', []);
 

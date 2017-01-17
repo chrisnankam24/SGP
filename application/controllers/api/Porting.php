@@ -132,6 +132,8 @@ class Porting extends CI_Controller
 
                     $portingOperationService = new PortingOperationService();
 
+                    $bscsOperationService = new BscsOperationService();
+
                     while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
                         if($row == 1){
                             // Check if header Ok
@@ -145,7 +147,7 @@ class Porting extends CI_Controller
                             if(strtolower($data[2]) != 'rio'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[3]) != 'documentType'){
+                            if(strtolower($data[3]) != 'documenttype'){
                                 $errorFound = true;
                             }
                             if(strtolower($data[4]) != 'firstname'){
@@ -189,7 +191,6 @@ class Porting extends CI_Controller
                             $subscriberType = 0; // Physical person
 
                             // Get subscriber contractId from BSCS with temporal MSISDN
-                            $bscsOperationService = new BscsOperationService();
                             $contractId = $bscsOperationService->getContractId($temporalNumber);
 
                             if($contractId == -1){

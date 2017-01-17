@@ -107,6 +107,12 @@ class sftpParams{
     const PATH = '/';
 }
 
+class BscsParams {
+    const cmsUserName = '';
+    const cmsPassword = '';
+    const endUserName = '';
+}
+
 class languageParams{
     const FRENCH = 'FR';
     const ENGLISH = 'EN';

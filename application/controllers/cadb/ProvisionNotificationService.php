@@ -109,6 +109,9 @@ class ProvisionNotificationService  extends CI_Controller {
 
                     if ($this->db->trans_status() === FALSE) {
 
+                        $error = $this->db->error();
+                        fileLogAction($error['code'], 'ProvisionNotificationService', $error['message']);
+
                         $emailService->adminErrorReport('PORTING_COMPLETED_FROM_PROVISIONING_BUT_DB_FILLED_INCOMPLETE', []);
 
                     }else{
@@ -153,6 +156,9 @@ class ProvisionNotificationService  extends CI_Controller {
                     // Notify Agents/Admin
 
                     if ($this->db->trans_status() === FALSE) {
+
+                        $error = $this->db->error();
+                        fileLogAction($error['code'], 'ProvisionNotificationService', $error['message']);
 
                         $emailService->adminErrorReport('ROLLBACK_COMPLETED_FROM_PROVISIONING_BUT_DB_FILLED_INCOMPLETE', []);
 
@@ -206,6 +212,9 @@ class ProvisionNotificationService  extends CI_Controller {
         $this->Provisioning_model->add_provisioning($params);
 
         if ($this->db->trans_status() === FALSE) {
+
+            $error = $this->db->error();
+            fileLogAction($error['code'], 'ProvisionNotificationService', $error['message']);
 
             $emailService = new EmailService();
             $emailService->adminErrorReport('PROVISION_ROUTING_DATA_RECEIVED_BUT_DB_FILLED_INCOMPLETE', []);
