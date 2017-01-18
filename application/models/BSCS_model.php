@@ -53,8 +53,11 @@ class BSCS_model extends CI_Model{
                 LEFT JOIN info_cust_text ic ON ic.customer_id = c.customer_id 
                 WHERE b.cs_deactiv_date IS NULL AND b.sncode=1 AND CCSEQ=1 AND a.dn_num='$msisdn'";
 
-        if($this->bscs_db){
-            $response = $this->bscs_db->query($sql)->row_array();
+        if(true/*$this->bscs_db*/){
+
+            //$response = $this->bscs_db->query($sql)->row_array();
+            $response = array();
+            $response['CONTRACT_ID'] = '80092';
         }
 
         return $response;
