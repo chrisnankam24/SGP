@@ -56,6 +56,7 @@ class BSCS_model extends CI_Model{
         if(true/*$this->bscs_db*/){
 
             //$response = $this->bscs_db->query($sql)->row_array();
+
             $response = array();
             $response['CONTRACT_ID'] = '80092';
         }
