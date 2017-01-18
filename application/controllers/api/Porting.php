@@ -803,7 +803,7 @@ class Porting extends CI_Controller
 //            $responseData['ste'] = $data['STE'];
 //            // TODO: Include contact number and TIN
 //
-//            $response['data'] = $responseData;
+            $response['data'] = $responseData;
 
         }else{
 

@@ -32,7 +32,6 @@ class BscsOperationService {
 
         $CI =& get_instance();
 
-
         $CI->load->model('BSCS_model');
 
         $this->BSCS_model = $CI->BSCS_model;
