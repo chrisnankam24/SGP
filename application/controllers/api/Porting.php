@@ -793,17 +793,17 @@ class Porting extends CI_Controller
 
             $responseData = [];
 
-            $responseData['msisdn'] = $data['MSISDN'];
+           // $responseData['msisdn'] = $data['MSISDN'];
             $responseData['contract_id'] = $data['CONTRACT_ID'];
-            $responseData['type_client'] = $data['TYPE_CLIENT'];
-            $responseData['nom'] = $data['NOM'];
-            $responseData['prenom'] = $data['PRENOM'];
-            $responseData['id_piece'] = $data['ID_PIECE'];
-
-            $responseData['ste'] = $data['STE'];
-            // TODO: Include contact number and TIN
-
-            $response['data'] = $responseData;
+//            $responseData['type_client'] = $data['TYPE_CLIENT'];
+//            $responseData['nom'] = $data['NOM'];
+//            $responseData['prenom'] = $data['PRENOM'];
+//            $responseData['id_piece'] = $data['ID_PIECE'];
+//
+//            $responseData['ste'] = $data['STE'];
+//            // TODO: Include contact number and TIN
+//
+//            $response['data'] = $responseData;
 
         }else{
 
