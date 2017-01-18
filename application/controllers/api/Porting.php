@@ -192,9 +192,8 @@ class Porting extends CI_Controller
 
                             // Get subscriber contractId from BSCS with temporal MSISDN
                             $contractId = $bscsOperationService->getContractId($temporalNumber);
-                            $tempResponse = $contractId;
 
-                            /*if($contractId == -1){
+                            if($contractId == -1){
 
                                 $tempResponse['success'] = false;
                                 $tempResponse['message'] = 'Connection to BSCS Unsuccessful. Please try again later';
@@ -223,7 +222,7 @@ class Porting extends CI_Controller
                                     $tempResponse['portingMSISDN'] = $portingMSISDN;
                                 }
 
-                            }*/
+                            }
 
                             $tmpData[] = $tempResponse;
 
