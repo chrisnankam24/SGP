@@ -119,10 +119,22 @@ class BscsOperationService {
 
         $contractId = -1;
 
+        if(strlen($msisdn) == 12){
+
+            $msisdn = substr($msisdn, 3);
+
+        }
+
         $subscriberInfo = $this->BSCS_model->get_msisdn_info($msisdn);
 
         if($subscriberInfo != null && $subscriberInfo != -1) {
+
             $contractId = $subscriberInfo['CONTRACT_ID'];
+
+        }elseif($subscriberInfo == null){
+
+            $contractId = null;
+
         }
 
         return $contractId;
