@@ -922,6 +922,7 @@ class PortingOperationService extends CI_Controller  {
                     if ($this->db->trans_status() === FALSE) {
 
                         $error = $this->db->error();
+
                         fileLogAction($error['code'], 'PortingOperationService', $error['message']);
 
                         $response['success'] = false;
@@ -932,7 +933,7 @@ class PortingOperationService extends CI_Controller  {
                         $submissionParams['recipientSubmissionDateTime'] = date('c');
 
                         $emailService = new EmailService();
-                        $emailService->adminErrorReport('PORTING_REQUESTED_OPERATOR_INACTIVE_BUT_STARTED_INCOMPLETE', [], processType::PORTING);
+                        $emailService->adminErrorReport('PORTING_REQUESTED_OPERATOR_INACTIVE_BUT_STARTED_INCOMPLETE', $submissionParams, processType::PORTING);
                         $response['message'] = 'Operator is currently Inactive. We have nonetheless encountered problems saving your request. Please contact Back Office';
 
                     }else {
@@ -980,7 +981,19 @@ class PortingOperationService extends CI_Controller  {
                 case Fault::ACTION_NOT_AUTHORIZED:
                 case Fault::SUBSCRIBER_DATA_MISSING:
                 default:
-                    $emailService->adminErrorReport($fault, []);
+
+                $portingParams = array(
+                    'portingId' => '----------------------',
+                    'recipientNetworkId' => '--------------------',
+                    'donorNetworkId' => '--------------------',
+                    'recipientSubmissionDateTime' => date('c'),
+                    'rio' =>  '--------------------',
+                    'startMSISDN' =>  $portingMsisdn,
+                    'lastChangeDateTime' => date('c'),
+                    'portingState' => 'NONE'
+                );
+
+                $emailService->adminErrorReport($fault, $portingParams, processType::PORTING);
                     $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
 
             }
@@ -1096,8 +1109,10 @@ class PortingOperationService extends CI_Controller  {
                         $error = $this->db->error();
                         fileLogAction($error['code'], 'PortingOperationService', $error['message']);
 
+                        $portingParams = $this->Porting_model->get_porting($portingId);
+
                         $emailService = new EmailService();
-                        $emailService->adminErrorReport('PORTING_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', []);
+                        $emailService->adminErrorReport('PORTING_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
 
                     }
 
@@ -1128,8 +1143,12 @@ class PortingOperationService extends CI_Controller  {
                         case Fault::INVALID_PORTING_ID:
                         case Fault::INVALID_REQUEST_FORMAT:
                         default:
-                            $emailService->adminErrorReport($fault, []);
-                            $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
+
+                        $portingParams = $this->Porting_model->get_porting($portingId);
+
+                        $emailService->adminErrorReport($fault, $portingParams, processType::PORTING);
+
+                        $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
                     }
 
                     logAction($userId, "Porting [$portingId] Acceptance Failed with [$fault] Fault");
@@ -1228,8 +1247,10 @@ class PortingOperationService extends CI_Controller  {
                             $error = $this->db->error();
                             fileLogAction($error['code'], 'PortingOperationService', $error['message']);
 
+                            $portingParams = $this->Porting_model->get_porting($portingId);
+
                             $emailService = new EmailService();
-                            $emailService->adminErrorReport('PORTING_REJECTED_BUT_DB_FILLED_INCOMPLETE', []);
+                            $emailService->adminErrorReport('PORTING_REJECTED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
 
                         }else {
 
@@ -1263,7 +1284,11 @@ class PortingOperationService extends CI_Controller  {
                             case Fault::INVALID_REQUEST_FORMAT:
                             case Fault::CAUSE_MISSING:
                             default:
-                                $emailService->adminErrorReport($fault, []);
+
+                                $portingParams = $this->Porting_model->get_porting($portingId);
+
+                                $emailService->adminErrorReport($fault, $portingParams, processType::PORTING);
+
                                 $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
 
                         }

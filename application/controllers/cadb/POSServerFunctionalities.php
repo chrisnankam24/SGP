@@ -166,7 +166,7 @@ class POSServerFunctionalities extends CI_Controller  {
         $response->portingTransaction->numberRanges = array($numRange);
 
         return $response;
-        //throw new invalidOperatorFault();
+        //throw new invalidPortingIdFault();
 
     }
 

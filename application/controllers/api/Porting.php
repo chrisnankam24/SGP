@@ -138,31 +138,31 @@ class Porting extends CI_Controller
                         if($row == 1){
                             // Check if header Ok
                             $errorFound = false;
-                            if(strtolower($data[0]) != 'donoroperator'){
+                            if(isset($data[0]) && strtolower($data[0]) != 'donoroperator'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[1]) != 'portingmsisdn'){
+                            if(isset($data[1]) && strtolower($data[1]) != 'portingmsisdn'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[2]) != 'rio'){
+                            if(isset($data[2]) && strtolower($data[2]) != 'rio'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[3]) != 'documenttype'){
+                            if(isset($data[3]) && strtolower($data[3]) != 'documenttype'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[4]) != 'firstname'){
+                            if(isset($data[4]) && strtolower($data[4]) != 'firstname'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[5]) != 'lastname'){
+                            if(isset($data[5]) && strtolower($data[5]) != 'lastname'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[6]) != 'idnumber'){
+                            if(isset($data[6]) && strtolower($data[6]) != 'idnumber'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[7]) != 'temporalnumber'){
+                            if(isset($data[7]) && strtolower($data[7]) != 'temporalnumber'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[8]) != 'language'){
+                            if(isset($data[8]) && strtolower($data[8]) != 'language'){
                                 $errorFound = true;
                             }
                             if($errorFound){
@@ -280,31 +280,31 @@ class Porting extends CI_Controller
                         if($row == 1){
                             // Check if header Ok
                             $errorFound = false;
-                            if(strtolower($data[0]) != 'donoroperator'){
+                            if(isset($data[0]) && strtolower($data[0]) != 'donoroperator'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[1]) != 'portingmsisdn'){
+                            if(isset($data[1]) && strtolower($data[1]) != 'portingmsisdn'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[2]) != 'rio'){
+                            if(isset($data[2]) && strtolower($data[2]) != 'rio'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[3]) != 'documentType'){
+                            if(isset($data[3]) && strtolower($data[3]) != 'documenttype'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[4]) != 'legalname'){
+                            if(isset($data[4]) && strtolower($data[4]) != 'legalname'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[5]) != 'legaltin'){
+                            if(isset($data[5]) && strtolower($data[5]) != 'legaltin'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[6]) != 'contactnumber'){
+                            if(isset($data[6]) && strtolower($data[6]) != 'contactnumber'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[7]) != 'temporalnumber'){
+                            if(isset($data[7]) && strtolower($data[7]) != 'temporalnumber'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[8]) != 'language'){
+                            if(isset($data[8]) && strtolower($data[8]) != 'language'){
                                 $errorFound = true;
                             }
                             if($errorFound){

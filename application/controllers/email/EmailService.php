@@ -30,9 +30,9 @@ class EmailService {
 
         // Load template
         //$template = file_get_contents(__DIR__ . '/templates/process_error_template.html');
-        $template = file_get_contents(__DIR__ . '/templates/email.html');
+        $template = file_get_contents(__DIR__ . '/templates/porting-confirm-template.html');
 
-        $to = array('christian.nankam@orange.com');
+        $to = array('christian.nankam@orange.com', 'chp.testbed@gmail.com');
         $cc = array();
         $subject = 'Great';
 
@@ -48,6 +48,7 @@ class EmailService {
     public function adminErrorReport($errorCode, $params, $processType){
 
         $subject = '';
+        $message = '';
 
         if($processType == processType::PORTING){
 
@@ -94,7 +95,12 @@ class EmailService {
             $template = str_replace('[rio]', $params['rio'], $template, $count);
 
             // Set Submission Date
-            $submissionDateTime = date('l, M d Y, H:i:s', strtotime($params['recipientSubmissionDateTime']));
+            $submissionDateTime = $params['recipientSubmissionDateTime'];
+            if($submissionDateTime != ''){
+                $submissionDateTime = date('l, M d Y, H:i:s', strtotime($params['recipientSubmissionDateTime']));
+            }else{
+                $submissionDateTime = '--------------------------';
+            }
             $template = str_replace('[submissionDateTime]', $submissionDateTime, $template, $count);
 
             // Set Last Change Date
@@ -114,7 +120,7 @@ class EmailService {
 
         }
 
-        $to = array('christian.nankam@orange.com');
+        $to = array('christian.nankam@orange.com', 'chp.testbed@gmail.com');
         $cc = array();
 
         $this->send_mail($to, $cc, $subject, $message);

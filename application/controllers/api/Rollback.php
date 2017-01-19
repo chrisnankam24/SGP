@@ -71,13 +71,13 @@ class Rollback extends CI_Controller
                         if($row == 1){
                             // Check if header Ok
                             $errorFound = false;
-                            if(strtolower($data[0]) != 'originalportingid'){
+                            if(isset($data[0]) && strtolower($data[0]) != 'originalportingid'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[1]) != 'temporalnumber'){
+                            if(isset($data[1]) && strtolower($data[1]) != 'temporalnumber'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[2]) != 'language'){
+                            if(isset($data[2]) && strtolower($data[2]) != 'language'){
                                 $errorFound = true;
                             }
                             if($errorFound){

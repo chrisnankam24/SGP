@@ -70,10 +70,10 @@ class NReturn extends CI_Controller
                         if($row == 1){
                             // Check if header Ok
                             $errorFound = false;
-                            if(strtolower($data[0]) != 'returnmsisdn'){
+                            if(strtolower(isset($data[0]) && $data[0]) != 'returnmsisdn'){
                                 $errorFound = true;
                             }
-                            if(strtolower($data[1]) != 'returnoperator'){
+                            if(strtolower(isset($data[1]) && $data[1]) != 'returnoperator'){
                                 $errorFound = true;
                             }
 
