@@ -20,6 +20,10 @@ class Operator {
     const ORANGE_ROUTING_NUMBER = '1602';
     const NEXTTEL_ROUTING_NUMBER = '1603';
 
+    const MTN_OPERATOR_NAME = 'MTN Cameroon';
+    const ORANGE_OPERATOR_NAME = 'Orange Cameroon';
+    const NEXTTEL_OPERATOR_NAME = 'Nexttel Cameroon';
+
     const ORANGE_NETWORK_ID_NUMBER = 2;
 }
 

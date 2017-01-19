@@ -197,11 +197,13 @@ class Porting extends CI_Controller
 
                                 $tempResponse['success'] = false;
                                 $tempResponse['message'] = 'Connection to BSCS Unsuccessful. Please try again later';
+                                $tempResponse['portingMSISDN'] = $portingMSISDN;
 
                             }elseif($contractId == null){
 
                                 $tempResponse['success'] = false;
                                 $tempResponse['message'] = 'Temporal number not found in BSCS. Please verify number has been identified properly and try again';
+                                $tempResponse['portingMSISDN'] = $portingMSISDN;
 
                             }else{
 
@@ -337,11 +339,13 @@ class Porting extends CI_Controller
 
                                 $tempResponse['success'] = false;
                                 $tempResponse['message'] = 'Connection to BSCS Unsuccessful. Please try again later';
+                                $tempResponse['portingMSISDN'] = $portingMSISDN;
 
                             }elseif($contractId == null){
 
                                 $tempResponse['success'] = false;
                                 $tempResponse['message'] = 'Temporal number not found in BSCS. Please verify number has been identified properly and try again';
+                                $tempResponse['portingMSISDN'] = $portingMSISDN;
 
                             }else{
 
@@ -352,6 +356,7 @@ class Porting extends CI_Controller
                                 }else{
                                     $tempResponse['success'] = false;
                                     $tempResponse['message'] = "Invalid donor operator. Must be <MTN> or <NEXTTEL>";
+                                    $tempResponse['portingMSISDN'] = $portingMSISDN;
                                 }
 
                                 if($donorOperator == 0 || $donorOperator == 1){

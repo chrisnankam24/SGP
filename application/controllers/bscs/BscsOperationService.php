@@ -15,7 +15,7 @@ use BscsService\BscsTypes as BscsTypes;
  */
 
 /**
- * Simulating Controller for PortingOperationService made by CADB
+ * BscsOperationService
  * Class PortingOperationService
  */
 class BscsOperationService {

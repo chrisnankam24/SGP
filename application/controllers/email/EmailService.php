@@ -8,6 +8,7 @@
  */
 
 require_once APPPATH . "third_party/PHPMailer/PHPMailerAutoload.php";
+require_once APPPATH . "controllers/cadb/Common.php";
 
 
 /**
@@ -26,26 +27,6 @@ class EmailService {
 
     public function test(){
 
-        /*$mail = new PHPMailer;
-
-        $mail->isSMTP();                                      // Set mailer to use SMTP
-        $mail->Host = '172.21.55.12';  // Specify main and backup SMTP servers
-
-        //$mail->setFrom('DTI_SIT@orange.com', 'DTI OSS');
-        $mail->setFrom('DTI_SIT@orange.com');
-        $mail->addAddress('christian.nankam@orange.com');     // Add a recipient
-        $mail->isHTML(true);                                  // Set email format to HTML
-
-        $mail->Subject = 'Here is the subject';
-        $mail->Body    = 'This is the HTML message body <b>in bold!</b>';
-        $mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
-
-        if(!$mail->send()) {
-            echo 'Message could not be sent.';
-            echo 'Mailer Error: ' . $mail->ErrorInfo;
-        } else {
-            echo 'Message has been sent';
-        }*/
 
         // Load template
         //$template = file_get_contents(__DIR__ . '/templates/process_error_template.html');
@@ -66,7 +47,77 @@ class EmailService {
      */
     public function adminErrorReport($errorCode, $params, $processType){
 
+        $subject = '';
 
+        if($processType == processType::PORTING){
+
+            $subject = 'Error with ' . $params['portingId'];
+
+            $template = file_get_contents(__DIR__ . '/templates/porting-error-template.html');
+
+            // Set Error Text
+            $template = str_replace('[errorText]', $errorCode, $template);
+
+            // Set PortingId
+            $template = str_replace('[portingId]', $params['portingId'], $template);
+
+            // Set Donor Network
+
+            $donorNetwork = '';
+
+            if($params['donorNetworkId'] == Operator::MTN_NETWORK_ID){
+                $donorNetwork = Operator::MTN_OPERATOR_NAME;
+            }elseif ($params['donorNetworkId'] == Operator::NEXTTEL_NETWORK_ID){
+                $donorNetwork = Operator::NEXTTEL_OPERATOR_NAME;
+            }elseif ($params['donorNetworkId'] == Operator::ORANGE_NETWORK_ID){
+                $donorNetwork = Operator::ORANGE_OPERATOR_NAME;
+            }
+
+            $recipientNetwork = '';
+
+            if($params['recipientNetworkId'] == Operator::MTN_NETWORK_ID){
+                $recipientNetwork = Operator::MTN_OPERATOR_NAME;
+            }elseif ($params['recipientNetworkId'] == Operator::NEXTTEL_NETWORK_ID){
+                $recipientNetwork = Operator::NEXTTEL_OPERATOR_NAME;
+            }elseif ($params['recipientNetworkId'] == Operator::ORANGE_NETWORK_ID){
+                $recipientNetwork = Operator::ORANGE_OPERATOR_NAME;
+            }
+
+            $template = str_replace('[donor_network]', $donorNetwork, $template);
+
+            $template = str_replace('[recipient_network]', $recipientNetwork, $template);
+
+            // Set Porting MSISDN
+            $template = str_replace('[portingMSISDN]', $params['startMSISDN'], $template);
+
+            // Set RIO
+            $template = str_replace('[rio]', $params['rio'], $template, $count);
+
+            // Set Submission Date
+            $submissionDateTime = date('l, M d Y, H:i:s', strtotime($params['recipientSubmissionDateTime']));
+            $template = str_replace('[submissionDateTime]', $submissionDateTime, $template, $count);
+
+            // Set Last Change Date
+            $lastChangeDateTime = date('l, M d Y, H:i:s', strtotime($params['lastChangeDateTime']));
+            $template = str_replace('[lastChangeDateTime]', $lastChangeDateTime, $template, $count);
+
+            // Set Porting State
+            $message = str_replace('[portingState]', $params['portingState'], $template, $count);
+
+        }elseif($processType == processType::ROLLBACK){
+
+
+
+        }else{
+
+
+
+        }
+
+        $to = array('christian.nankam@orange.com');
+        $cc = array();
+
+        $this->send_mail($to, $cc, $subject, $message);
 
     }
 
@@ -165,7 +216,7 @@ class EmailService {
 
         $this->CI->load->library('email');
 
-        $this->CI->email->from('chp.testbed@gmail.com', 'Nankam Happi C.');
+        $this->CI->email->from('SGP', 'SGP Notification Center');
         $this->CI->email->to($to);
         $this->CI->email->cc($cc);
 

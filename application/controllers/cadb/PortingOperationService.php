@@ -850,7 +850,7 @@ class PortingOperationService extends CI_Controller  {
                 fileLogAction($error['code'], 'PortingOperationService', $error['message']);
 
                 $emailService = new EmailService();
-                $emailService->adminErrorReport('PORTING_ORDERED_BUT_DB_FILLED_INCOMPLETE', []);
+                $emailService->adminErrorReport('PORTING_ORDERED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
 
             }else {
 
@@ -925,8 +925,14 @@ class PortingOperationService extends CI_Controller  {
                         fileLogAction($error['code'], 'PortingOperationService', $error['message']);
 
                         $response['success'] = false;
+
+                        $submissionParams['portingMSISDN'] = $portingMsisdn;
+                        $submissionParams['recipient_network'] = Operator::ORANGE_NETWORK_ID;
+                        $submissionParams['lastChangeDateTime'] = date('c');
+                        $submissionParams['recipientSubmissionDateTime'] = date('c');
+
                         $emailService = new EmailService();
-                        $emailService->adminErrorReport('PORTING_REQUESTED_OPERATOR_INACTIVE_BUT_STARTED_INCOMPLETE', []);
+                        $emailService->adminErrorReport('PORTING_REQUESTED_OPERATOR_INACTIVE_BUT_STARTED_INCOMPLETE', [], processType::PORTING);
                         $response['message'] = 'Operator is currently Inactive. We have nonetheless encountered problems saving your request. Please contact Back Office';
 
                     }else {
