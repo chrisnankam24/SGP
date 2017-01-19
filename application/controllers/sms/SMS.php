@@ -31,6 +31,7 @@ class SMS extends CI_Controller {
 
     public function index(){
 
+        self::send_response('694975166', 'Hello, test SMS');
         //SMS::OPD_Inform_Subcriber('237694975166',SMS::$DENOMINATION_COMMERCIALE_NEXTTEL, '2343454564567567');
 
         //SMS::OPR_Subscriber_OK('237694975166', '21/11/2016', '12:00:00', '15:00:00');

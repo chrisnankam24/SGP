@@ -107,8 +107,6 @@ class USSD extends CI_Controller {
 
         self::send_response($response);
 
-        $this->db->trans_start();
-
         // Send USSD SMS and save in DB
         $response = SMS::USSD_SMS($message, $msisdn);
 
@@ -138,8 +136,6 @@ class USSD extends CI_Controller {
         }
 
         $this->Ussdsmsnotification_model->add_ussdsmsnotification($smsNotificationparams);
-
-        $this->db->trans_complete();
 
     }
 
