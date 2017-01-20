@@ -64,7 +64,7 @@ class Porting_model extends CI_Model
      */
     function get_all_waiting_porting()
     {
-        return $this->db->where_in('portingState', array(\PortingService\Porting\portingStateType::APPROVED))->order_by('recipientSubmissionDateTime', 'desc')->get_where('Porting')->result_array();
+        return $this->db->where('portingState', \PortingService\Porting\portingStateType::APPROVED)->where('donorNetworkId', Operator::ORANGE_NETWORK_ID)->order_by('recipientSubmissionDateTime', 'desc')->get_where('Porting')->result_array();
     }
     
     /*

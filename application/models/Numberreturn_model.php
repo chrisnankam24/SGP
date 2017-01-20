@@ -24,7 +24,15 @@ class Numberreturn_model extends CI_Model
      */
     function get_all_numberreturn()
     {
-        return $this->db->get('NumberReturn')->result_array();
+        return $this->db->order_by('openDateTime', 'desc')->get('NumberReturn')->result_array();
+    }
+
+    /*
+     * Get all waiting
+     */
+    function get_all_waiting_return()
+    {
+        return $this->db->where('returnNumberState', \ReturnService\_Return\returnStateType::OPENED)->where('primaryOwnerNetworkId', Operator::ORANGE_NETWORK_ID)->get_where('NumberReturn')->result_array();
     }
 
     /*

@@ -55,9 +55,17 @@ class Rollback_model extends CI_Model
      */
     function get_all_rollback()
     {
-        return $this->db->get('Rollback')->result_array();
+        return $this->db->order_by('donorSubmissionDateTime', 'desc')->join('Porting', 'Porting.portingId = originalPortingId')->get('Rollback')->result_array();
     }
-    
+
+    /*
+     * Get all waiting
+     */
+    function get_all_waiting_rollback()
+    {
+        return $this->db->where('rollbackState', \RollbackService\Rollback\rollbackStateType::OPENED)->where('recipientNetworkId', Operator::ORANGE_NETWORK_ID)->join('Porting', 'Porting.portingId = originalPortingId')->order_by('donorSubmissionDateTime', 'desc')->get_where('Rollback')->result_array();
+    }
+
     /*
      * function to add new rollback
      */

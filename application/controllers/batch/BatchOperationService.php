@@ -62,7 +62,7 @@ class BatchOperationService extends CI_Controller {
 
     public function index(){
 
-        var_dump($this->Porting_model->get_all_porting());
+        var_dump($this->Rollback_model->get_all_waiting_rollback());
         //$emailService = new EmailService();
 
         //var_dump($emailService->test());
