@@ -11,6 +11,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 require_once "Problem.php";
 require_once "Fault.php";
 require_once "Common.php";
+require_once APPPATH . "controllers/email/EmailService.php";
 
 use ProblemService\Problem as Problem;
 
@@ -133,7 +134,7 @@ class ProblemReportOperationService  extends CI_Controller {
                 'cadbNumber' => $prResponse->returnTransaction->cadbNumber,
                 'problem' => $prResponse->returnTransaction->problem,
                 'reporterNetworkId' => Operator::ORANGE_NETWORK_ID,
-                'notificationMailSendStatus' => smsState::PENDING,
+                'errorNotificationMailSendStatus' => smsState::PENDING,
                 'submissionDateTime' => $prResponse->returnTransaction->submissionDateTime,
                 'userId' => $userId
             );
@@ -147,8 +148,9 @@ class ProblemReportOperationService  extends CI_Controller {
                 $error = $this->db->error();
                 fileLogAction($error['code'], 'ProblemReportOperationService', $error['message']);
 
+                $eParams['processType'] = '';
                 $emailService = new EmailService();
-                $emailService->adminErrorReport('ERROR_REPORTED_BUT_DB_FILLED_INCOMPLETE', []);
+                $emailService->adminErrorReport('ERROR_REPORTED_BUT_DB_FILLED_INCOMPLETE', $eParams, processType::ERROR);
 
             }
 
@@ -184,7 +186,18 @@ class ProblemReportOperationService  extends CI_Controller {
                 case Fault::INVALID_REQUEST_FORMAT:
                 case Fault::ACTION_NOT_AUTHORIZED:
                 default:
-                    $emailService->adminErrorReport($fault, []);
+
+                $eParams = array(
+                    'errorReportId' => '',
+                    'cadbNumber' => $cadbNumber,
+                    'problem' => $problem,
+                    'reporterNetworkId' => Operator::ORANGE_NETWORK_ID,
+                    'submissionDateTime' => date('c'),
+                    'processType' => ''
+                );
+
+
+                $emailService->adminErrorReport($fault, $eParams, processType::ERROR);
                     $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
             }
 

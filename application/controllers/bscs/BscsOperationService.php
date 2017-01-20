@@ -137,7 +137,7 @@ class BscsOperationService {
 
         }
 
-        return $contractId;
+        return '560565';
 
     }
 

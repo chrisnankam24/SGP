@@ -63,7 +63,7 @@ class ROSServerFunctionalities extends CI_Controller  {
 
         return $response;
 
-        //throw new invalidOperatorFault();
+        //throw new invalidRequestFormatFault();
     }
 
     /**

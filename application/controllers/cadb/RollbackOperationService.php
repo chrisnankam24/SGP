@@ -436,13 +436,13 @@ class RollbackOperationService  extends CI_Controller {
 
         if($contractId == -1){
 
-            $tempResponse['success'] = false;
-            $tempResponse['message'] = 'Connection to BSCS Unsuccessful. Please try again later';
+            $response['success'] = false;
+            $response['message'] = 'Connection to BSCS Unsuccessful. Please try again later';
 
         }elseif($contractId == null){
 
-            $tempResponse['success'] = false;
-            $tempResponse['message'] = 'Temporal number not found in BSCS. Please verify number has been identified properly and try again';
+            $response['success'] = false;
+            $response['message'] = 'Temporal number not found in BSCS. Please verify number has been identified properly and try again';
 
         }else{
 
@@ -474,19 +474,20 @@ class RollbackOperationService  extends CI_Controller {
 
                 $rollbacksubmission_id = $this->Rollbacksubmission_model->add_rollbacksubmission($submissionParams);
                 $rollbackId = $openResponse->rollbackTransaction->rollbackId;
+                $originalPortingId = $openResponse->rollbackTransaction->originalPortingId;
 
                 // Insert into Rollback table
 
                  $rollbackParams = array(
                      'rollbackId' => $rollbackId,
-                     'originalPortingId' => $openResponse->rollbackTransaction->originalPortingId,
+                     'originalPortingId' => $originalPortingId,
                      'donorSubmissionDateTime' => $openResponse->rollbackTransaction->donorSubmissionDateTime,
                      'preferredRollbackDateTime' => $openResponse->rollbackTransaction->preferredRollbackDateTime,
                      'rollbackDateTime' => $openResponse->rollbackTransaction->rollbackDateTime,
                      'cadbOpenDateTime' => $openResponse->rollbackTransaction->cadbOpenDateTime,
                      'lastChangeDateTime' => $openResponse->rollbackTransaction->lastChangeDateTime,
                      'rollbackState' => \RollbackService\Rollback\rollbackStateType::OPENED,
-                     'notificationMailSendStatus' => smsState::PENDING,
+                     'rollbackNotificationMailSendStatus' => smsState::PENDING,
                      'rollbackSubmissionId' => $rollbacksubmission_id,
                  );
 
@@ -510,8 +511,13 @@ class RollbackOperationService  extends CI_Controller {
                     $error = $this->db->error();
                     fileLogAction($error['code'], 'RollbackOperationService', $error['message']);
 
+                    $portingParams = $this->Porting_model->get_porting($originalPortingId);
+
+                    $rollbackParams = array_merge($rollbackParams, $portingParams);
+
                     $emailService = new EmailService();
-                    $emailService->adminErrorReport('ROLLBACK_OPENED_BUT_DB_FILLED_INCOMPLETE', []);
+
+                    $emailService->adminErrorReport('ROLLBACK_OPENED_BUT_DB_FILLED_INCOMPLETE', $rollbackParams, processType::ROLLBACK);
 
                 }
 
@@ -559,7 +565,16 @@ class RollbackOperationService  extends CI_Controller {
                             $error = $this->db->error();
                             fileLogAction($error['code'], 'RollbackOperationService', $error['message']);
 
-                            $emailService->adminErrorReport('ROLLBACK_REQUESTED_OPERATOR_INACTIVE_BUT_STARTED_INCOMPLETE', []);
+                            $portingParams = $this->Porting_model->get_porting($originalPortingId);
+
+                            $rollbackParams = array_merge($submissionParams, $portingParams);
+
+                            $rollbackParams['rollbackId'] = '';
+                            $rollbackParams['donorSubmissionDateTime'] = date('c');
+                            $rollbackParams['rollbackState'] = 'NA';
+
+                            $emailService->adminErrorReport('ROLLBACK_REQUESTED_OPERATOR_INACTIVE_BUT_STARTED_INCOMPLETE', $rollbackParams, processType::ROLLBACK);
+
                             $response['message'] = 'Operator is currently Inactive. We have nonetheless encountered problems saving your request. Please contact Back Office';
 
                         }else{
@@ -584,7 +599,19 @@ class RollbackOperationService  extends CI_Controller {
                     case Fault::INVALID_REQUEST_FORMAT:
                     case Fault::ACTION_NOT_AUTHORIZED:
                     default:
-                        $emailService->adminErrorReport($fault, []);
+
+                        $portingParams = $this->Porting_model->get_porting($originalPortingId);
+
+                        $submissionParams = array(
+                            'originalPortingId' => $originalPortingId,
+                            'rollbackId' => '',
+                            'donorSubmissionDateTime' => date('c'),
+                            'rollbackState' => 'NA'
+                        );
+
+                        $rollbackParams = array_merge($submissionParams, $portingParams);
+
+                        $emailService->adminErrorReport($fault, $rollbackParams, processType::ROLLBACK);
                         $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
                 }
 
@@ -653,8 +680,11 @@ class RollbackOperationService  extends CI_Controller {
                         $error = $this->db->error();
                         fileLogAction($error['code'], 'RollbackOperationService', $error['message']);
 
+                        $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
+
                         $emailService = new EmailService();
-                        $emailService->adminErrorReport('ROLLBACK_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', []);
+
+                        $emailService->adminErrorReport('ROLLBACK_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', $rollbackParams, processType::ROLLBACK);
 
                     }
 
@@ -685,7 +715,10 @@ class RollbackOperationService  extends CI_Controller {
                         case Fault::INVALID_ROLLBACK_ID:
                         case Fault::ROLLBACK_ACTION_NOT_AVAILABLE:
                         default:
-                            $emailService->adminErrorReport($fault, []);
+
+                        $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
+
+                        $emailService->adminErrorReport($fault, $rollbackParams, processType::ROLLBACK);
                             $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
                     }
 
@@ -782,8 +815,10 @@ class RollbackOperationService  extends CI_Controller {
                             $error = $this->db->error();
                             fileLogAction($error['code'], 'RollbackOperationService', $error['message']);
 
+                            $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
+
                             $emailService = new EmailService();
-                            $emailService->adminErrorReport('ROLLBACK_REJECTED_BUT_DB_FILLED_INCOMPLETE', []);
+                            $emailService->adminErrorReport('ROLLBACK_REJECTED_BUT_DB_FILLED_INCOMPLETE', $rollbackParams, processType::ROLLBACK);
 
                         }
 
@@ -815,7 +850,10 @@ class RollbackOperationService  extends CI_Controller {
                             case Fault::CAUSE_MISSING:
                             case Fault::ROLLBACK_ACTION_NOT_AVAILABLE:
                             default:
-                                $emailService->adminErrorReport($fault, []);
+
+                                $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
+
+                                $emailService->adminErrorReport($fault, $rollbackParams, processType::ROLLBACK);
                                 $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
                         }
 

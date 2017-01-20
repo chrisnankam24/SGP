@@ -106,7 +106,7 @@ class PortingNotificationService extends CI_Controller
                 'rio' =>  $notifyOrderedRequest->portingTransaction->rio,
                 'contractId' =>  $contractId,
                 'language' =>  $language,
-                'notificationMailSendStatus' => smsState::PENDING,
+                'portingNotificationMailSendStatus' => smsState::PENDING,
                 'startMSISDN' =>  $startMSISDN,
                 'endMSISDN' =>  $endMSISDN
             );
@@ -182,10 +182,11 @@ class PortingNotificationService extends CI_Controller
             if ($this->db->trans_status() === FALSE) {
 
                 $error = $this->db->error();
+
                 fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
                 $emailService = new EmailService();
-                $emailService->adminErrorReport('ORDERED_PORTING_RECEIVED_BUT_DB_FILLING_ERROR', []);
+                $emailService->adminErrorReport('ORDERED_PORTING_RECEIVED_BUT_DB_FILLING_ERROR', $portingParams, processType::PORTING);
                 $this->db->trans_complete();
                 throw new ldbAdministrationServiceFault();
 
@@ -220,11 +221,13 @@ class PortingNotificationService extends CI_Controller
 
         // Fill in portingStateEvolution table with state approved
 
+        $portingId = $notifyApprovedRequest->portingTransaction->portingId;
+
         $portingEvolutionParams = array(
             'lastChangeDateTime' => $notifyApprovedRequest->portingTransaction->lastChangeDateTime,
             'portingState' => \PortingService\Porting\portingStateType::APPROVED,
             'isAutoReached' => false,
-            'portingId' => $notifyApprovedRequest->portingTransaction->portingId,
+            'portingId' => $portingId,
         );
 
         $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
@@ -245,8 +248,11 @@ class PortingNotificationService extends CI_Controller
             $error = $this->db->error();
             fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
+            $portingParams = $this->Porting_model->get_porting($portingId);
+
             $emailService = new EmailService();
-            $emailService->adminErrorReport('PORTING_APPROVED_BUT_DB_FILLED_INCOMPLETE', []);
+            $emailService->adminErrorReport('PORTING_APPROVED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
+
             $this->db->trans_complete();
             throw new ldbAdministrationServiceFault();
 
@@ -274,11 +280,13 @@ class PortingNotificationService extends CI_Controller
 
         // Insert into porting Evolution state table
 
+        $portingId = $notifyAutoApproveRequest->portingTransaction->portingId;
+
         $portingEvolutionParams = array(
             'lastChangeDateTime' => $notifyAutoApproveRequest->portingTransaction->lastChangeDateTime,
             'portingState' => \PortingService\Porting\portingStateType::APPROVED,
             'isAutoReached' => true,
-            'portingId' => $notifyAutoApproveRequest->portingTransaction->portingId,
+            'portingId' => $portingId,
         );
 
         $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
@@ -301,7 +309,9 @@ class PortingNotificationService extends CI_Controller
             $error = $this->db->error();
             fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
-            $emailService->adminErrorReport('PORTING_AUTO_APPROVED_BUT_DB_FILLED_INCOMPLETE', []);
+            $portingParams = $this->Porting_model->get_porting($portingId);
+
+            $emailService->adminErrorReport('PORTING_AUTO_APPROVED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
             $this->db->trans_complete();
             throw new ldbAdministrationServiceFault();
 
@@ -309,7 +319,9 @@ class PortingNotificationService extends CI_Controller
 
             $this->db->trans_complete();
 
-            $emailService->adminErrorReport('PORTING_REACHED_AUTO_APPROVE', []);
+            $portingParams = $this->Porting_model->get_porting($portingId);
+
+            $emailService->adminErrorReport('PORTING_REACHED_AUTO_APPROVE', $portingParams, processType::PORTING);
 
             $response = new PortingNotification\notifyAutoApproveResponse();
 
@@ -402,8 +414,10 @@ class PortingNotificationService extends CI_Controller
             $error = $this->db->error();
             fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
+            $portingParams = $this->Porting_model->get_porting($portingId);
+
             $emailService = new EmailService();
-            $emailService->adminErrorReport('PORTING_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', []);
+            $emailService->adminErrorReport('PORTING_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
             $this->db->trans_complete();
             throw new ldbAdministrationServiceFault();
 
@@ -504,13 +518,17 @@ class PortingNotificationService extends CI_Controller
             $error = $this->db->error();
             fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
-            $emailService->adminErrorReport('PORTING_AUTO_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', []);
+            $portingParams = $this->Porting_model->get_porting($portingId);
+
+            $emailService->adminErrorReport('PORTING_AUTO_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
 
         }
 
         $this->db->trans_complete();
 
-        $emailService->adminErrorReport('PORTING_REACHED_AUTO_ACCEPT', []);
+        $portingParams = $this->Porting_model->get_porting($portingId);
+
+        $emailService->adminErrorReport('PORTING_REACHED_AUTO_ACCEPT', $portingParams, processType::PORTING);
 
         $response = new PortingNotification\notifyAutoAcceptResponse();
 
@@ -531,8 +549,10 @@ class PortingNotificationService extends CI_Controller
 
         $emailService = new EmailService();
 
+        $dbPortingParams = $this->Porting_model->get_porting($portingId);
+
         // Alert admin
-        $emailService->adminErrorReport('PORTING_REACHED_AUTO_CONFIRM', []);
+        $emailService->adminErrorReport('PORTING_REACHED_AUTO_CONFIRM', $dbPortingParams, processType::PORTING);
 
         // Start porting process
         $portingStatedResponse = $this->startPortingOPR($subscriberMSISDN);
@@ -568,7 +588,9 @@ class PortingNotificationService extends CI_Controller
                 $error = $this->db->error();
                 fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
-                $emailService->adminErrorReport('PORTING_AUTO_CONFIRMED_AND_MSISDN_EXPORTED_BUT_DB_FILLED_INCOMPLETE', []);
+                $portingParams = $this->Porting_model->get_porting($portingId);
+
+                $emailService->adminErrorReport('PORTING_AUTO_CONFIRMED_AND_MSISDN_EXPORTED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
                 $this->db->trans_complete();
                 throw new ldbAdministrationServiceFault();
 
@@ -619,7 +641,9 @@ class PortingNotificationService extends CI_Controller
                     $fault = $faultCode;
             }
 
-            $emailService->adminErrorReport($fault, []);
+            $portingParams = $this->Porting_model->get_porting($portingId);
+
+            $emailService->adminErrorReport($fault, $portingParams, processType::PORTING);
 
             $response = new PortingNotification\notifyAutoConfirmResponse();
 
@@ -713,8 +737,10 @@ class PortingNotificationService extends CI_Controller
             $error = $this->db->error();
             fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
+            $portingParams = $this->Porting_model->get_porting($portingId);
+
             $emailService = new EmailService();
-            $emailService->adminErrorReport('PORTING_REJECTED_BUT_DB_FILLED_INCOMPLETE', []);
+            $emailService->adminErrorReport('PORTING_REJECTED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
             $this->db->trans_complete();
             throw new ldbAdministrationServiceFault();
 
@@ -816,8 +842,10 @@ class PortingNotificationService extends CI_Controller
             $error = $this->db->error();
             fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
+            $portingParams = $this->Porting_model->get_porting($portingId);
+
             $emailService = new EmailService();
-            $emailService->adminErrorReport('PORTING_REJECTED_BUT_DB_FILLED_INCOMPLETE', []);
+            $emailService->adminErrorReport('PORTING_REJECTED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
             $this->db->trans_complete();
             throw new ldbAdministrationServiceFault();
 
@@ -918,7 +946,9 @@ class PortingNotificationService extends CI_Controller
             $error = $this->db->error();
             fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
-            $emailService->adminErrorReport('PORTING_ABANDONED_BUT_DB_FILLED_INCOMPLETE', []);
+            $portingParams = $this->Porting_model->get_porting($portingId);
+
+            $emailService->adminErrorReport('PORTING_ABANDONED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
 
             $this->db->trans_complete();
 

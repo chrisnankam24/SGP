@@ -313,7 +313,7 @@ class ReturnOperationService extends CI_Controller {
                     'primaryOwnerRoutingNumber' => $openResponse->returnTransaction->primaryOwnerNrn->routingNumber,
                     'returnMSISDN' => $returnMSISDN,
                     'returnNumberState' => \ReturnService\_Return\returnSubmissionStateType::OPENED,
-                    'notificationMailSendStatus' => smsState::PENDING,
+                    'returnNotificationMailSendStatus' => smsState::PENDING,
                     'numberReturnSubmissionId' => $submissionId,
                 );
 
@@ -337,7 +337,7 @@ class ReturnOperationService extends CI_Controller {
                     fileLogAction($error['code'], 'ReturnOperationService', $error['message']);
 
                     $emailService = new EmailService();
-                    $emailService->adminErrorReport('RETURN_OPENED_BUT_DB_FILLED_INCOMPLETE', []);
+                    $emailService->adminErrorReport('RETURN_OPENED_BUT_DB_FILLED_INCOMPLETE', $nrParams, processType::_RETURN);
 
                 }
 
@@ -393,7 +393,14 @@ class ReturnOperationService extends CI_Controller {
                             $error = $this->db->error();
                             fileLogAction($error['code'], 'ReturnOperationService', $error['message']);
 
-                            $emailService->adminErrorReport('RETURN_REQUESTED_OPERATOR_INACTIVE_BUT_STARTED_INCOMPLETE', []);
+                            $nrParams = array(
+                                'ownerNetworkId' => Operator::ORANGE_NETWORK_ID,
+                                'returnMSISDN' => $returnMSISDN,
+                                'returnId' => '',
+                                'returnNumberState' => 'N/A'
+                            );
+
+                            $emailService->adminErrorReport('RETURN_REQUESTED_OPERATOR_INACTIVE_BUT_STARTED_INCOMPLETE', $nrParams, processType::_RETURN);
                             $response['message'] = 'Operator is currently Inactive. We have nonetheless encountered problems saving your request. Please contact Back Office';
 
                         }else{
@@ -429,7 +436,13 @@ class ReturnOperationService extends CI_Controller {
                     case Fault::NUMBER_QUANTITY_LIMIT_EXCEEDED:
                     case Fault::NUMBER_RANGES_OVERLAP:
                     default:
-                        $emailService->adminErrorReport($fault, []);
+                        $nrParams = array(
+                            'ownerNetworkId' => Operator::ORANGE_NETWORK_ID,
+                            'returnMSISDN' => $returnMSISDN,
+                            'returnId' => '',
+                            'returnNumberState' => 'N/A'
+                        );
+                        $emailService->adminErrorReport($fault, $nrParams, processType::_RETURN);
                         $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
                 }
 
@@ -501,8 +514,10 @@ class ReturnOperationService extends CI_Controller {
                         $error = $this->db->error();
                         fileLogAction($error['code'], 'ReturnOperationService', $error['message']);
 
+                        $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
+
                         $emailService = new EmailService();
-                        $emailService->adminErrorReport('RETURN_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', []);
+                        $emailService->adminErrorReport('RETURN_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', $nrParams, processType::_RETURN);
 
                     }
 
@@ -528,8 +543,12 @@ class ReturnOperationService extends CI_Controller {
                         case Fault::INVALID_RETURN_ID:
                         case Fault::INVALID_REQUEST_FORMAT:
                         default:
-                            $emailService->adminErrorReport($fault, []);
-                            $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
+
+                        $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
+
+                        $emailService->adminErrorReport($fault, $nrParams, processType::_RETURN);
+                        $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
+
                     }
 
                     logAction($userId, "Number Return Acceptance Failed with [$fault] Fault");
@@ -619,8 +638,10 @@ class ReturnOperationService extends CI_Controller {
                         $error = $this->db->error();
                         fileLogAction($error['code'], 'ReturnOperationService', $error['message']);
 
+                        $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
+
                         $emailService = new EmailService();
-                        $emailService->adminErrorReport('RETURN_REJECTED_BUT_DB_FILLED_INCOMPLETE', []);
+                        $emailService->adminErrorReport('RETURN_REJECTED_BUT_DB_FILLED_INCOMPLETE', $nrParams, processType::_RETURN);
 
                     }
 
@@ -647,7 +668,11 @@ class ReturnOperationService extends CI_Controller {
                         case Fault::INVALID_REQUEST_FORMAT:
                         case Fault::UNKNOWN_NUMBER:
                         default:
-                            $emailService->adminErrorReport($fault, []);
+
+                            $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
+
+                            $emailService->adminErrorReport($fault, $nrParams, processType::_RETURN);
+
                             $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
                     }
 

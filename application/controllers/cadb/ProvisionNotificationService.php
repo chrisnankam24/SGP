@@ -112,7 +112,9 @@ class ProvisionNotificationService  extends CI_Controller {
                         $error = $this->db->error();
                         fileLogAction($error['code'], 'ProvisionNotificationService', $error['message']);
 
-                        $emailService->adminErrorReport('PORTING_COMPLETED_FROM_PROVISIONING_BUT_DB_FILLED_INCOMPLETE', []);
+                        $portingParams = $this->Porting_model->get_porting($processId);
+
+                        $emailService->adminErrorReport('PORTING_COMPLETED_FROM_PROVISIONING_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
 
                     }else{
 
@@ -160,7 +162,9 @@ class ProvisionNotificationService  extends CI_Controller {
                         $error = $this->db->error();
                         fileLogAction($error['code'], 'ProvisionNotificationService', $error['message']);
 
-                        $emailService->adminErrorReport('ROLLBACK_COMPLETED_FROM_PROVISIONING_BUT_DB_FILLED_INCOMPLETE', []);
+                        $rollbackParams = $this->Rollback_model->get_full_rollback($processId);
+
+                        $emailService->adminErrorReport('ROLLBACK_COMPLETED_FROM_PROVISIONING_BUT_DB_FILLED_INCOMPLETE', $rollbackParams, processType::ROLLBACK);
 
                     }else{
 
@@ -217,7 +221,17 @@ class ProvisionNotificationService  extends CI_Controller {
             fileLogAction($error['code'], 'ProvisionNotificationService', $error['message']);
 
             $emailService = new EmailService();
-            $emailService->adminErrorReport('PROVISION_ROUTING_DATA_RECEIVED_BUT_DB_FILLED_INCOMPLETE', []);
+
+            $eParams = array(
+                'errorReportId' => $processId,
+                'cadbNumber' => '',
+                'problem' => 'NB: This is a provisioning problem',
+                'reporterNetworkId' => '',
+                'submissionDateTime' => date('c'),
+                'processType' => $processType
+            );
+
+            $emailService->adminErrorReport('PROVISION_ROUTING_DATA_RECEIVED_BUT_DB_FILLED_INCOMPLETE', $eParams, processType::ERROR);
 
             $this->db->trans_complete();
 

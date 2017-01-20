@@ -62,5 +62,6 @@ class PrOSServerFunctionalities extends CI_Controller  {
         $response->returnTransaction->problem = $reportProblemRequest->problem;
 
         return $response;
+        //throw new actionNotAuthorizedFault();
     }
 }

@@ -813,7 +813,7 @@ class PortingOperationService extends CI_Controller  {
                 'portingState' => \PortingService\Porting\portingStateType::ORDERED,
                 'contractId' => $contractId,
                 'language' => $language,
-                'notificationMailSendStatus' => smsState::PENDING,
+                'portingNotificationMailSendStatus' => smsState::PENDING,
                 'portingSubmissionId' => $portingsubmission_id,
             );
 
@@ -928,6 +928,7 @@ class PortingOperationService extends CI_Controller  {
                         $response['success'] = false;
 
                         $submissionParams['portingMSISDN'] = $portingMsisdn;
+                        $submissionParams['portingId'] = '';
                         $submissionParams['recipient_network'] = Operator::ORANGE_NETWORK_ID;
                         $submissionParams['lastChangeDateTime'] = date('c');
                         $submissionParams['recipientSubmissionDateTime'] = date('c');
@@ -983,11 +984,11 @@ class PortingOperationService extends CI_Controller  {
                 default:
 
                 $portingParams = array(
-                    'portingId' => '----------------------',
-                    'recipientNetworkId' => '--------------------',
-                    'donorNetworkId' => '--------------------',
+                    'portingId' => '',
+                    'recipientNetworkId' => '',
+                    'donorNetworkId' => '',
                     'recipientSubmissionDateTime' => date('c'),
-                    'rio' =>  '--------------------',
+                    'rio' =>  '',
                     'startMSISDN' =>  $portingMsisdn,
                     'lastChangeDateTime' => date('c'),
                     'portingState' => 'NONE'

@@ -66,7 +66,7 @@ class ReturnNotificationService extends CI_Controller {
             'primaryOwnerNetworkId' => $notifyOpenedRequest->returnTransaction->primaryOwnerNrn->networkId,
             'primaryOwnerRoutingNumber' => $notifyOpenedRequest->returnTransaction->primaryOwnerNrn->routingNumber,
             'returnMSISDN' => $notifyOpenedRequest->returnTransaction->numberRanges->numberRange->startNumber,
-            'notificationMailSendStatus' => smsState::PENDING,
+            'returnNotificationMailSendStatus' => smsState::PENDING,
             'returnNumberState' => \ReturnService\_Return\returnStateType::OPENED,
         );
 
@@ -88,7 +88,7 @@ class ReturnNotificationService extends CI_Controller {
             fileLogAction($error['code'], 'ReturnNotificationService', $error['message']);
 
             $emailService = new EmailService();
-            $emailService->adminErrorReport('OPENED_RETURN_RECEIVED_BUT_DB_FILLING_ERROR', []);
+            $emailService->adminErrorReport('OPENED_RETURN_RECEIVED_BUT_DB_FILLING_ERROR', $nrParams, processType::_RETURN);
         }
 
         $this->db->trans_complete();
@@ -133,7 +133,10 @@ class ReturnNotificationService extends CI_Controller {
             fileLogAction($error['code'], 'ReturnNotificationService', $error['message']);
 
             $emailService = new EmailService();
-            $emailService->adminErrorReport('RETURN_REJECTED_BUT_DB_FILLED_INCOMPLETE', []);
+
+            $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
+
+            $emailService->adminErrorReport('RETURN_REJECTED_BUT_DB_FILLED_INCOMPLETE', $nrParams, processType::_RETURN);
 
         }
 
@@ -190,7 +193,10 @@ class ReturnNotificationService extends CI_Controller {
             fileLogAction($error['code'], 'ReturnNotificationService', $error['message']);
 
             $emailService = new EmailService();
-            $emailService->adminErrorReport('RETURN_REJECTED_BUT_DB_FILLED_INCOMPLETE', []);
+
+            $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
+
+            $emailService->adminErrorReport('RETURN_REJECTED_BUT_DB_FILLED_INCOMPLETE', $nrParams, processType::_RETURN);
 
         }
 

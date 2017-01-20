@@ -80,7 +80,7 @@ class ProblemReportNotificationService extends CI_Controller {
                 'nrnNetworkId' => $notifyProblemReportedRequest->nrn->networkId,
                 'nrnRoutingNumber' => $notifyProblemReportedRequest->nrn->routingNumber,
                 'routingChangeDateTime' => $notifyProblemReportedRequest->routingChangeDateTime,
-                'notificationMailSendStatus' => smsState::PENDING,
+                'errorNotificationMailSendStatus' => smsState::PENDING,
                 'processType' => $notifyProblemReportedRequest->processType
             );
 
@@ -93,7 +93,9 @@ class ProblemReportNotificationService extends CI_Controller {
             $error = $this->db->error();
             fileLogAction($error['code'], 'ProblemReportNotificationService', $error['message']);
 
-            $emailService->adminErrorReport('ERROR_REPORT_RECEIVED_BUT_DB_FILLED_INCOMPLETE', []);
+            $params = $this->Error_model->get_error($errorReportId);
+
+            $emailService->adminErrorReport('ERROR_REPORT_RECEIVED_BUT_DB_FILLED_INCOMPLETE', $params, processType::ERROR);
 
         }
 

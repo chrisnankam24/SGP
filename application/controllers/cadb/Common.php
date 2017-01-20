@@ -101,6 +101,8 @@ class processType {
     const PORTING = 'PORTING';
     const ROLLBACK = 'ROLLBACK';
     const _RETURN = 'RETURN';
+
+    const ERROR = 'ERROR';
 }
 
 // CADB SFTP CONNECTION PARAMS
