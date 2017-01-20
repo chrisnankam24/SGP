@@ -56,7 +56,15 @@ class Porting_model extends CI_Model
      */
     function get_all_porting()
     {
-        return $this->db->get('Porting')->result_array();
+        return $this->db->order_by('recipientSubmissionDateTime', 'desc')->get('Porting')->result_array();
+    }
+
+    /*
+     * Get all waiting
+     */
+    function get_all_waiting_porting()
+    {
+        return $this->db->where_in('portingState', array(\PortingService\Porting\portingStateType::APPROVED))->order_by('recipientSubmissionDateTime', 'desc')->get_where('Porting')->result_array();
     }
     
     /*

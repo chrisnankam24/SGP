@@ -68,6 +68,7 @@ class NReturn extends CI_Controller
 
                     while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
                         if($row == 1){
+
                             // Check if header Ok
                             $errorFound = false;
                             if(isset($data[0]) && strtolower($data[0]) != 'returnmsisdn'){
