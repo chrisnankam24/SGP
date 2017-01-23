@@ -1331,4 +1331,323 @@ class PortingOperationService extends CI_Controller  {
 
     }
 
+    /**
+     * API to retrieve detail on porting
+     */
+    public function getCADBPorting($portingId){
+
+        $response = [];
+
+        $portingOperationService = new PortingOperationService();
+        $getResponse = $portingOperationService->getPorting($portingId);
+
+        // Verify response
+
+        if($getResponse->success){
+
+            $response['success'] = true;
+
+            $tmpData = $getResponse->portingTransaction;
+
+            $subscriberType = getSubscriberType($tmpData->rio);
+
+            $data = array();
+
+            $data['portingId'] = $tmpData->portingId;
+            $data['recipientNetworkId'] = $tmpData->recipientNrn->networkId;
+            $data['recipientRoutingNumber'] = $tmpData->recipientNrn->routingNumber;
+            $data['donorNetworkId'] = $tmpData->donorNrn->networkId;
+            $data['donorRoutingNumber'] = $tmpData->donorNrn->routingNumber;
+            $data['recipientSubmissionDateTime'] = $tmpData->recipientSubmissionDateTime;
+            $data['portingDateTime'] = $tmpData->portingDateTime;
+            $data['cadbOrderedDateTime'] = $tmpData->cadbOrderDateTime;
+            $data['lastChangeDateTime'] = $tmpData->lastChangeDateTime;
+            $data['portingState'] = $tmpData->portingState;
+            $data['rio'] = $tmpData->rio;
+            $data['startMSISDN'] = $tmpData->numberRanges->numberRange->startNumber;
+            $data['endMSISDN'] = $tmpData->numberRanges->numberRange->endNumber;
+
+            if($subscriberType == 0) {
+
+                $data['physicalPersonFirstName'] = $tmpData->subscriberInfo->physicalPersonFirstName;
+                $data['physicalPersonLastName'] = $tmpData->subscriberInfo->physicalPersonLastName;
+                $data['physicalPersonIdNumber'] = $tmpData->subscriberInfo->physicalPersonIdNumber;
+
+                $data['legalPersonName'] = null;
+                $data['legalPersonTin'] = null;
+                $data['contactNumber'] = null;
+
+            }
+            else{
+
+                $data['legalPersonName'] = $tmpData->subscriberInfo->legalPersonName;
+                $data['legalPersonTin'] = $tmpData->subscriberInfo->legalPersonTin;
+                $data['contactNumber'] = $tmpData->subscriberInfo->contactNumber;
+
+                $data['physicalPersonFirstName'] = null;
+                $data['physicalPersonLastName'] = null;
+                $data['physicalPersonIdNumber'] = null;
+
+            }
+
+            $response['data'] = $data;
+
+        }
+
+        else{
+
+            $fault = $getResponse->error;
+
+            $response['success'] = false;
+
+            switch ($fault) {
+                // Terminal Processes
+                case Fault::INVALID_OPERATOR_FAULT:
+                case Fault::PORTING_ACTION_NOT_AVAILABLE:
+                case Fault::INVALID_PORTING_ID:
+                case Fault::INVALID_REQUEST_FORMAT:
+                default:
+                    $response['message'] = 'Error from CADB';
+
+            }
+
+        }
+
+        $this->send_response($response);
+    }
+
+    /**
+     * TODO: getCADBPortings
+     * API to retrieve all portings from CADB
+     */
+    private function getCADBPortings(){
+
+        $response = [];
+
+        $response['data'] = [];
+
+        $portingOperationService = new PortingOperationService();
+
+        // Load ORDERED Portings
+
+        $orderedResponse = $portingOperationService->getOrderedPortings(Operator::ORANGE_NETWORK_ID);
+
+        if($orderedResponse->success){
+
+            $response['data'] = array_merge($response['data'], $orderedResponse->portingTransactions);
+
+        }
+        else{
+
+            $fault = $orderedResponse->error;
+
+            $emailService = new EmailService();
+
+            switch ($fault) {
+
+                case Fault::INVALID_OPERATOR_FAULT:
+                case Fault::ACTION_NOT_AUTHORIZED:
+                case Fault::INVALID_REQUEST_FORMAT:
+                default:
+                    //$emailService->adminErrorReport("ERROR_RETRIEVING_ORDERED_PORTINGS_FROM_CADB", []);
+            }
+
+        }
+
+        // Load APPROVED Portings
+
+        $approvedResponse = $portingOperationService->getApprovedPortings(Operator::ORANGE_NETWORK_ID);
+
+        if($approvedResponse->success){
+
+            $response['data'] = array_merge($response['data'], $approvedResponse->portingTransactions);
+
+        }
+        else{
+
+            $fault = $approvedResponse->error;
+
+            $emailService = new EmailService();
+
+            switch ($fault) {
+
+                case Fault::INVALID_OPERATOR_FAULT:
+                case Fault::ACTION_NOT_AUTHORIZED:
+                case Fault::INVALID_REQUEST_FORMAT:
+                default:
+                    //$emailService->adminErrorReport("ERROR_RETRIEVING_APPROVED_PORTINGS_FROM_CADB", []);
+            }
+
+        }
+
+        // Load ACCEPTED Portings
+
+        $acceptedResponse = $portingOperationService->getAcceptedPortings(Operator::ORANGE_NETWORK_ID);
+
+        if($acceptedResponse->success){
+
+            $response['data'] = array_merge($response['data'], $acceptedResponse->portingTransactions);
+
+        }
+        else{
+
+            $fault = $acceptedResponse->error;
+
+            $emailService = new EmailService();
+
+            switch ($fault) {
+
+                case Fault::INVALID_OPERATOR_FAULT:
+                case Fault::ACTION_NOT_AUTHORIZED:
+                case Fault::INVALID_REQUEST_FORMAT:
+                default:
+                    //$emailService->adminErrorReport("ERROR_RETRIEVING_ACCEPTED_PORTINGS_FROM_CADB", []);
+            }
+
+        }
+
+        // Load CONFIRMED Portings
+
+        $confirmedResponse = $portingOperationService->getConfirmedPortings(Operator::ORANGE_NETWORK_ID);
+
+        if($confirmedResponse->success){
+
+            $response['data'] = array_merge($response['data'], $confirmedResponse->portingTransactions);
+
+        }
+        else{
+
+            $fault = $confirmedResponse->error;
+
+            $emailService = new EmailService();
+
+            switch ($fault) {
+
+                case Fault::INVALID_OPERATOR_FAULT:
+                case Fault::ACTION_NOT_AUTHORIZED:
+                case Fault::INVALID_REQUEST_FORMAT:
+                default:
+                    //$emailService->adminErrorReport("ERROR_RETRIEVING_CONFIRMED_PORTINGS_FROM_CADB", []);
+            }
+
+        }
+
+        // Load DENIED Portings
+
+        $deniedResponse = $portingOperationService->getDeniedPortings(Operator::ORANGE_NETWORK_ID, params::DENIED_REJECTED_MAX_COUNT);
+
+        if($deniedResponse->success){
+
+            $response['data'] = array_merge($response['data'], $deniedResponse->portingTransactions);
+
+        }
+        else{
+
+            $fault = $deniedResponse->error;
+
+            $emailService = new EmailService();
+
+            switch ($fault) {
+
+                case Fault::INVALID_OPERATOR_FAULT:
+                case Fault::ACTION_NOT_AUTHORIZED:
+                case Fault::INVALID_REQUEST_FORMAT:
+                case Fault::COUNT_OVER_MAX_COUNT_LIMIT:
+                default:
+                    //$emailService->adminErrorReport("ERROR_RETRIEVING_DENIED_PORTINGS_FROM_CADB", []);
+            }
+
+        }
+
+        // Load REJECTED Portings
+
+        $rejectedResponse = $portingOperationService->getRejectedPortings(Operator::ORANGE_NETWORK_ID, params::DENIED_REJECTED_MAX_COUNT);
+
+        if($rejectedResponse->success){
+
+            $response['data'] = array_merge($response['data'], $rejectedResponse->portingTransactions);
+
+        }
+        else{
+
+            $fault = $rejectedResponse->error;
+
+            $emailService = new EmailService();
+
+            switch ($fault) {
+
+                case Fault::INVALID_OPERATOR_FAULT:
+                case Fault::ACTION_NOT_AUTHORIZED:
+                case Fault::INVALID_REQUEST_FORMAT:
+                case Fault::COUNT_OVER_MAX_COUNT_LIMIT:
+                default:
+                    //$emailService->adminErrorReport("ERROR_RETRIEVING_REJECTED_PORTINGS_FROM_CADB", []);
+            }
+
+        }
+
+        $tmpData = $response['data'];
+
+        $response['data'] = [];
+
+        foreach ($tmpData as $tmpDatum){
+
+            $subscriberType = getSubscriberType($tmpDatum->rio);
+
+            $data = array();
+
+            $data['portingId'] = $tmpDatum->portingId;
+            $data['recipientNetworkId'] = $tmpDatum->recipientNrn->networkId;
+            $data['recipientRoutingNumber'] = $tmpDatum->recipientNrn->routingNumber;
+            $data['donorNetworkId'] = $tmpDatum->donorNrn->networkId;
+            $data['donorRoutingNumber'] = $tmpDatum->donorNrn->routingNumber;
+            $data['recipientSubmissionDateTime'] = $tmpDatum->recipientSubmissionDateTime;
+            $data['portingDateTime'] = $tmpDatum->portingDateTime;
+            $data['cadbOrderedDateTime'] = $tmpDatum->cadbOrderDateTime;
+            $data['lastChangeDateTime'] = $tmpDatum->lastChangeDateTime;
+            $data['portingState'] = $tmpDatum->portingState;
+            $data['rio'] = $tmpDatum->rio;
+            $data['startMSISDN'] = $tmpDatum->numberRanges->numberRange->startNumber;
+            $data['endMSISDN'] = $tmpDatum->numberRanges->numberRange->endNumber;
+
+            if($subscriberType == 0) {
+
+                $data['physicalPersonFirstName'] = $tmpDatum->subscriberInfo->physicalPersonFirstName;
+                $data['physicalPersonLastName'] = $tmpDatum->subscriberInfo->physicalPersonLastName;
+                $data['physicalPersonIdNumber'] = $tmpDatum->subscriberInfo->physicalPersonIdNumber;
+
+                $data['legalPersonName'] = null;
+                $data['legalPersonTin'] = null;
+                $data['contactNumber'] = null;
+
+            }
+            else{
+
+                $data['legalPersonName'] = $tmpDatum->subscriberInfo->legalPersonName;
+                $data['legalPersonTin'] = $tmpDatum->subscriberInfo->legalPersonTin;
+                $data['contactNumber'] = $tmpDatum->subscriberInfo->contactNumber;
+
+                $data['physicalPersonFirstName'] = null;
+                $data['physicalPersonLastName'] = null;
+                $data['physicalPersonIdNumber'] = null;
+
+            }
+
+            array_push($response['data'], $data);
+
+        }
+
+        $this->send_response($response);
+    }
+
+    /**
+     *
+     * @param $response
+     */
+    private function send_response($response)
+    {
+        header("Content-type: text/json");
+        echo json_encode($response);
+    }
+
 }

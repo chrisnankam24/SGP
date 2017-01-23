@@ -701,4 +701,108 @@ class ReturnOperationService extends CI_Controller {
 
     }
 
+    /**
+     * API to retrieve detail on NR
+     */
+    public function getCADBNReturn($returnId){
+        $response = [];
+
+        $returnOperationService = new ReturnOperationService();
+        $getResponse = $returnOperationService->getReturningTransaction($returnId);
+
+        // Verify response
+
+        if($getResponse->success){
+
+            $response['success'] = true;
+
+            $tmpData = $getResponse->returnTransaction;
+
+            $data = array();
+
+            $data['returnId'] = $tmpData->returnId;
+            $data['openDateTime'] = $tmpData->openDateTime;
+            $data['ownerNetworkId'] = $tmpData->ownerNrn->networkId;
+            $data['ownerRoutingNumber'] = $tmpData->ownerNrn->routingNumber;
+            $data['primaryOwnerNetworkId'] = $tmpData->primaryOwnerNrn->networkId;
+            $data['primaryOwnerRoutingNumber'] = $tmpData->primaryOwnerNrn->routingNumber;
+            $data['returnMSISDN'] = $tmpData->numberRanges->numberRange->startNumber;
+            $data['returnNumberState'] = $tmpData->returnNumberState;
+
+            $response['data'] = $tmpData;
+
+        }
+
+        else{
+
+            $fault = $getResponse->error;
+
+            $response['success'] = false;
+
+            switch ($fault) {
+                // Terminal Processes
+                case Fault::INVALID_OPERATOR_FAULT:
+                case Fault::PORTING_ACTION_NOT_AVAILABLE:
+                case Fault::INVALID_RETURN_ID:
+                case Fault::INVALID_REQUEST_FORMAT:
+                default:
+                    $response['message'] = 'Error from CADB';
+
+            }
+
+
+        }
+
+        $this->send_response($response);
+    }
+
+    /**
+     * TODO: getCADBNumberReturns
+     * API to retrieve all NRs from CADB
+     */
+    private function getCADBNumberReturns(){
+
+        $response = [];
+
+        $response['data'] = [];
+
+        $returnOperationService = new ReturnOperationService();
+
+        // Load ORDERED Rollbacks
+
+        $currentNRResponse = $returnOperationService->getCurrentReturningTransactions(Operator::ORANGE_NETWORK_ID);
+
+        if($currentNRResponse->success){
+
+            $response['data'] = array_merge($response['data'], $currentNRResponse->returnNumberTransactions);
+
+        }
+        else{
+
+            $fault = $currentNRResponse->error;
+
+            $emailService = new EmailService();
+
+            switch ($fault) {
+
+                case Fault::INVALID_REQUEST_FORMAT:
+                default:
+                    //$emailService->adminErrorReport("ERROR_RETRIEVING_CURRENT_NRS_FROM_CADB", []);
+            }
+
+        }
+
+        $this->send_response($response);
+    }
+
+    /**
+     * @param $response
+     */
+    private function send_response($response)
+    {
+        header("Content-type: text/json");
+        echo json_encode($response);
+    }
+
+
 }

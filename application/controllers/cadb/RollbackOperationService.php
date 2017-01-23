@@ -892,4 +892,187 @@ class RollbackOperationService  extends CI_Controller {
 
     }
 
+    /**
+     * API to retrieve detail on rollback
+     */
+    public function getCADBRollback($rollbackId){
+        $response = [];
+
+        $rollbackOperationService = new RollbackOperationService();
+        $getResponse = $rollbackOperationService->getRollback($rollbackId);
+
+        // Verify response
+
+        if($getResponse->success){
+
+            $response['success'] = true;
+
+            $tmpData = $getResponse->rollbackTransaction;
+
+            $data = array();
+
+            $data['rollbackId'] = $tmpData->rollbackId;
+            $data['originalPortingId'] = $tmpData->originalPortingId;
+            $data['donorSubmissionDateTime'] = $tmpData->donorSubmissionDateTime;
+            $data['preferredRollbackDateTime'] = $tmpData->preferredRollbackDateTime;
+            $data['rollbackDateTime'] = $tmpData->rollbackDateTime;
+            $data['lastChangeDateTime'] = $tmpData->lastChangeDateTime;
+            $data['cadbOpenDateTime'] = $tmpData->cadbOpenDateTime;
+            $data['rollbackState'] = $tmpData->rollbackState;
+
+            $response['data'] = $tmpData;
+
+        }
+
+        else{
+
+            $fault = $getResponse->error;
+
+            $response['success'] = false;
+
+            switch ($fault) {
+                // Terminal Processes
+                case Fault::INVALID_OPERATOR_FAULT:
+                case Fault::PORTING_ACTION_NOT_AVAILABLE:
+                case Fault::INVALID_ROLLBACK_ID:
+                case Fault::INVALID_REQUEST_FORMAT:
+                default:
+                    $response['message'] = 'Error from CADB';
+
+            }
+
+        }
+
+        $this->send_response($response);
+    }
+
+    /**
+     * TODO: getCADBRollbacks
+     * API to retrieve all rollbacks from CADB
+     */
+    private function getCADBRollbacks(){
+
+        $response = [];
+
+        $response['data'] = [];
+
+        $rollbackOperationService = new RollbackOperationService();
+
+        // Load ORDERED Rollbacks
+
+        $openedResponse = $rollbackOperationService->getOpenedRollbacks(Operator::ORANGE_NETWORK_ID);
+
+        if($openedResponse->success){
+
+            $response['data'] = array_merge($response['data'], $openedResponse->rollbacks);
+
+        }
+        else{
+
+            $fault = $openedResponse->error;
+
+            $emailService = new EmailService();
+
+            switch ($fault) {
+
+                case Fault::INVALID_OPERATOR_FAULT:
+                case Fault::ACTION_NOT_AUTHORIZED:
+                case Fault::INVALID_REQUEST_FORMAT:
+                default:
+                    //$emailService->adminErrorReport("ERROR_RETRIEVING_OPENED_ROLLBACKS_FROM_CADB", []);
+            }
+
+        }
+
+        // Load ACCEPTED Rollbacks
+
+        $acceptedResponse = $rollbackOperationService->getAcceptedRollbacks(Operator::ORANGE_NETWORK_ID);
+
+        if($acceptedResponse->success){
+
+            $response['data'] = array_merge($response['data'], $acceptedResponse->rollbacks);
+
+        }
+        else{
+
+            $fault = $acceptedResponse->error;
+
+            $emailService = new EmailService();
+
+            switch ($fault) {
+
+                case Fault::INVALID_OPERATOR_FAULT:
+                case Fault::ACTION_NOT_AUTHORIZED:
+                case Fault::INVALID_REQUEST_FORMAT:
+                default:
+                    //$emailService->adminErrorReport("ERROR_RETRIEVING_ACCEPTED_ROLLBACKS_FROM_CADB", []);
+            }
+
+        }
+
+        // Load CONFIRMED Rollbacks
+
+        $confirmedResponse = $rollbackOperationService->getConfirmedRollbacks(Operator::ORANGE_NETWORK_ID);
+
+        if($confirmedResponse->success){
+
+            $response['data'] = array_merge($response['data'], $confirmedResponse->rollbacks);
+
+        }
+        else{
+
+            $fault = $confirmedResponse->error;
+
+            $emailService = new EmailService();
+
+            switch ($fault) {
+
+                case Fault::INVALID_OPERATOR_FAULT:
+                case Fault::ACTION_NOT_AUTHORIZED:
+                case Fault::INVALID_REQUEST_FORMAT:
+                default:
+                    //$emailService->adminErrorReport("ERROR_RETRIEVING_CONFIRMED_ROLLBACKS_FROM_CADB", []);
+            }
+
+        }
+
+        // Load REJECTED Rollbacks
+
+        $rejectedResponse = $rollbackOperationService->getRejectedRollbacks(Operator::ORANGE_NETWORK_ID, params::DENIED_REJECTED_MAX_COUNT);
+
+        if($rejectedResponse->success){
+
+            $response['data'] = array_merge($response['data'], $rejectedResponse->rollbacks);
+
+        }
+        else{
+
+            $fault = $rejectedResponse->error;
+
+            $emailService = new EmailService();
+
+            switch ($fault) {
+
+                case Fault::INVALID_OPERATOR_FAULT:
+                case Fault::ACTION_NOT_AUTHORIZED:
+                case Fault::INVALID_REQUEST_FORMAT:
+                case Fault::COUNT_OVER_MAX_COUNT_LIMIT:
+                default:
+                    //$emailService->adminErrorReport("ERROR_RETRIEVING_REJECTED_ROLLBACKS_FROM_CADB", []);
+            }
+
+        }
+
+        $this->send_response($response);
+    }
+
+    /**
+     *
+     * @param $response
+     */
+    private function send_response($response)
+    {
+        header("Content-type: text/json");
+        echo json_encode($response);
+    }
 }
