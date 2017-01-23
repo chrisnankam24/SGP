@@ -22,20 +22,36 @@ use PortingService\Porting as Porting;
  * Simulating Controller for PortingOperationService made by CADB
  * Class PortingOperationService
  */
-class PortingOperationService extends CI_Controller  {
+class PortingOperationService  {
 
     // Declare client
     private $client = null;
 
+    private $db = null;
+    private $Porting_model = null;
+    private $Portingstateevolution_model = null;
+    private $Portingsmsnotification_model = null;
+    private $Portingdenyrejectionabandon_model = null;
+
     public function __construct()
     {
-        parent::__construct();
 
-        $this->load->model('Porting_model');
-        $this->load->model('Portingsubmission_model');
-        $this->load->model('Portingstateevolution_model');
-        $this->load->model('Portingsmsnotification_model');
-        $this->load->model('Portingdenyrejectionabandon_model');
+
+        $CI =& get_instance();
+
+        $this->db = $CI->db;
+
+        $CI->load->model('Porting_model');
+        $CI->load->model('Portingsubmission_model');
+        $CI->load->model('Portingstateevolution_model');
+        $CI->load->model('Portingsmsnotification_model');
+        $CI->load->model('Portingdenyrejectionabandon_model');
+
+        $this->Porting_model = $CI->Porting_model;
+        $this->Portingsubmission_model = $CI->Portingsubmission_model;
+        $this->Portingstateevolution_model = $CI->Portingstateevolution_model;
+        $this->Portingsmsnotification_model = $CI->Portingsmsnotification_model;
+        $this->Portingdenyrejectionabandon_model = $CI->Portingdenyrejectionabandon_model;
 
         // Disable wsdl cache
         ini_set("soap.wsdl_cache_enabled", "0");
