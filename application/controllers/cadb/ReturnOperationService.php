@@ -752,7 +752,8 @@ class ReturnOperationService extends CI_Controller {
 
         }
 
-        $this->send_response($response);
+        return $response;
+
     }
 
     /**
@@ -789,17 +790,8 @@ class ReturnOperationService extends CI_Controller {
 
         }
 
-        $this->send_response($response);
-    }
+        return $response;
 
-    /**
-     * @param $response
-     */
-    private function send_response($response)
-    {
-        header("Content-type: text/json");
-        echo json_encode($response);
     }
-
 
 }
