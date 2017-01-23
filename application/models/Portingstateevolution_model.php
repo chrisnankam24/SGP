@@ -12,11 +12,11 @@ class Portingstateevolution_model extends CI_Model
     }
     
     /*
-     * Get portingstateevolution by portingStateEvolutionId
+     * Get portingstateevolution by portingId
      */
-    function get_portingstateevolution($portingStateEvolutionId)
+    function get_portingstateevolution($portingId)
     {
-        return $this->db->get_where('PortingStateEvolution',array('portingStateEvolutionId'=>$portingStateEvolutionId))->row_array();
+        return $this->db->get_where('PortingStateEvolution',array('portingId'=>$portingId))->result_array();
     }
     
     /*

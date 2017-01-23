@@ -46,6 +46,7 @@ class BatchOperationService extends CI_Controller {
 
         $this->load->model('Rollback_model');
         $this->load->model('Rollbacksubmission_model');
+        $this->load->model('Rollbacksmsnotification_model');
         $this->load->model('Rollbackstateevolution_model');
 
         $this->load->model('Numberreturn_model');
@@ -62,7 +63,6 @@ class BatchOperationService extends CI_Controller {
 
     public function index(){
 
-        var_dump($this->Rollback_model->get_all_waiting_rollback());
         //$emailService = new EmailService();
 
         //var_dump($emailService->test());
@@ -172,7 +172,8 @@ class BatchOperationService extends CI_Controller {
                     'portingState' => \PortingService\Porting\portingStateType::ORDERED,
                     'contractId' => $contractId,
                     'language' => $language,
-                    'portingNotificationMailSendStatus' => smsState::PENDING,
+                    'portingNotificationMailSendStatus' => smsState::CLOSED,
+                    'portingNotificationMailSendDateTime' => date('c'),
                     'portingSubmissionId' => $portingSubmissionId,
                 );
 
@@ -273,7 +274,6 @@ class BatchOperationService extends CI_Controller {
 
                         $emailService->adminErrorReport($fault, $portingParams, processType::PORTING);
                 }
-
 
             }
 
@@ -1314,7 +1314,8 @@ class BatchOperationService extends CI_Controller {
                     'cadbOpenDateTime' => $openResponse->rollbackTransaction->cadbOpenDateTime,
                     'lastChangeDateTime' => $openResponse->rollbackTransaction->lastChangeDateTime,
                     'rollbackState' => \RollbackService\Rollback\rollbackStateType::OPENED,
-                    'rollbackNotificationMailSendStatus' => smsState::PENDING,
+                    'rollbackNotificationMailSendStatus' => smsState::CLOSED,
+                    'rollbackNotificationMailSendDateTime' => date('c'),
                     'rollbackSubmissionId' => $rollbackSubmissionId,
                 );
 
@@ -2141,7 +2142,8 @@ class BatchOperationService extends CI_Controller {
                     'primaryOwnerRoutingNumber' => $openResponse->returnTransaction->primaryOwnerNrn->routingNumber,
                     'returnMSISDN' => $returnMSISDN,
                     'returnNumberState' => \ReturnService\_Return\returnSubmissionStateType::OPENED,
-                    'returnNotificationMailSendStatus' => smsState::PENDING,
+                    'returnNotificationMailSendStatus' => smsState::CLOSED,
+                    'returnNotificationMailSendDateTime' => date('c'),
                     'numberReturnSubmissionId' => $submissionId,
                 );
 
@@ -2908,6 +2910,74 @@ class BatchOperationService extends CI_Controller {
      */
     public function smsUpdater(){
 
+        // Get all Porting SMS messages in state pending
+        /*$portingMessages = $this->Portingsmsnotification_model->get_portingsmsnotificationByStatus(smsState::PENDING);
+
+        foreach ($portingMessages as $portingMessage){
+
+            $portingNotificationId = $portingMessage['portingSmsNotificationId'];
+            $message = $portingMessage['message'];
+            $msisdn = $portingMessage['msisdn'];
+
+            $this->db->trans_start();
+
+            // Send SMS and save in DB
+            $response = SMS::MESSAGE_SMS($message, $msisdn);
+
+            $smsNotificationparams = [];
+
+            if($response['success']){
+
+                // Update SMS in PortingSMSNotification table in state SENT
+
+                $smsNotificationparams = array(
+                    'status' => smsState::SENT,
+                    'attemptCount' => $portingMessage['attemptCount'] + 1,
+                    'sendDateTime' => date('c')
+                );
+
+            }
+
+            $this->Portingsmsnotification_model->update_portingsmsnotification($portingNotificationId, $smsNotificationparams);
+
+            $this->db->trans_complete();
+        }*/
+
+        // Get all Rollback SMS messages in state pending
+        $rollbackMessages = $this->Rollbacksmsnotification_model->get_rollbacksmsnotificationByStatus(smsState::PENDING);
+
+        var_dump($rollbackMessages);
+
+        foreach ($rollbackMessages as $rollbackMessage){
+
+            $rollbackNotificationId = $rollbackMessage['rollbackSmsNotificationId'];
+            $message = $rollbackMessage['message'];
+            $msisdn = $rollbackMessage['msisdn'];
+
+            $this->db->trans_start();
+
+            // Send SMS and save in DB
+            $response = SMS::MESSAGE_SMS($message, $msisdn);
+
+            $smsNotificationparams = [];
+
+            if($response['success']){
+
+                // Update SMS in RollbackSMSNotification table in state SENT
+
+                $smsNotificationparams = array(
+                    'status' => smsState::SENT,
+                    'attemptCount' => $rollbackMessage['attemptCount'] + 1,
+                    'sendDateTime' => date('c')
+                );
+
+            }
+
+            $this->Rollbacksmsnotification_model->update_rollbacksmsnotification($rollbackNotificationId, $smsNotificationparams);
+
+            $this->db->trans_complete();
+        }
+
     }
 
     /**
@@ -2917,7 +2987,7 @@ class BatchOperationService extends CI_Controller {
     public function ussdSmsUpdater(){
 
         // Get all USSD messages in state pending
-        $ussdMessages = $this->get_ussdsmsnotificationByStatus(smsState::PENDING);
+        $ussdMessages = $this->Ussdsmsnotification_model->get_ussdsmsnotificationByStatus(smsState::PENDING);
 
         foreach ($ussdMessages as $ussdMessage){
 

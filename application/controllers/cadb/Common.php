@@ -58,7 +58,10 @@ class smsState {
 
     const PENDING = 'PENDING';
     const SENT = 'SENT';
-    const TERMiNATED = 'TERMINATED';
+    const TERMINATED = 'TERMINATED';
+
+    // Used for email notifications in which mails are not needed
+    const CLOSED = 'CLOSED';
 
 }
 

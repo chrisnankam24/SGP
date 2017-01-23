@@ -24,7 +24,7 @@ class ussdsmsnotification_model extends CI_Model
      */
     function get_ussdsmsnotificationByStatus($status)
     {
-        return $this->db->get_where('USSDSmsNotification',array('status'=>$status))->row_array();
+        return $this->db->get_where('USSDSmsNotification',array('status'=>$status))->result_array();
     }
 
 

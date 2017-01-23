@@ -546,6 +546,28 @@ class EmailService {
 
     public function adminKPSAError($fault, $params){
 
+        $this->error('', $params);
+
+    }
+
+    public function error($fault, $params){
+
+        $subject = 'Error Encountered';
+        $message = '';
+
+        $template = file_get_contents(__DIR__ . '/templates/generic-error-template.html');
+
+        // Set errorText
+        $template = str_replace('[errorText]', $fault, $template);
+
+        // Set errorMessage
+        $message = str_replace('[errorMessage]', $params['errorMessage'], $template);
+
+        $to = array('christian.nankam@orange.com', 'chp.testbed@gmail.com');
+        $cc = array();
+
+        $this->send_mail($to, $cc, $subject, $message);
+
     }
 
     public function cadbSynchronizationFailure($params){
@@ -563,13 +585,7 @@ class EmailService {
      */
     public function adminAgentsPortingAbandoned($params){
 
-        $template = 'Porting abandoned by CADB';
-
-        $to = array('chp.testbed@gmail.com');
-        $cc = array();
-        $subject = [];
-
-        $this->send_mail($to, $cc, $subject, $template);
+        $this->error('', $params);
 
     }
 

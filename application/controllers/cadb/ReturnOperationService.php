@@ -313,7 +313,8 @@ class ReturnOperationService extends CI_Controller {
                     'primaryOwnerRoutingNumber' => $openResponse->returnTransaction->primaryOwnerNrn->routingNumber,
                     'returnMSISDN' => $returnMSISDN,
                     'returnNumberState' => \ReturnService\_Return\returnSubmissionStateType::OPENED,
-                    'returnNotificationMailSendStatus' => smsState::PENDING,
+                    'returnNotificationMailSendStatus' => smsState::CLOSED,
+                    'returnNotificationMailSendDateTime' => date('c'),
                     'numberReturnSubmissionId' => $submissionId,
                 );
 

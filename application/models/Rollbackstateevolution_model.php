@@ -12,11 +12,11 @@ class Rollbackstateevolution_model extends CI_Model
     }
     
     /*
-     * Get rollbackstateevolution by rollbackStatevolutionId
+     * Get rollbackstateevolution by rollbackId
      */
-    function get_rollbackstateevolution($rollbackStatevolutionId)
+    function get_rollbackstateevolution($rollbackId)
     {
-        return $this->db->get_where('RollbackStateEvolution',array('rollbackStatevolutionId'=>$rollbackStatevolutionId))->row_array();
+        return $this->db->get_where('RollbackStateEvolution',array('rollbackId'=>$rollbackId))->row_array();
     }
 
     /*

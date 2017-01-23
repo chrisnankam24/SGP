@@ -160,6 +160,8 @@ class PortingNotificationService extends CI_Controller
                 $smsNotificationparams = array(
                     'portingId' => $portingId,
                     'smsType' => SMSType::OPD_PORTING_INIT,
+                    'message' => $smsResponse['message'],
+                    'msisdn' => $smsResponse['msisdn'],
                     'creationDateTime' => date('c'),
                     'status' => smsState::SENT,
                     'attemptCount' => 1,
@@ -171,6 +173,8 @@ class PortingNotificationService extends CI_Controller
                 $smsNotificationparams = array(
                     'portingId' => $portingId,
                     'smsType' => SMSType::OPD_PORTING_INIT,
+                    'message' => $smsResponse['message'],
+                    'msisdn' => $smsResponse['msisdn'],
                     'creationDateTime' => date('c'),
                     'status' => smsState::PENDING,
                     'attemptCount' => 1,
@@ -388,6 +392,8 @@ class PortingNotificationService extends CI_Controller
             $smsNotificationparams = array(
                 'portingId' => $portingId,
                 'smsType' => SMSType::OPR_PORTING_OK,
+                'message' => $smsResponse['message'],
+                'msisdn' => $smsResponse['msisdn'],
                 'creationDateTime' => date('c'),
                 'status' => smsState::SENT,
                 'attemptCount' => 1,
@@ -400,6 +406,8 @@ class PortingNotificationService extends CI_Controller
             $smsNotificationparams = array(
                 'portingId' => $portingId,
                 'smsType' => SMSType::OPR_PORTING_OK,
+                'message' => $smsResponse['message'],
+                'msisdn' => $smsResponse['msisdn'],
                 'creationDateTime' => date('c'),
                 'status' => smsState::PENDING,
                 'attemptCount' => 1,
@@ -490,6 +498,8 @@ class PortingNotificationService extends CI_Controller
             $smsNotificationparams = array(
                 'portingId' => $portingId,
                 'smsType' => SMSType::OPR_PORTING_OK,
+                'message' => $smsResponse['message'],
+                'msisdn' => $smsResponse['msisdn'],
                 'creationDateTime' => date('c'),
                 'status' => smsState::SENT,
                 'attemptCount' => 1,
@@ -502,6 +512,8 @@ class PortingNotificationService extends CI_Controller
             $smsNotificationparams = array(
                 'portingId' => $portingId,
                 'smsType' => SMSType::OPR_PORTING_OK,
+                'message' => $smsResponse['message'],
+                'msisdn' => $smsResponse['msisdn'],
                 'creationDateTime' => date('c'),
                 'status' => smsState::PENDING,
                 'attemptCount' => 1,
@@ -713,6 +725,8 @@ class PortingNotificationService extends CI_Controller
             $smsNotificationparams = array(
                 'portingId' => $portingId,
                 'smsType' => SMSType::OPR_PORTING_KO,
+                'message' => $smsResponse['message'],
+                'msisdn' => $smsResponse['msisdn'],
                 'creationDateTime' => date('c'),
                 'status' => smsState::SENT,
                 'attemptCount' => 1,
@@ -724,6 +738,8 @@ class PortingNotificationService extends CI_Controller
             $smsNotificationparams = array(
                 'portingId' => $portingId,
                 'smsType' => SMSType::OPR_PORTING_KO,
+                'message' => $smsResponse['message'],
+                'msisdn' => $smsResponse['msisdn'],
                 'creationDateTime' => date('c'),
                 'status' => smsState::PENDING,
                 'attemptCount' => 1,
@@ -817,6 +833,8 @@ class PortingNotificationService extends CI_Controller
             $smsNotificationparams = array(
                 'portingId' => $portingId,
                 'smsType' => SMSType::OPR_PORTING_KO,
+                'message' => $smsResponse['message'],
+                'msisdn' => $smsResponse['msisdn'],
                 'creationDateTime' => date('c'),
                 'status' => smsState::SENT,
                 'attemptCount' => 1,
@@ -828,6 +846,8 @@ class PortingNotificationService extends CI_Controller
             $smsNotificationparams = array(
                 'portingId' => $portingId,
                 'smsType' => SMSType::OPR_PORTING_KO,
+                'message' => $smsResponse['message'],
+                'msisdn' => $smsResponse['msisdn'],
                 'creationDateTime' => date('c'),
                 'status' => smsState::PENDING,
                 'attemptCount' => 1,
@@ -919,6 +939,8 @@ class PortingNotificationService extends CI_Controller
             $smsNotificationparams = array(
                 'portingId' => $portingId,
                 'smsType' => SMSType::OPR_PORTING_KO,
+                'message' => $smsResponse['message'],
+                'msisdn' => $smsResponse['msisdn'],
                 'creationDateTime' => date('c'),
                 'status' => smsState::SENT,
                 'attemptCount' => 1,
@@ -930,6 +952,8 @@ class PortingNotificationService extends CI_Controller
             $smsNotificationparams = array(
                 'portingId' => $portingId,
                 'smsType' => SMSType::OPR_PORTING_KO,
+                'message' => $smsResponse['message'],
+                'msisdn' => $smsResponse['msisdn'],
                 'creationDateTime' => date('c'),
                 'status' => smsState::PENDING,
                 'attemptCount' => 1,

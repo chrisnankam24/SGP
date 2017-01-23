@@ -813,7 +813,8 @@ class PortingOperationService extends CI_Controller  {
                 'portingState' => \PortingService\Porting\portingStateType::ORDERED,
                 'contractId' => $contractId,
                 'language' => $language,
-                'portingNotificationMailSendStatus' => smsState::PENDING,
+                'portingNotificationMailSendStatus' => smsState::CLOSED,
+                'portingNotificationMailSendDateTime' => date('c'),
                 'portingSubmissionId' => $portingsubmission_id,
             );
 
@@ -1084,6 +1085,8 @@ class PortingOperationService extends CI_Controller  {
                         $smsNotificationparams = array(
                             'portingId' => $portingId,
                             'smsType' => SMSType::OPD_PORTING_REMINDER,
+                            'message' => $smsResponse['message'],
+                            'msisdn' => $smsResponse['msisdn'],
                             'creationDateTime' => date('c'),
                             'status' => smsState::SENT,
                             'attemptCount' => 1,
@@ -1095,6 +1098,8 @@ class PortingOperationService extends CI_Controller  {
                         $smsNotificationparams = array(
                             'portingId' => $portingId,
                             'smsType' => SMSType::OPD_PORTING_REMINDER,
+                            'message' => $smsResponse['message'],
+                            'msisdn' => $smsResponse['msisdn'],
                             'creationDateTime' => date('c'),
                             'status' => smsState::PENDING,
                             'attemptCount' => 1,

@@ -66,12 +66,12 @@ class USSD extends CI_Controller {
             if($language == 'fr'){
 
                 // Load fr template
-                $template = file_get_contents(__DIR__ . '/fr_error_ussd_template_rio.txt.txt');
+                $template = file_get_contents(__DIR__ . '/fr_error_ussd_template_rio.txt');
 
             }else{
 
                 // Load en template
-                $template = file_get_contents(__DIR__ . '/en_error_ussd_template_rio.txt.txt');
+                $template = file_get_contents(__DIR__ . '/en_error_ussd_template_rio.txt');
             }
 
             // Set Subscriber RIO

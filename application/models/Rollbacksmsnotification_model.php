@@ -18,7 +18,15 @@ class Rollbacksmsnotification_model extends CI_Model
     {
         return $this->db->get_where('RollbackSmsNotification',array('rollbackSmsNotification'=>$rollbackSmsNotification))->row_array();
     }
-    
+
+    /*
+    * Get rollbacksmsnotification by status
+    */
+    function get_rollbacksmsnotificationByStatus($status)
+    {
+        return $this->db->get_where('RollbackSmsNotification',array('status'=>$status))->result_array();
+    }
+
     /*
      * Get all rollbacksmsnotification
      */

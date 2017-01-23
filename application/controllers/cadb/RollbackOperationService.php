@@ -487,7 +487,8 @@ class RollbackOperationService  extends CI_Controller {
                      'cadbOpenDateTime' => $openResponse->rollbackTransaction->cadbOpenDateTime,
                      'lastChangeDateTime' => $openResponse->rollbackTransaction->lastChangeDateTime,
                      'rollbackState' => \RollbackService\Rollback\rollbackStateType::OPENED,
-                     'rollbackNotificationMailSendStatus' => smsState::PENDING,
+                     'rollbackNotificationMailSendStatus' => smsState::CLOSED,
+                     'rollbackNotificationMailSendDateTime' => date('c'),
                      'rollbackSubmissionId' => $rollbacksubmission_id,
                  );
 

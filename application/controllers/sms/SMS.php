@@ -353,6 +353,25 @@ class SMS extends CI_Controller {
     }
 
     /**
+     * SMS message
+     * @param $message
+     * @param $msisdn
+     * @return array
+     */
+    public static function MESSAGE_SMS($message, $msisdn){
+
+        //$response = self::send_response($msisdn, $message);
+
+        //return $response;
+        $response = array();
+
+        $response['success'] = true;
+
+        return $response;
+
+    }
+
+    /**
      * Sends message to SMS Gateway
      * @param $msisdn
      * @param $message
@@ -362,6 +381,8 @@ class SMS extends CI_Controller {
 
         $sendResponse = array();
         $sendResponse['success'] = true;
+        $sendResponse['message'] = $message;
+        $sendResponse['msisdn'] = $msisdn;
 
         try {
 

@@ -66,7 +66,31 @@ class Porting_model extends CI_Model
     {
         return $this->db->where('portingState', \PortingService\Porting\portingStateType::APPROVED)->where('donorNetworkId', Operator::ORANGE_NETWORK_ID)->order_by('recipientSubmissionDateTime', 'desc')->get_where('Porting')->result_array();
     }
-    
+
+    /*
+     * Get all waiting less than 1 hour
+     */
+    function get_all_waiting_last_hour_porting()
+    {
+        return $this->db->where(array('portingState' => \PortingService\Porting\portingStateType::APPROVED, 'NOW() - recipientSubmissionDateTime <' => 360000, 'donorNetworkId' => Operator::ORANGE_NETWORK_ID))->order_by('recipientSubmissionDateTime', 'desc')->get_where('Porting')->result_array();
+    }
+
+    /*
+     * Get all waiting less than 2 hour
+     */
+    function get_all_waiting_last_2_hours_porting()
+    {
+        return $this->db->where('portingState', \PortingService\Porting\portingStateType::APPROVED)->where('donorNetworkId', Operator::ORANGE_NETWORK_ID)->order_by('recipientSubmissionDateTime', 'desc')->get_where('Porting')->result_array();
+    }
+
+    /*
+     * Get all waiting greater than 2 hour
+     */
+    function get_all_waiting_morethan_2hours_porting()
+    {
+        return $this->db->where('portingState', \PortingService\Porting\portingStateType::APPROVED)->where('donorNetworkId', Operator::ORANGE_NETWORK_ID)->order_by('recipientSubmissionDateTime', 'desc')->get_where('Porting')->result_array();
+    }
+
     /*
      * function to add new porting
      */

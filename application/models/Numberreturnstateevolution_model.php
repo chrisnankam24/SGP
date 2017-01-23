@@ -12,11 +12,11 @@ class Numberreturnstateevolution_model extends CI_Model
     }
     
     /*
-     * Get numberreturnstateevolution by numberReturnStateEvolutionId
+     * Get numberreturnstateevolution by returnId
      */
-    function get_numberreturnstateevolution($numberReturnStateEvolutionId)
+    function get_numberreturnstateevolution($returnId)
     {
-        return $this->db->get_where('NumberReturnStateEvolution',array('numberReturnStateEvolutionId'=>$numberReturnStateEvolutionId))->row_array();
+        return $this->db->get_where('NumberReturnStateEvolution',array('returnId'=>$returnId))->row_array();
     }
     
     /*

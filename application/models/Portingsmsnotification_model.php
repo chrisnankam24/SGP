@@ -18,7 +18,16 @@ class Portingsmsnotification_model extends CI_Model
     {
         return $this->db->get_where('PortingSmsNotification',array('portingSmsNotificationId'=>$portingSmsNotificationId))->row_array();
     }
-    
+
+    /*
+     * Get portingsmsnotification by status
+     */
+    function get_portingsmsnotificationByStatus($status)
+    {
+        return $this->db->get_where('PortingSmsNotification',array('status'=>$status))->result_array();
+    }
+
+
     /*
      * Get all portingsmsnotification
      */
