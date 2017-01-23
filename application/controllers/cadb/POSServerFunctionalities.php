@@ -275,6 +275,12 @@ class POSServerFunctionalities extends CI_Controller  {
         $response->portingTransaction->subscriberInfo->physicalPersonLastName = 'Christian';
         $response->portingTransaction->subscriberInfo->physicalPersonIdNumber = '110328054';
 
+        // numberRange
+        $numRange = new numberRangeType();
+        $numRange->endNumber = '237694975166';
+        $numRange->startNumber = '237694975166';
+        $response->portingTransaction->numberRanges = array($numRange);
+
         return $response;
 
     }
