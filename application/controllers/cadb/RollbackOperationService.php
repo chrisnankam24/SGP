@@ -898,8 +898,7 @@ class RollbackOperationService  extends CI_Controller {
     public function getCADBRollback($rollbackId){
         $response = [];
 
-        $rollbackOperationService = new RollbackOperationService();
-        $getResponse = $rollbackOperationService->getRollback($rollbackId);
+        $getResponse = $this->getRollback($rollbackId);
 
         // Verify response
 
@@ -956,11 +955,9 @@ class RollbackOperationService  extends CI_Controller {
 
         $response['data'] = [];
 
-        $rollbackOperationService = new RollbackOperationService();
-
         // Load ORDERED Rollbacks
 
-        $openedResponse = $rollbackOperationService->getOpenedRollbacks(Operator::ORANGE_NETWORK_ID);
+        $openedResponse = $this->getOpenedRollbacks(Operator::ORANGE_NETWORK_ID);
 
         if($openedResponse->success){
 
@@ -986,7 +983,7 @@ class RollbackOperationService  extends CI_Controller {
 
         // Load ACCEPTED Rollbacks
 
-        $acceptedResponse = $rollbackOperationService->getAcceptedRollbacks(Operator::ORANGE_NETWORK_ID);
+        $acceptedResponse = $this->getAcceptedRollbacks(Operator::ORANGE_NETWORK_ID);
 
         if($acceptedResponse->success){
 
@@ -1012,7 +1009,7 @@ class RollbackOperationService  extends CI_Controller {
 
         // Load CONFIRMED Rollbacks
 
-        $confirmedResponse = $rollbackOperationService->getConfirmedRollbacks(Operator::ORANGE_NETWORK_ID);
+        $confirmedResponse = $this->getConfirmedRollbacks(Operator::ORANGE_NETWORK_ID);
 
         if($confirmedResponse->success){
 
@@ -1038,7 +1035,7 @@ class RollbackOperationService  extends CI_Controller {
 
         // Load REJECTED Rollbacks
 
-        $rejectedResponse = $rollbackOperationService->getRejectedRollbacks(Operator::ORANGE_NETWORK_ID, params::DENIED_REJECTED_MAX_COUNT);
+        $rejectedResponse = $this->getRejectedRollbacks(Operator::ORANGE_NETWORK_ID, params::DENIED_REJECTED_MAX_COUNT);
 
         if($rejectedResponse->success){
 

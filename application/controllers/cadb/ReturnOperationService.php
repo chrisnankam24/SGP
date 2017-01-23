@@ -707,8 +707,7 @@ class ReturnOperationService extends CI_Controller {
     public function getCADBNReturn($returnId){
         $response = [];
 
-        $returnOperationService = new ReturnOperationService();
-        $getResponse = $returnOperationService->getReturningTransaction($returnId);
+        $getResponse = $this->getReturningTransaction($returnId);
 
         // Verify response
 
@@ -766,11 +765,9 @@ class ReturnOperationService extends CI_Controller {
 
         $response['data'] = [];
 
-        $returnOperationService = new ReturnOperationService();
-
         // Load ORDERED Rollbacks
 
-        $currentNRResponse = $returnOperationService->getCurrentReturningTransactions(Operator::ORANGE_NETWORK_ID);
+        $currentNRResponse = $this->getCurrentReturningTransactions(Operator::ORANGE_NETWORK_ID);
 
         if($currentNRResponse->success){
 

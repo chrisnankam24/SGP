@@ -143,6 +143,13 @@ class ROSServerFunctionalities extends CI_Controller  {
 
         $response = new rollback\getRollbackResponse();
 
+        $response->rollbackTransaction = new rollback\rollbackTransactionType();
+        $response->rollbackTransaction->lastChangeDateTime = date('c');
+        $response->rollbackTransaction->donorSubmissionDateTime = date('c');
+        $response->rollbackTransaction->preferredRollbackDateTime = date('c');
+        $response->rollbackTransaction->rollbackDateTime = date('c');
+        $response->rollbackTransaction->rollbackId = $getRollbackRequest->rollbackId;
+
         return $response;
 
     }
