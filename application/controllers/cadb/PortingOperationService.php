@@ -1354,8 +1354,7 @@ class PortingOperationService  {
 
         $response = [];
 
-        $portingOperationService = new PortingOperationService();
-        $getResponse = $portingOperationService->getPorting($portingId);
+        $getResponse = $this->getPorting($portingId);
 
         // Verify response
 
@@ -1441,12 +1440,10 @@ class PortingOperationService  {
         $response = [];
 
         $response['data'] = [];
-
-        $portingOperationService = new PortingOperationService();
-
+        
         // Load ORDERED Portings
 
-        $orderedResponse = $portingOperationService->getOrderedPortings(Operator::ORANGE_NETWORK_ID);
+        $orderedResponse = $this->getOrderedPortings(Operator::ORANGE_NETWORK_ID);
 
         if($orderedResponse->success){
 
@@ -1472,7 +1469,7 @@ class PortingOperationService  {
 
         // Load APPROVED Portings
 
-        $approvedResponse = $portingOperationService->getApprovedPortings(Operator::ORANGE_NETWORK_ID);
+        $approvedResponse = $this->getApprovedPortings(Operator::ORANGE_NETWORK_ID);
 
         if($approvedResponse->success){
 
@@ -1498,7 +1495,7 @@ class PortingOperationService  {
 
         // Load ACCEPTED Portings
 
-        $acceptedResponse = $portingOperationService->getAcceptedPortings(Operator::ORANGE_NETWORK_ID);
+        $acceptedResponse = $this->getAcceptedPortings(Operator::ORANGE_NETWORK_ID);
 
         if($acceptedResponse->success){
 
@@ -1524,7 +1521,7 @@ class PortingOperationService  {
 
         // Load CONFIRMED Portings
 
-        $confirmedResponse = $portingOperationService->getConfirmedPortings(Operator::ORANGE_NETWORK_ID);
+        $confirmedResponse = $this->getConfirmedPortings(Operator::ORANGE_NETWORK_ID);
 
         if($confirmedResponse->success){
 
@@ -1550,7 +1547,7 @@ class PortingOperationService  {
 
         // Load DENIED Portings
 
-        $deniedResponse = $portingOperationService->getDeniedPortings(Operator::ORANGE_NETWORK_ID, params::DENIED_REJECTED_MAX_COUNT);
+        $deniedResponse = $this->getDeniedPortings(Operator::ORANGE_NETWORK_ID, params::DENIED_REJECTED_MAX_COUNT);
 
         if($deniedResponse->success){
 
@@ -1577,7 +1574,7 @@ class PortingOperationService  {
 
         // Load REJECTED Portings
 
-        $rejectedResponse = $portingOperationService->getRejectedPortings(Operator::ORANGE_NETWORK_ID, params::DENIED_REJECTED_MAX_COUNT);
+        $rejectedResponse = $this->getRejectedPortings(Operator::ORANGE_NETWORK_ID, params::DENIED_REJECTED_MAX_COUNT);
 
         if($rejectedResponse->success){
 
