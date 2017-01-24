@@ -20,6 +20,14 @@ class Rollback_model extends CI_Model
     }
 
     /*
+    * Search rollbaczk by msisdn
+    */
+    function search_rollback($msisdn)
+    {
+        return $this->db->order_by('donorSubmissionDateTime', 'desc')->join('Porting', 'Porting.portingId = originalPortingId')->get_where('Rollback',array('startMSISDN'=>$msisdn))->result_array();
+    }
+
+    /*
      * Get rollback by rollbackId
      */
     function get_full_rollback($rollbackId)

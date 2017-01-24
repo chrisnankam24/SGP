@@ -20,6 +20,14 @@ class Porting_model extends CI_Model
     }
 
     /*
+    * Search porting by msisdn
+    */
+    function search_porting($msisdn)
+    {
+        return $this->db->order_by('recipientSubmissionDateTime', 'desc')->get_where('Porting',array('startMSISDN'=>$msisdn))->result_array();
+    }
+
+    /*
      * Get porting in particular state and for particular donor.
      * personType = 0 for personal and 1 for enterprise
      */

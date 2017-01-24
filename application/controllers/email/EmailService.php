@@ -544,9 +544,13 @@ class EmailService {
 
     }
 
-    public function adminKPSAError($fault, $params){
+    public function adminKPSAError($message){
 
-        $this->error('', $params);
+        $params = array(
+            'errorMessage' => $message
+        );
+
+        $this->error('KPSA ERROR DETECTED', $params);
 
     }
 
@@ -575,17 +579,6 @@ class EmailService {
     }
 
     public function cadbPortingStateOffConfirmed($params){
-
-    }
-
-    /**
-     * Reports Error to Admin via mail
-     * @param $faultCode
-     * @param $params
-     */
-    public function adminAgentsPortingAbandoned($params){
-
-        $this->error('', $params);
 
     }
 

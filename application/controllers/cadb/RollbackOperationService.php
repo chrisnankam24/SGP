@@ -893,6 +893,24 @@ class RollbackOperationService  extends CI_Controller {
     }
 
     /**
+     * Search rollback with msisdn
+     * @param $msisdn
+     * @return array
+     */
+    public function searchRollback($msisdn, $userId){
+
+        $response = [];
+
+        $response['success'] = true;
+
+        $response['data'] = $this->Rollback_model->search_rollback($msisdn);
+
+        return $response;
+
+    }
+
+
+    /**
      * API to retrieve detail on rollback
      */
     public function getCADBRollback($rollbackId){

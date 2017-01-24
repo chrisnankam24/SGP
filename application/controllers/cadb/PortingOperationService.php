@@ -1348,6 +1348,23 @@ class PortingOperationService  {
     }
 
     /**
+     * Search porting with msisdn
+     * @param $msisdn
+     * @return array
+     */
+    public function searchPort($msisdn, $userId){
+
+        $response = [];
+
+        $response['success'] = true;
+
+        $response['data'] = $this->Porting_model->search_porting($msisdn);
+
+        return $response;
+
+    }
+
+    /**
      * API to retrieve detail on porting
      */
     public function getCADBPorting($portingId){

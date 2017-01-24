@@ -676,7 +676,11 @@ class RollbackNotificationService extends CI_Controller {
 
         $this->db->trans_complete();
 
-        $emailService->adminAgentsPortingAbandoned([]);
+        $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
+
+        $emailService = new EmailService();
+        $emailService->adminErrorReport('ROLLBACK ABANDONED BY CADB', $rollbackParams, processType::ROLLBACK);
+
 
         $response = new RollbackNotification\notifyAbandonedResponse();
 

@@ -530,6 +530,34 @@ class Porting extends CI_Controller
     }
 
     /**
+     * TODO: OK
+     * API for performing search
+     */
+    public function searchPorting(){
+
+        $response = [];
+
+        if(isset($_POST) && count($_POST) > 0) {
+
+            $searchMSISDN = $this->input->post('searchMSISDN');
+            $userId = $this->input->post('userId');
+
+            $portingOperationService = new PortingOperationService();
+
+            $response = $portingOperationService->searchPort($searchMSISDN, $userId);
+
+        }else{
+
+            $response['success'] = false;
+            $response['message'] = 'No search msisdn found';
+
+        }
+
+        $this->send_response($response);
+
+    }
+
+    /**
      *
      * @param $response
      */

@@ -957,7 +957,7 @@ class BatchOperationService extends CI_Controller {
 
             else{
 
-                $emailService->adminKPSAError($kpsaResponse['message'], []);
+                $emailService->adminKPSAError($kpsaResponse['message']);
 
             }
 
@@ -1253,7 +1253,7 @@ class BatchOperationService extends CI_Controller {
 
             else{
 
-                $emailService->adminKPSAError($kpsaResponse['message'], []);
+                $emailService->adminKPSAError($kpsaResponse['message']);
 
             }
 
@@ -1764,7 +1764,7 @@ class BatchOperationService extends CI_Controller {
 
             else{
 
-                $emailService->adminKPSAError($kpsaResponse['message'], []);
+                $emailService->adminKPSAError($kpsaResponse['message']);
 
             }
 
@@ -2076,7 +2076,7 @@ class BatchOperationService extends CI_Controller {
 
             else{
 
-                $emailService->adminKPSAError($kpsaResponse['message'], []);
+                $emailService->adminKPSAError($kpsaResponse['message']);
 
             }
 
@@ -2457,7 +2457,7 @@ class BatchOperationService extends CI_Controller {
 
             else{
 
-                $emailService->adminKPSAError($kpsaResponse['message'], []);
+                $emailService->adminKPSAError($kpsaResponse['message']);
 
             }
 
@@ -2659,7 +2659,7 @@ class BatchOperationService extends CI_Controller {
 
             else{
 
-                $emailService->adminKPSAError($kpsaResponse['success'], []);
+                $emailService->adminKPSAError($kpsaResponse['message']);
 
             }
 
@@ -2749,7 +2749,7 @@ class BatchOperationService extends CI_Controller {
 
             else{
 
-                $emailService->adminKPSAError($kpsaResponse['message'], []);
+                $emailService->adminKPSAError($kpsaResponse['message']);
 
             }
 

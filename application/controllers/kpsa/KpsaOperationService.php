@@ -38,6 +38,10 @@ class KpsaOperationService extends CI_Controller {
         $response = [];
         $response['success'] = true;
 
+        if(strlen($msisdn) == 12){
+            $msisdn = substr($msisdn, 3);
+        }
+
         // Search for MSISDN in KPSA
        $searchResponse = $this->viewSubscriberTEKELEC($msisdn);
 
@@ -111,6 +115,10 @@ class KpsaOperationService extends CI_Controller {
         $response = [];
         $response['success'] = true;
 
+        if(strlen($msisdn) == 12){
+            $msisdn = substr($msisdn, 3);
+        }
+
         // Search for MSISDN in KPSA
         $searchResponse = $this->viewSubscriberTEKELEC($msisdn);
 
@@ -166,6 +174,10 @@ class KpsaOperationService extends CI_Controller {
         $response = [];
         $response['success'] = true;
 
+        if(strlen($msisdn) == 12){
+            $msisdn = substr($msisdn, 3);
+        }
+
         // Search for MSISDN in KPSA
         $searchResponse = $this->viewSubscriberTEKELEC($msisdn);
 
@@ -220,8 +232,6 @@ class KpsaOperationService extends CI_Controller {
         $creationResponse = [];
         $creationResponse['success'] = -1; // -1 means connection to KPSA failed, false means connection to KPSA ok but STATUS is FAILED, and finally, true means connected to KPSA with STATUS COMPLETED
 
-        //TODO: Verify if MSISDN is full or partial
-
         $requestId = 1;
 
         try {
@@ -266,8 +276,6 @@ class KpsaOperationService extends CI_Controller {
 
         $deleteResponse = [];
         $deleteResponse['success'] = -1; // -1 means connection to KPSA failed, false means connection to KPSA ok but STATUS is FAILED, and finally, true means connected to KPSA with STATUS COMPLETED
-
-        //TODO: Verify if MSISDN is full or partial
 
         $requestId = 1;
 
@@ -314,8 +322,6 @@ class KpsaOperationService extends CI_Controller {
         $updateResponse = [];
         $updateResponse['success'] = -1; // -1 means connection to KPSA failed, false means connection to KPSA ok but STATUS is FAILED, and finally, true means connected to KPSA with STATUS COMPLETED
 
-        //TODO: Verify if MSISDN is full or partial
-
         $requestId = 1;
 
         try {
@@ -359,8 +365,6 @@ class KpsaOperationService extends CI_Controller {
 
         $viewResponse = [];
         $viewResponse['success'] = -1; // -1 means connection to KPSA failed, false means connection to KPSA ok but STATUS is FAILED, and finally, true means connected to KPSA with STATUS COMPLETED
-
-        //TODO: Verify if MSISDN is full or partial
 
         $requestId = 1;
 
