@@ -122,7 +122,7 @@ class USSD extends CI_Controller {
             // Set Subscriber RIO
             $message_en = str_replace('[rio]', $rio, $template);
 
-            $message = $message . '\n' . $message_en;
+            $message = $message . $message_en;
 
         }
 

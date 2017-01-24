@@ -416,7 +416,7 @@ class BscsOperationService {
 
     }
 
-    private function logonMSISDN(){
+    public function logonMSISDN(){
 
         // Make logon request
         $request = new BscsTypes\logon();
@@ -446,7 +446,7 @@ class BscsOperationService {
         }
     }
 
-    private function logoutMSISDN(){
+    public function logoutMSISDN(){
 
         // Make logon request
         $request = new BscsTypes\logout();
@@ -695,7 +695,7 @@ class BscsOperationService {
 
     }
 
-    private function logonContract(){
+    public function logonContract(){
 
         // Make logon request
         $request = new BscsTypes\logon();
@@ -725,7 +725,7 @@ class BscsOperationService {
         }
     }
 
-    private function logoutContract(){
+    public function logoutContract(){
 
         // Make logon request
         $request = new BscsTypes\logout();

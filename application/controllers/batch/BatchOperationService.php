@@ -63,11 +63,9 @@ class BatchOperationService extends CI_Controller {
 
     public function index(){
 
-        //$emailService = new EmailService();
-
-        //var_dump($emailService->test());
-        //$bscsOperationService = new BscsOperationService();
-        //var_dump($bscsOperationService->loadTemporalNumberInfo('694975166'));
+        $bscsOperationService = new BscsOperationService();
+        var_dump($bscsOperationService->logonMSISDN());
+        var_dump($bscsOperationService->logoutMSISDN());
 
     }
 

@@ -117,9 +117,9 @@ class sftpParams{
 }
 
 class BscsParams {
-    const cmsUserName = '';
-    const cmsPassword = '';
-    const endUserName = '';
+    const cmsUserName = 'CSMINT';
+    const cmsPassword = 'CSMINT';
+    const endUserName = 'CSMINT';
 }
 
 class languageParams{
