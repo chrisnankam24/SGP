@@ -985,7 +985,7 @@ class PortingNotificationService extends CI_Controller
             $portingParams = $this->Porting_model->get_porting($portingId);
 
             $emailService = new EmailService();
-            $emailService->adminErrorReport('PORTING ABANDONED BY CADB', $portingParams, processType::PORTING);
+            $emailService->adminErrorReport('', $portingParams, processType::PORTING);
 
             $response = new PortingNotification\notifyAbandonedResponse();
 
@@ -1012,4 +1012,3 @@ class PortingNotificationService extends CI_Controller
     }
 
 }
-

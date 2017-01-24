@@ -37,7 +37,16 @@ class USSD extends CI_Controller {
 
         $msisdn = substr($headers['User-MSISDN'], 3);
 
-        $language = $headers['User-Language'];
+        $language = 'fr';
+
+        $gotLanguage = false;
+
+        if(isset($headers['User-Language'])){
+
+            $language = $headers['User-Language'];
+            $gotLanguage = true;
+
+        }
 
         $template = '';
 
@@ -106,6 +115,16 @@ class USSD extends CI_Controller {
         $response = $dom->saveXML();
 
         self::send_response($response);
+
+        if($rio && !$gotLanguage){
+            // Load en template
+            $template = file_get_contents(__DIR__ . '/en_ussd_template_rio.txt');
+            // Set Subscriber RIO
+            $message_en = str_replace('[rio]', $rio, $template);
+
+            $message = $message . '\n' . $message_en;
+
+        }
 
         // Send USSD SMS and save in DB
         $response = SMS::USSD_SMS($message, $msisdn);

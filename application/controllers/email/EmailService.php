@@ -352,14 +352,6 @@ class EmailService {
 
     }
 
-    public function adminAgentsRetardedSubmission($params){
-
-    }
-
-    public function adminAgentsPortingApprovedDenied($params){
-
-    }
-
     public function backOfficePortingAcceptReject($params){
 
         $subject = 'Accept / Reject PortID: ' . $params['portingId'];
@@ -579,34 +571,6 @@ class EmailService {
     }
 
     public function cadbPortingStateOffConfirmed($params){
-
-    }
-
-    /**
-     * @param $params
-     */
-    public function adminAgentsErrorReport($params, $processType){
-
-    }
-
-    /**
-     * @param $params
-     */
-    public function adminAgentsBatchPortingSubmission($params){
-
-    }
-
-    /**
-     * @param $params
-     */
-    public function adminAgentsBatchRollbackSubmission($params){
-
-    }
-
-    /**
-     * @param $params
-     */
-    public function adminAgentsBatchNRSubmission($params){
 
     }
 

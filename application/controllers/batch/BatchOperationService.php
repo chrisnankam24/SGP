@@ -212,8 +212,6 @@ class BatchOperationService extends CI_Controller {
 
                 }else{
 
-                    $emailService->adminAgentsBatchPortingSubmission([]);
-
                 }
 
                 $this->db->trans_complete();
@@ -241,7 +239,9 @@ class BatchOperationService extends CI_Controller {
                         // More than 20 minutes difference
                         if($diff->i > 20){
 
-                            $emailService->adminAgentsRetardedSubmission([]);
+                            $params = array('errorMessage' => 'Retarded porting submission encountered');
+
+                            $emailService->error('RETARDED PORTING SUBMISSION DETECTED', $params);
 
                         }
 
@@ -450,7 +450,7 @@ class BatchOperationService extends CI_Controller {
                             $emailService->adminErrorReport('PORTING_APPROVED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
 
                         }else{
-                            $emailService->adminAgentsPortingApprovedDenied([]);
+
                         }
 
                         $this->db->trans_complete();
@@ -532,7 +532,7 @@ class BatchOperationService extends CI_Controller {
                             $emailService->adminErrorReport('PORTING_DENIED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
 
                         }else{
-                            $emailService->adminAgentsPortingApprovedDenied([]);
+
                         }
 
                         $this->db->trans_complete();
@@ -1345,8 +1345,6 @@ class BatchOperationService extends CI_Controller {
 
                 }else{
 
-                    $emailService->adminAgentsBatchRollbackSubmission([]);
-
                 }
 
                 $this->db->trans_complete();
@@ -1374,7 +1372,9 @@ class BatchOperationService extends CI_Controller {
                         // More than 20 minutes difference
                         if($diff->i > 20){
 
-                            $emailService->adminAgentsRetardedSubmission([]);
+                            $params = array('errorMessage' => 'Retarded rollback submission encountered');
+
+                            $emailService->error('RETARDED ROLLBACK SUBMISSION DETECTED', $params);
 
                         }
 
@@ -1440,8 +1440,6 @@ class BatchOperationService extends CI_Controller {
                     $this->Rollback_model->update_rollback($openedRollback['rollbackId'], $rollbackParams);
 
                 }else{
-
-                    echo 'False';
 
                 }
             }
@@ -2170,7 +2168,9 @@ class BatchOperationService extends CI_Controller {
 
                 }else {
 
-                    $emailService->adminAgentsBatchNRSubmission([]);
+                    $params = array('errorMessage' => 'Retarded number return submission encountered');
+
+                    $emailService->error('RETARDED NUMBER RETURN SUBMISSION DETECTED', $params);
 
                 }
 
@@ -2911,7 +2911,7 @@ class BatchOperationService extends CI_Controller {
     public function smsUpdater(){
 
         // Get all Porting SMS messages in state pending
-        /*$portingMessages = $this->Portingsmsnotification_model->get_portingsmsnotificationByStatus(smsState::PENDING);
+        $portingMessages = $this->Portingsmsnotification_model->get_portingsmsnotificationByStatus(smsState::PENDING);
 
         foreach ($portingMessages as $portingMessage){
 
@@ -2941,7 +2941,7 @@ class BatchOperationService extends CI_Controller {
             $this->Portingsmsnotification_model->update_portingsmsnotification($portingNotificationId, $smsNotificationparams);
 
             $this->db->trans_complete();
-        }*/
+        }
 
         // Get all Rollback SMS messages in state pending
         $rollbackMessages = $this->Rollbacksmsnotification_model->get_rollbacksmsnotificationByStatus(smsState::PENDING);
