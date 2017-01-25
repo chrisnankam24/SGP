@@ -156,7 +156,7 @@ class BscsOperationService {
      * @param $portingMSISDN
      * @return errorResponse
      */
-    public function changeImportMSISDN($temporalMSISDN, $portingMSISDN){
+    public function changeImportMSISDN($temporalMSISDN, $portingMSISDN, $contractId){
 
         if($this->msisdnClient) {
 
@@ -164,14 +164,20 @@ class BscsOperationService {
 
             if($logonResponse->success){
 
+                // Retrieve Cookie data
+                $cookie = $this->msisdnClient->_cookies;
+
+                // Set Cookies
+                $this->contractClient->__setCookie('JSESSIONID', $cookie['JSESSIONID']);
+
                 // Make ChangeImportMSISDN request
                 $request = new BscsTypes\ChangeImportMSISDN();
 
                 $request->autoCommit = true;
                 $request->MSISDN = $portingMSISDN;
                 $request->MSISDN_TMP = $temporalMSISDN;
-                $request->endUserName = '?';
-                $request->CO_ID = '?';
+                $request->endUserName = BscsParams::endUserName;
+                $request->CO_ID = $contractId;
 
                 try {
 
@@ -222,7 +228,7 @@ class BscsOperationService {
      * @param $portingMSISDN
      * @return errorResponse
      */
-    public function importMSISDN($portingMSISDN){
+    public function importMSISDN($portingMSISDN, $sourceOperatorId){
 
         if($this->msisdnClient) {
 
@@ -230,14 +236,25 @@ class BscsOperationService {
 
             if($logonResponse->success){
 
+                // Retrieve Cookie data
+                $cookie = $this->msisdnClient->_cookies;
+
+                // Set Cookies
+                $this->contractClient->__setCookie('JSESSIONID', $cookie['JSESSIONID']);
+
                 // Make ChangeImportMSISDN request
                 $request = new BscsTypes\ImportMSISDN();
 
                 $request->autoCommit = true;
                 $request->MSISDN = $portingMSISDN;
-                $request->endUserName = '?';
-                $request->SRC_PLCODE = '?';
-                $request->CO_ID = '?';
+                $request->endUserName = BscsParams::cmsUserName;
+                $request->NPCODE = 1;
+
+                if($sourceOperatorId == Operator::MTN_NETWORK_ID){
+                    $request->SRC_PLCODE = BscsParams::MTN_PLCODE;
+                }else{
+                    $request->SRC_PLCODE = BscsParams::NEXTTEL_PLCODE;
+                }
 
                 try {
 
@@ -288,7 +305,7 @@ class BscsOperationService {
      * @param $returnMSISDN
      * @return errorResponse
      */
-    public function ReturnMSISDN($returnMSISDN){
+    public function ReturnMSISDN($returnMSISDN, $sourceOperatorId){
 
         if($this->msisdnClient) {
 
@@ -296,14 +313,25 @@ class BscsOperationService {
 
             if($logonResponse->success){
 
+                // Retrieve Cookie data
+                $cookie = $this->msisdnClient->_cookies;
+
+                // Set Cookies
+                $this->contractClient->__setCookie('JSESSIONID', $cookie['JSESSIONID']);
+
                 // Make ChangeImportMSISDN request
                 $request = new BscsTypes\ReturnMSISDN();
 
                 $request->autoCommit = true;
-                $request->endUserName = '?';
+                $request->endUserName = BscsParams::endUserName;
                 $request->PHONE_NUMBER = $returnMSISDN;
-                $request->NPCODE = '?';
-                $request->SRC_PLCODE = '?';
+                $request->NPCODE = 1;
+
+                if($sourceOperatorId == Operator::MTN_NETWORK_ID){
+                    $request->SRC_PLCODE = BscsParams::MTN_PLCODE;
+                }else{
+                    $request->SRC_PLCODE = BscsParams::NEXTTEL_PLCODE;
+                }
 
                 try {
 
@@ -355,7 +383,7 @@ class BscsOperationService {
      * @param $MSISDN
      * @return errorResponse
      */
-    public function exportMSISDN($MSISDN){
+    public function exportMSISDN($MSISDN, $destOperatorId){
 
         if($this->msisdnClient) {
 
@@ -363,14 +391,25 @@ class BscsOperationService {
 
             if($logonResponse->success){
 
+                // Retrieve Cookie data
+                $cookie = $this->msisdnClient->_cookies;
+
+                // Set Cookies
+                $this->contractClient->__setCookie('JSESSIONID', $cookie['JSESSIONID']);
+
                 // Make ExportMSISDN request
                 $request = new BscsTypes\ExportMSISDN();
 
                 $request->autoCommit = true;
                 $request->PHONE_NUMBER = $MSISDN;
-                $request->endUserName = '?';
-                $request->DEST_PLCODE = '?';
-                $request->NPCODE = '?';
+                $request->endUserName = BscsParams::endUserName;
+                $request->NPCODE = 1;
+
+                if($destOperatorId == Operator::MTN_NETWORK_ID){
+                    $request->DEST_PLCODE = BscsParams::MTN_PLCODE;
+                }else{
+                    $request->DEST_PLCODE = BscsParams::NEXTTEL_PLCODE;
+                }
 
                 try {
 
@@ -646,10 +685,21 @@ class BscsOperationService {
 
             if($logonResponse->success){
 
+                // Retrieve Cookie data
+                $cookie = $this->contractClient->_cookies;
+
+                // Set Cookies
+                $this->contractClient->__setCookie('JSESSIONID', $cookie['JSESSIONID']);
+
                 // Make deleteContract request
                 $request = new BscsTypes\deleteContract();
 
                 $request->contractId = $contractId;
+                $request->autoCommit = true;
+                $request->endUserName = BscsParams::endUserName;
+                $request->coDevRetention = 0;
+                $request->coDnRetention = 0;
+                $request->coPortRetention = 0;
 
                 try {
 

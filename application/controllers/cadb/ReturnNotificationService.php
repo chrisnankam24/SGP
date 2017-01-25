@@ -13,7 +13,6 @@ require_once "Return.php";
 require_once "Common.php";
 require_once "ReturnNotification.php";
 require_once APPPATH . "controllers/email/EmailService.php";
-require_once APPPATH . "controllers/bscs/BscsOperationService.php";
 require_once APPPATH . "controllers/kpsa/KpsaOperationService.php";
 
 use ReturnService\_ReturnNotification as _ReturnNotification;

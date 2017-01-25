@@ -785,8 +785,9 @@ class BatchOperationService extends CI_Controller {
 
             // Porting already provisioned. Start porting moving to MSISDN_EXPORT_CONFIRMED state
             $subscriberMSISDN = $msisdnContractDeletedPort['startMSISDN'];
+            $recipientNetworkId = $msisdnContractDeletedPort['recipientNetworkId'];
 
-            $exportResponse = $bscsOperationService->exportMSISDN($subscriberMSISDN);
+            $exportResponse = $bscsOperationService->exportMSISDN($subscriberMSISDN, $recipientNetworkId);
 
             if($exportResponse->success){
 
@@ -1015,7 +1016,9 @@ class BatchOperationService extends CI_Controller {
                 // Start porting moving to MSISDN_IMPORT_CONFIRMED state. Import Porting MSISDN into BSCS
                 $subscriberMSISDN = $acceptedPort['startMSISDN'];
 
-                $importResponse = $bscsOperationService->importMSISDN($subscriberMSISDN);
+                $donorNetworkId = $acceptedPort['donorNetworkId'];
+
+                $importResponse = $bscsOperationService->importMSISDN($subscriberMSISDN, $donorNetworkId);
 
                 if($importResponse->success){
 
@@ -1116,7 +1119,9 @@ class BatchOperationService extends CI_Controller {
 
             $subscriberMSISDN = $msisdnConfirmedPort['startMSISDN'];
 
-            $changeResponse = $bscsOperationService->changeImportMSISDN($subscriberInfo['temporalMSISDN'], $subscriberMSISDN);
+            $contractId = $msisdnConfirmedPort['contractId'];
+
+            $changeResponse = $bscsOperationService->changeImportMSISDN($subscriberInfo['temporalMSISDN'], $subscriberMSISDN, $contractId);
 
             if($changeResponse->success){
 
@@ -1585,7 +1590,9 @@ class BatchOperationService extends CI_Controller {
 
             $subscriberMSISDN = $msisdnContractDeletedRollback['startMSISDN'];
 
-            $exportResponse = $bscsOperationService->exportMSISDN($subscriberMSISDN);
+            $donorNetworkId = $msisdnContractDeletedRollback['donorNetworkId'];
+
+            $exportResponse = $bscsOperationService->exportMSISDN($subscriberMSISDN, $donorNetworkId);
 
             if($exportResponse->success){
 
@@ -1820,7 +1827,9 @@ class BatchOperationService extends CI_Controller {
                 // Start rollback moving to MSISDN_IMPORT_CONFIRMED state. Import rollback MSISDN into BSCS
                 $subscriberMSISDN = $acceptedRollback['startMSISDN'];
 
-                $importResponse = $bscsOperationService->importMSISDN($subscriberMSISDN);
+                $recipientNetworkId = $acceptedRollback['recipientNetworkId'];
+
+                $importResponse = $bscsOperationService->importMSISDN($subscriberMSISDN, $recipientNetworkId);
 
                 if($importResponse->success){
 
@@ -1928,7 +1937,9 @@ class BatchOperationService extends CI_Controller {
 
             $subscriberMSISDN = $msisdnConfirmedRollback['startMSISDN'];
 
-            $changeResponse = $bscsOperationService->changeImportMSISDN($subscriberInfo['temporalMSISDN'], $subscriberMSISDN);
+            $contractId = $msisdnConfirmedRollback['contractId'];
+
+            $changeResponse = $bscsOperationService->changeImportMSISDN($subscriberInfo['temporalMSISDN'], $subscriberMSISDN, $contractId);
 
             if($changeResponse->success){
 
@@ -2283,7 +2294,9 @@ class BatchOperationService extends CI_Controller {
 
             $returnMSISDN = $acceptedReturn['returnMSISDN'];
 
-            $exportResponse = $bscsOperationService->exportMSISDN($returnMSISDN);
+            $primaryOwnerNetworkId = $acceptedReturn['primaryOwnerNetworkId'];
+
+            $exportResponse = $bscsOperationService->exportMSISDN($returnMSISDN, $primaryOwnerNetworkId);
 
             if($exportResponse->success){
 
@@ -2492,7 +2505,9 @@ class BatchOperationService extends CI_Controller {
 
             $returnMSISDN = $acceptedReturn['returnMSISDN'];
 
-            $returnResponse = $bscsOperationService->returnMSISDN($returnMSISDN);
+            $currentOwnerNetworkId = $acceptedReturn['ownerNetworkId'];
+
+            $returnResponse = $bscsOperationService->returnMSISDN($returnMSISDN, $currentOwnerNetworkId);
 
             if($returnResponse->success){
 

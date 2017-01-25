@@ -117,9 +117,14 @@ class sftpParams{
 }
 
 class BscsParams {
-    const cmsUserName = 'CSMINT';
-    const cmsPassword = 'CSMINT';
-    const endUserName = 'CSMINT';
+    const cmsUserName = 'CMSINT';
+    const cmsPassword = 'CMSINT';
+    const endUserName = 'CMSINT';
+
+    const HMCODE = '179';
+    const MTN_PLCODE = '354';
+    const NEXTTEL_PLCODE = '355';
+
 }
 
 class languageParams{

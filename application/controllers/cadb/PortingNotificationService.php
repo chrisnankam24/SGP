@@ -557,6 +557,8 @@ class PortingNotificationService extends CI_Controller
 
         $portingId = $notifyAutoConfirmRequest->portingTransaction->portingId;
 
+        $donorNetworkId = $notifyAutoConfirmRequest->portingTransaction->donorNrn->networkId;
+
         $subscriberMSISDN = $notifyAutoConfirmRequest->portingTransaction->numberRanges->numberRange->startNumber;
 
         $emailService = new EmailService();
@@ -567,7 +569,7 @@ class PortingNotificationService extends CI_Controller
         $emailService->adminErrorReport('PORTING_REACHED_AUTO_CONFIRM', $dbPortingParams, processType::PORTING);
 
         // Start porting process
-        $portingStatedResponse = $this->startPortingOPR($subscriberMSISDN);
+        $portingStatedResponse = $this->startPortingOPR($subscriberMSISDN, $donorNetworkId);
 
         if($portingStatedResponse->success){
 
@@ -1000,12 +1002,12 @@ class PortingNotificationService extends CI_Controller
      * @param $portingNumber
      * @return errorResponse
      */
-    private function startPortingOPR($portingNumber){
+    private function startPortingOPR($portingNumber, $donorNetworkId){
 
         // Import MSISDN
         $bscsOperationService = new BscsOperationService();
 
-        $response = $bscsOperationService->importMSISDN($portingNumber);
+        $response = $bscsOperationService->importMSISDN($portingNumber, $donorNetworkId);
 
         return $response;
 

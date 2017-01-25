@@ -373,7 +373,11 @@ class RollbackNotificationService extends CI_Controller {
      */
     public function notifyAutoConfirm($notifyAutoConfirmRequest){
 
+        $notifyAutoConfirmRequest = new RollbackNotification\notifyAutoConfirmRequest();
+
         $rollbackId = $notifyAutoConfirmRequest->rollbackTransaction->rollbackId;
+
+        $recipientNetworkId = $notifyAutoConfirmRequest->rollbackTransaction->recipientNrn->networkId;
 
         $subscriberMSISDN = $notifyAutoConfirmRequest->rollbackTransaction->numberRanges->numberRange->startNumber;
 
@@ -385,7 +389,7 @@ class RollbackNotificationService extends CI_Controller {
         $emailService->adminErrorReport('ROLLBACK_REACHED_AUTO_CONFIRM', $nrollbackParams, processType::ROLLBACK);
 
         // Start rollback process
-        $rollbackStartedResponse = $this->startRollbackOPD($subscriberMSISDN);
+        $rollbackStartedResponse = $this->startRollbackOPD($subscriberMSISDN, $recipientNetworkId);
 
         if($rollbackStartedResponse->success){
 
@@ -693,12 +697,12 @@ class RollbackNotificationService extends CI_Controller {
      * @param $rollbackNumber
      * @return errorResponse
      */
-    private function startRollbackOPD($rollbackNumber){
+    private function startRollbackOPD($rollbackNumber, $recipientNetworkId){
 
         // Import MSISDN
         $bscsOperationService = new BscsOperationService();
 
-        $response = $bscsOperationService->importMSISDN($rollbackNumber);
+        $response = $bscsOperationService->importMSISDN($rollbackNumber, $recipientNetworkId);
 
         return $response;
 

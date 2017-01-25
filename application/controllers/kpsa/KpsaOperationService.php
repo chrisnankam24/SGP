@@ -38,10 +38,6 @@ class KpsaOperationService extends CI_Controller {
         $response = [];
         $response['success'] = true;
 
-        if(strlen($msisdn) == 12){
-            $msisdn = substr($msisdn, 3);
-        }
-
         // Search for MSISDN in KPSA
        $searchResponse = $this->viewSubscriberTEKELEC($msisdn);
 
@@ -51,7 +47,7 @@ class KpsaOperationService extends CI_Controller {
             if($toOperator == Operator::ORANGE_NETWORK_ID && isOCMNumber($msisdn)){ // Orange number coming back
 
                 // Delete number from KPSA
-                $deleteResponse = $this->deleteSubscriberTEKELEC($msisdn, $searchResponse['routingNumber']);
+                $deleteResponse = $this->deleteSubscriberTEKELEC($msisdn);
 
                 if($deleteResponse['success'] == true){
                     // Operation successful
@@ -115,10 +111,6 @@ class KpsaOperationService extends CI_Controller {
         $response = [];
         $response['success'] = true;
 
-        if(strlen($msisdn) == 12){
-            $msisdn = substr($msisdn, 3);
-        }
-
         // Search for MSISDN in KPSA
         $searchResponse = $this->viewSubscriberTEKELEC($msisdn);
 
@@ -139,7 +131,7 @@ class KpsaOperationService extends CI_Controller {
 
             //create MSISDN with routing number toOperator
 
-            $deleteResponse = $this->deleteSubscriberTEKELEC($msisdn, $searchResponse['routingNumber']);
+            $deleteResponse = $this->deleteSubscriberTEKELEC($msisdn);
 
             if($deleteResponse['success'] == true){
                 // Operation successful
@@ -173,10 +165,6 @@ class KpsaOperationService extends CI_Controller {
 
         $response = [];
         $response['success'] = true;
-
-        if(strlen($msisdn) == 12){
-            $msisdn = substr($msisdn, 3);
-        }
 
         // Search for MSISDN in KPSA
         $searchResponse = $this->viewSubscriberTEKELEC($msisdn);
@@ -269,10 +257,9 @@ class KpsaOperationService extends CI_Controller {
     /**
      * API to delete a subscriber from TEKELEC
      * @param $msisdn
-     * @param $routingNumber
      * @return array
      */
-    private function deleteSubscriberTEKELEC($msisdn, $routingNumber){
+    private function deleteSubscriberTEKELEC($msisdn){
 
         $deleteResponse = [];
         $deleteResponse['success'] = -1; // -1 means connection to KPSA failed, false means connection to KPSA ok but STATUS is FAILED, and finally, true means connected to KPSA with STATUS COMPLETED
@@ -282,7 +269,7 @@ class KpsaOperationService extends CI_Controller {
         try {
 
             $response = file_get_contents("https://" . KPSAParams::HOST . ":" . KPSAParams::PORT .
-                "/exec_mcp?MCP={ID=$requestId;ACT=TEKELEC_DELETE_PORT;MSISDN=$msisdn;MOBILE_NETWORK=$routingNumber}");
+                "/exec_mcp?MCP={ID=$requestId;ACT=TEKELEC_DELETE_PORT;MSISDN=$msisdn}");
 
             $response = $this->parseKPSAResponse($response);
 
