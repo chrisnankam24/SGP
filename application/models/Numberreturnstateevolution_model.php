@@ -16,7 +16,7 @@ class Numberreturnstateevolution_model extends CI_Model
      */
     function get_numberreturnstateevolution($returnId)
     {
-        return $this->db->get_where('NumberReturnStateEvolution',array('returnId'=>$returnId))->row_array();
+        return $this->db->get_where('NumberReturnStateEvolution',array('returnId'=>$returnId))->result_array();
     }
     
     /*

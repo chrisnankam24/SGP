@@ -566,14 +566,6 @@ class EmailService {
 
     }
 
-    public function cadbSynchronizationFailure($params){
-
-    }
-
-    public function cadbPortingStateOffConfirmed($params){
-
-    }
-
     /**
      * Sends message to SMS Gateway
      * @param $msisdn

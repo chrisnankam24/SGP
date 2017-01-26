@@ -20,20 +20,33 @@ use ReturnService\_Return as _Return;
 /**
  * Class ReturnOperationService
  */
-class ReturnOperationService extends CI_Controller {
+class ReturnOperationService {
 
     // Declare client
     private $client = null;
 
+    private $db = null;
+    private $Numberreturn_model = null;
+    private $Returnrejection_model = null;
+    private $Numberreturnsubmission_model = null;
+    private $Numberreturnstateevolution_model = null;
+
     public function __construct()
     {
 
-        parent::__construct();
+        $CI =& get_instance();
 
-        $this->load->model('Numberreturn_model');
-        $this->load->model('Returnrejection_model');
-        $this->load->model('Numberreturnsubmission_model');
-        $this->load->model('Numberreturnstateevolution_model');
+        $this->db = $CI->db;
+
+        $CI->load->model('Numberreturn_model');
+        $CI->load->model('Returnrejection_model');
+        $CI->load->model('Numberreturnsubmission_model');
+        $CI->load->model('Numberreturnstateevolution_model');
+
+        $this->Numberreturn_model = $CI->Numberreturn_model;
+        $this->Returnrejection_model = $CI->Returnrejection_model;
+        $this->Numberreturnsubmission_model = $CI->Numberreturnsubmission_model;
+        $this->Numberreturnstateevolution_model = $CI->Numberreturnstateevolution_model;
 
         // Disable wsdl cache
         ini_set("soap.wsdl_cache_enabled", "0");
@@ -42,19 +55,6 @@ class ReturnOperationService extends CI_Controller {
         $this->client = new SoapClient(__DIR__ . '/wsdl/ReturnOperationService.wsdl', array(
             "trace" => false
         ));
-
-    }
-
-    public function index(){
-
-        // Create a new soap server in WSDL mode
-        $server = new SoapServer( __DIR__ . '/wsdl/ReturnOperationService.wsdl');
-
-        // Set the class for the soap server
-        $server->setClass("ReOSServerFunctionalities");
-
-        // Handle soap operations
-        $server->handle();
 
     }
 
@@ -696,6 +696,23 @@ class ReturnOperationService extends CI_Controller {
             $response['message'] = 'No process found in LDB with given Id';
 
         }
+
+        return $response;
+
+    }
+
+    /**
+     * Search number return with msisdn
+     * @param $msisdn
+     * @return array
+     */
+    public function searchReturn($msisdn, $userId){
+
+        $response = [];
+
+        $response['success'] = true;
+
+        $response['data'] = $this->Numberreturn_model->search_numberreturn($msisdn);
 
         return $response;
 

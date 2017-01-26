@@ -112,6 +112,7 @@ class ROSServerFunctionalities extends CI_Controller  {
         $response->rollbackTransaction->rollbackId = $rejectRequest->rollbackId;
 
         return $response;
+        //throw new invalidOperatorFault();
 
     }
 
@@ -148,6 +149,7 @@ class ROSServerFunctionalities extends CI_Controller  {
         $response->rollbackTransaction->donorSubmissionDateTime = date('c');
         $response->rollbackTransaction->preferredRollbackDateTime = date('c');
         $response->rollbackTransaction->rollbackDateTime = date('c');
+        $response->rollbackTransaction->originalPortingId = '20170110-02-237694975166-480';
         $response->rollbackTransaction->rollbackId = $getRollbackRequest->rollbackId;
 
         return $response;

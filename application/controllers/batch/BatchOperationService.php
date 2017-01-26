@@ -59,13 +59,11 @@ class BatchOperationService extends CI_Controller {
         $this->load->model('Ussdsmsnotification_model');
         $this->load->model('Error_model');
 
+        set_time_limit(0);
+
     }
 
     public function index(){
-
-        $bscsOperationService = new BscsOperationService();
-        var_dump($bscsOperationService->logonMSISDN());
-        var_dump($bscsOperationService->logoutMSISDN());
 
     }
 
@@ -2807,7 +2805,7 @@ class BatchOperationService extends CI_Controller {
      * BATCH_014
      * Performs SFTP synchronization of yesterday data
      */
-    private function CADBFileSynchronizer(){
+    public function CADBFileSynchronizer(){
 
         $prevDay = date('Y-m-d', strtotime('-1 days', strtotime(date('c'))));
 
@@ -2848,9 +2846,32 @@ class BatchOperationService extends CI_Controller {
 
                             $porting = $this->Porting_model->get_porting($cadbId);
 
-                            if($porting['portingState'] != \PortingService\Porting\portingStateType::COMPLETED) {
+                            if($porting && $porting['portingState'] != \PortingService\Porting\portingStateType::COMPLETED) {
 
-                                //$emailService->cadbPortingStateOffCompleted([]);
+                                $eParams = array(
+                                    'errorReportId' => 'N/A',
+                                    'cadbNumber' => '',
+                                    'problem' => 'NB: This is a CADB Synchronization problem',
+                                    'reporterNetworkId' => '',
+                                    'submissionDateTime' => date('c'),
+                                    'processType' => 'CADB Synchronization'
+                                );
+
+                                $emailService->adminErrorReport("CADB SYNCHRONIZATIONN OFF FOR " . $porting['portingState'], $eParams, processType::ERROR);
+
+                            }else{
+
+                                $eParams = array(
+                                    'errorReportId' => 'N/A',
+                                    'cadbNumber' => '',
+                                    'problem' => 'NB: This is a CADB Synchronization problem',
+                                    'reporterNetworkId' => '',
+                                    'submissionDateTime' => date('c'),
+                                    'processType' => 'CADB Synchronization'
+                                );
+
+                                $emailService->adminErrorReport("NO ENTRY IN LDB FOR " . $cadbId, $eParams, processType::ERROR);
+
 
                             }
                         }
@@ -2860,19 +2881,48 @@ class BatchOperationService extends CI_Controller {
 
                 }else{
 
-                    $response['success'] = false;
-                    $response['message'] = 'No file name found';
+                    $eParams = array(
+                        'errorReportId' => 'N/A',
+                        'cadbNumber' => '',
+                        'problem' => 'NB: This is a CADB Synchronization problem',
+                        'reporterNetworkId' => '',
+                        'submissionDateTime' => date('c'),
+                        'processType' => 'CADB Synchronization'
+                    );
+
+                    $emailService->adminErrorReport("SYNCHRONIZATION FILE NOT FOUND", $eParams, processType::ERROR);
 
                 }
 
             }else{
                 $response['success'] = false;
                 $response['message'] = 'Failed opening file';
+                $eParams = array(
+                    'errorReportId' => 'N/A',
+                    'cadbNumber' => '',
+                    'problem' => 'NB: This is a CADB Synchronization problem',
+                    'reporterNetworkId' => '',
+                    'submissionDateTime' => date('c'),
+                    'processType' => 'CADB Synchronization'
+                );
+
+                $emailService->adminErrorReport("FAILED OPENING SYNCHRONIZATION FILE", $eParams, processType::ERROR);
             }
 
         }else{
             // Mail admin for failure
-            $emailService->cadbSynchronizationFailure([]);
+            $eParams = array(
+                'errorReportId' => 'N/A',
+                'cadbNumber' => '',
+                'problem' => 'NB: This is a CADB Synchronization problem',
+                'reporterNetworkId' => '',
+                'submissionDateTime' => date('c'),
+                'processType' => 'CADB Synchronization'
+            );
+
+            $emailService->adminErrorReport("SYNCHRONIZATION PROCESSED FAILED FOR $day", $eParams, processType::ERROR);
+
+
         }
 
     }

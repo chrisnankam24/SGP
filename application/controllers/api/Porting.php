@@ -71,6 +71,8 @@ class Porting extends CI_Controller
             $language = $this->input->post('language'); // EN or FR
             $userId = $this->input->post('userId'); // EN or FR
 
+            $portingDateTime = $this->input->post('portingDateTime');
+
             // Get subscriber contractId from BSCS with temporal MSISDN
             $bscsOperationService = new BscsOperationService();
             $contractId = $bscsOperationService->getContractId($temporalNumber);
@@ -91,7 +93,7 @@ class Porting extends CI_Controller
 
                 $orderResponse = $portingOperationService->orderPort($donorOperator, $portingMsisdn, $subscriberType, $rio, $documentType, $physicalPersonFirstName,
                     $physicalPersonLastName, $physicalPersonIdNumber, $legalPersonName, $legalPersonTin,
-                    $contactNumber, $temporalNumber, $contractId, $language, $userId);
+                    $contactNumber, $temporalNumber, $contractId, $language, $portingDateTime, $userId);
 
                 $response = $orderResponse;
 
@@ -119,6 +121,7 @@ class Porting extends CI_Controller
         if(isset($_POST)) {
 
             $file_name = $this->input->post('fileName');
+            $portingDateTime = $this->input->post('portingDateTime');
             $userId = $this->input->post('userId');
 
             if($file_name != ''){
@@ -220,7 +223,7 @@ class Porting extends CI_Controller
 
                                     $tempResponse = $portingOperationService->orderPort($donorOperator, $portingMSISDN, $subscriberType, $rio, $documentType, $physicalPersonFirstName,
                                         $physicalPersonLastName, $physicalPersonIdNumber, null, null,
-                                        null, $temporalNumber, $contractId, $language, $userId);
+                                        null, $temporalNumber, $contractId, $language, $portingDateTime, $userId);
                                     $tempResponse['portingMSISDN'] = $portingMSISDN;
                                 }
 
@@ -263,6 +266,7 @@ class Porting extends CI_Controller
         if(isset($_POST)) {
 
             $file_name = $this->input->post('fileName');
+            $portingDateTime = $this->input->post('portingDateTime');
             $userId = $this->input->post('userId');
 
             if($file_name != ''){
@@ -363,7 +367,7 @@ class Porting extends CI_Controller
 
                                     $tempResponse = $portingOperationService->orderPort($donorOperator, $portingMSISDN, $subscriberType, $rio, $documentType, null,
                                         null, null,$legalPersonName, $legalPersonTin, $contactNumber,
-                                        $temporalNumber, $contractId, $language, $userId);
+                                        $temporalNumber, $contractId, $language, $portingDateTime, $userId);
 
                                     $tempResponse['portingMSISDN'] = $portingMSISDN;
 

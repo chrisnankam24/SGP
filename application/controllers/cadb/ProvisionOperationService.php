@@ -17,14 +17,13 @@ use ProvisionService\Provision as Provision;
 /**
  * Class ProvisionOperationService
  */
-class ProvisionOperationService extends CI_Controller {
+class ProvisionOperationService {
 
     // Declare client
     private $client = null;
 
     public function __construct()
     {
-        parent::__construct();
 
         // Disable wsdl cache
         ini_set("soap.wsdl_cache_enabled", "0");

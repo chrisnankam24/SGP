@@ -164,12 +164,6 @@ class BscsOperationService {
 
             if($logonResponse->success){
 
-                // Retrieve Cookie data
-                $cookie = $this->msisdnClient->_cookies;
-
-                // Set Cookies
-                $this->contractClient->__setCookie('JSESSIONID', $cookie['JSESSIONID']);
-
                 // Make ChangeImportMSISDN request
                 $request = new BscsTypes\ChangeImportMSISDN();
 
@@ -235,12 +229,6 @@ class BscsOperationService {
             $logonResponse = $this->logonMSISDN();
 
             if($logonResponse->success){
-
-                // Retrieve Cookie data
-                $cookie = $this->msisdnClient->_cookies;
-
-                // Set Cookies
-                $this->contractClient->__setCookie('JSESSIONID', $cookie['JSESSIONID']);
 
                 // Make ChangeImportMSISDN request
                 $request = new BscsTypes\ImportMSISDN();
@@ -312,12 +300,6 @@ class BscsOperationService {
             $logonResponse = $this->logonMSISDN();
 
             if($logonResponse->success){
-
-                // Retrieve Cookie data
-                $cookie = $this->msisdnClient->_cookies;
-
-                // Set Cookies
-                $this->contractClient->__setCookie('JSESSIONID', $cookie['JSESSIONID']);
 
                 // Make ChangeImportMSISDN request
                 $request = new BscsTypes\ReturnMSISDN();
@@ -391,17 +373,11 @@ class BscsOperationService {
 
             if($logonResponse->success){
 
-                // Retrieve Cookie data
-                $cookie = $this->msisdnClient->_cookies;
-
-                // Set Cookies
-                $this->contractClient->__setCookie('JSESSIONID', $cookie['JSESSIONID']);
-
                 // Make ExportMSISDN request
                 $request = new BscsTypes\ExportMSISDN();
 
                 $request->autoCommit = true;
-                $request->PHONE_NUMBER = $MSISDN;
+                $request->MSISDN = $MSISDN;
                 $request->endUserName = BscsParams::endUserName;
                 $request->NPCODE = 1;
 
@@ -684,12 +660,6 @@ class BscsOperationService {
             $logonResponse = $this->logonContract();
 
             if($logonResponse->success){
-
-                // Retrieve Cookie data
-                $cookie = $this->contractClient->_cookies;
-
-                // Set Cookies
-                $this->contractClient->__setCookie('JSESSIONID', $cookie['JSESSIONID']);
 
                 // Make deleteContract request
                 $request = new BscsTypes\deleteContract();

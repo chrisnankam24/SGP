@@ -270,6 +270,34 @@ class NReturn extends CI_Controller
     }
 
     /**
+     * TODO: OK
+     * API for performing search
+     */
+    public function searchNumberReturn(){
+
+        $response = [];
+
+        if(isset($_POST) && count($_POST) > 0) {
+
+            $searchMSISDN = $this->input->post('searchMSISDN');
+            $userId = $this->input->post('userId');
+
+            $nrOperationService = new ReturnOperationService();
+
+            $response = $nrOperationService->searchReturn($searchMSISDN, $userId);
+
+        }else{
+
+            $response['success'] = false;
+            $response['message'] = 'No search msisdn found';
+
+        }
+
+        $this->send_response($response);
+
+    }
+
+    /**
      * @param $response
      */
     private function send_response($response)

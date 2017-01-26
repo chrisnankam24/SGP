@@ -48,15 +48,15 @@ class Fault {
     const LDB_ADMINISTRATION_SERVICE = 'ldbAdministrationServiceFault';
 
     // BSCS Fault
-    const SIGNATURE_MISMATCH = 'SignatureMismatchException';
-    const PARAMETER_LIST = 'ParameterListException';
-    const UNKNOWN_COMMAND = 'UnknownCommandFault';
-    const SERVICE_BREAK_DOWN = 'ServiceBreakDownFault';
-    const CMS_EXECUTION = 'CMSExecutionFault';
-    const INVALID_PARAMETER_TYPE = 'InvalidParameterTypeException';
-    const DENIED_ACCESS = 'DeniedAccessFault';
-    const SERVER_NOT_FOUND = 'ServerNotFoundFault';
-    const POST_CONNECTION_INITIALIZATION = 'PostConnectInitializationFault';
+    const SIGNATURE_MISMATCH = 'com.orangecaraibe.commonapi.corba.cms.SignatureMismatchException';
+    const PARAMETER_LIST = 'com.orangecaraibe.commonapi.corba.cms.ParameterListException';
+    const UNKNOWN_COMMAND = 'com.orangecaraibe.commonapi.corba.cms.UnknownCommandFault';
+    const SERVICE_BREAK_DOWN = 'com.orangecaraibe.commonapi.corba.cms.ServiceBreakDownFault';
+    const CMS_EXECUTION = 'com.orangecaraibe.commonapi.corba.cms.CMSExecutionFault';
+    const INVALID_PARAMETER_TYPE = 'com.orangecaraibe.commonapi.corba.cms.InvalidParameterTypeException';
+    const DENIED_ACCESS = 'com.orangecaraibe.commonapi.corba.cms.DeniedAccessFault';
+    const SERVER_NOT_FOUND = 'com.orangecaraibe.commonapi.corba.cms.ServerNotFoundFault';
+    const POST_CONNECTION_INITIALIZATION = 'com.orangecaraibe.commonapi.corba.cms.PostConnectInitializationFault';
 
     // BSCS Fault names
     const SIGNATURE_MISMATCH_CODE = 'fault';

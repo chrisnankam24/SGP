@@ -452,7 +452,7 @@ class ExportMSISDN {
     /**
      * @var string
      */
-    public $PHONE_NUMBER;
+    public $MSISDN;
 
     /**
      * @var long

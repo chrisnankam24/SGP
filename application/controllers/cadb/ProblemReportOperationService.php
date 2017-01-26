@@ -19,17 +19,26 @@ use ProblemService\Problem as Problem;
  * Controller for ProblemReportOperationService CADB server
  * Class ProblemReportOperationService
  */
-class ProblemReportOperationService  extends CI_Controller {
+class ProblemReportOperationService {
 
     // Declare client
     private $client = null;
 
+    private $db = null;
+    private $Error_model = null;
+
     public function __construct()
     {
 
-        parent::__construct();
-
         $this->load->model('Error_model');
+
+        $CI =& get_instance();
+
+        $this->db = $CI->db;
+
+        $CI->load->model('Error_model');
+
+        $this->Error_model = $CI->Error_model;
 
         // Disable wsdl cache
         ini_set("soap.wsdl_cache_enabled", "0");
@@ -38,19 +47,6 @@ class ProblemReportOperationService  extends CI_Controller {
         $this->client = new SoapClient(__DIR__ . '/wsdl/ProblemReportOperationService.wsdl', array(
             "trace" => false
         ));
-
-    }
-
-    public function index(){
-
-        // Create a new soap server in WSDL mode
-        $server = new SoapServer( __DIR__ . '/wsdl/ProblemReportOperationService.wsdl');
-
-        // Set the class for the soap server
-        $server->setClass("ServerFunctionalities");
-
-        // Handle soap operations
-        $server->handle();
 
     }
 

@@ -17,20 +17,36 @@ require_once APPPATH . "controllers/sms/SMS.php";
 
 use RollbackService\Rollback as rollback;
 
-class RollbackOperationService  extends CI_Controller {
+class RollbackOperationService {
 
     // Declare client
     private $client = null;
 
+    private $db = null;
+    private $Porting_model = null;
+    private $Rollback_model = null;
+    private $Rollbacksubmission_model = null;
+    private $Rollbackstateevolution_model = null;
+    private $Rollbackrejectionabandon_model = null;
+
     public function __construct()
     {
-        parent::__construct();
 
-        $this->load->model('Porting_model');
-        $this->load->model('Rollback_model');
-        $this->load->model('Rollbacksubmission_model');
-        $this->load->model('Rollbackstateevolution_model');
-        $this->load->model('Rollbackrejectionabandon_model');
+        $CI =& get_instance();
+
+        $this->db = $CI->db;
+
+        $CI->load->model('Porting_model');
+        $CI->load->model('Rollback_model');
+        $CI->load->model('Rollbacksubmission_model');
+        $CI->load->model('Rollbackstateevolution_model');
+        $CI->load->model('Rollbackrejectionabandon_model');
+
+        $this->Porting_model = $CI->Porting_model;
+        $this->Rollback_model = $CI->Rollback_model;
+        $this->Rollbacksubmission_model = $CI->Rollbacksubmission_model;
+        $this->Rollbackstateevolution_model = $CI->Rollbackstateevolution_model;
+        $this->Rollbackrejectionabandon_model = $CI->Rollbackrejectionabandon_model;
 
         // Disable wsdl cache
         ini_set("soap.wsdl_cache_enabled", "0");
@@ -447,7 +463,7 @@ class RollbackOperationService  extends CI_Controller {
         }else{
 
             $donorSubmissionDateTime = date('c');
-            $preferredRollbackDateTime = date('c', strtotime('+4 hours', strtotime(date('c'))));
+            $preferredRollbackDateTime = date('c', strtotime('+2 hours', strtotime(date('c'))));
 
             // Make Open Rollback Operation
 
@@ -656,7 +672,7 @@ class RollbackOperationService  extends CI_Controller {
 
                     $rollbackParams = array(
                         'preferredRollbackDateTime' => $acceptResponse->rollbackTransaction->preferredRollbackDateTime,
-                        'rollbackDateAndTime' => $acceptResponse->rollbackTransaction->rollbackDateTime,
+                        'rollbackDateTime' => $acceptResponse->rollbackTransaction->rollbackDateTime,
                         'lastChangeDateTime' => $acceptResponse->rollbackTransaction->lastChangeDateTime,
                         'rollbackState' => \RollbackService\Rollback\rollbackStateType::ACCEPTED
                     );
@@ -759,11 +775,11 @@ class RollbackOperationService  extends CI_Controller {
         $response = [];
 
         // Verify if rollback currently in OPENED state in DB
-        $dbPort = $this->Rollback_model->get_rollback($rollbackId);
+        $dbRollback = $this->Rollback_model->get_rollback($rollbackId);
 
-        if($dbPort){
+        if($dbRollback){
 
-            if($dbPort['rollbackState'] == rollback\rollbackStateType::OPENED){
+            if($dbRollback['rollbackState'] == rollback\rollbackStateType::OPENED){
 
                 if($rejectionReason == \RollbackService\Rollback\rejectionReasonType::OTHER_REASONS) {
 
@@ -781,7 +797,7 @@ class RollbackOperationService  extends CI_Controller {
 
                         $rollbackParams = array(
                             'preferredRollbackDateTime' => $rejectResponse->rollbackTransaction->preferredRollbackDateTime,
-                            'rollbackDateAndTime' => $rejectResponse->rollbackTransaction->rollbackDateTime,
+                            'rollbackDateTime' => $rejectResponse->rollbackTransaction->rollbackDateTime,
                             'lastChangeDateTime' => $rejectResponse->rollbackTransaction->lastChangeDateTime,
                             'rollbackState' => \RollbackService\Rollback\rollbackStateType::REJECTED
                         );
@@ -814,9 +830,12 @@ class RollbackOperationService  extends CI_Controller {
                         if ($this->db->trans_status() === FALSE) {
 
                             $error = $this->db->error();
+
                             fileLogAction($error['code'], 'RollbackOperationService', $error['message']);
 
                             $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
+
+                            $response = $error;
 
                             $emailService = new EmailService();
                             $emailService->adminErrorReport('ROLLBACK_REJECTED_BUT_DB_FILLED_INCOMPLETE', $rollbackParams, processType::ROLLBACK);
@@ -876,7 +895,7 @@ class RollbackOperationService  extends CI_Controller {
 
                 $response['success'] = false;
 
-                $response['message'] = 'Rollback now in ' . $dbPort['rollbackState'] . ' state. Request not sent.';
+                $response['message'] = 'Rollback now in ' . $dbRollback['rollbackState'] . ' state. Request not sent.';
 
             }
 
@@ -926,6 +945,8 @@ class RollbackOperationService  extends CI_Controller {
 
             $tmpData = $getResponse->rollbackTransaction;
 
+            $portingData = $this->Porting_model->get_porting($tmpData->originalPortingId);
+
             $data = array();
 
             $data['rollbackId'] = $tmpData->rollbackId;
@@ -937,7 +958,11 @@ class RollbackOperationService  extends CI_Controller {
             $data['cadbOpenDateTime'] = $tmpData->cadbOpenDateTime;
             $data['rollbackState'] = $tmpData->rollbackState;
 
-            $response['data'] = $tmpData;
+            if($portingData == null){
+                $portingData = [];
+            }
+
+            $response['data'] = array_merge($data, $portingData);
 
         }
 

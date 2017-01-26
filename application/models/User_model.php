@@ -43,14 +43,7 @@ class User_model extends CI_Model
     {
         $this->db->where('userId',$userId);
         $response = $this->db->update('Users',$params);
-        if($response)
-        {
-            return "user updated successfully";
-        }
-        else
-        {
-            return "Error occuring while updating user";
-        }
+        return $response;
     }
     
     /*

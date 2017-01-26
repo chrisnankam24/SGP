@@ -36,7 +36,6 @@ class PortingOperationService  {
     public function __construct()
     {
 
-
         $CI =& get_instance();
 
         $this->db = $CI->db;
@@ -60,10 +59,6 @@ class PortingOperationService  {
         $this->client = new SoapClient(__DIR__ . '/wsdl/PortingOperationService.wsdl', array(
             "trace" => false
         ));
-
-    }
-
-    public function index(){
 
     }
 
@@ -749,7 +744,7 @@ class PortingOperationService  {
      */
     public function orderPort($donorOperator, $portingMsisdn, $subscriberType, $rio, $documentType, $physicalPersonFirstName,
                                $physicalPersonLastName, $physicalPersonIdNumber, $legalPersonName, $legalPersonTin,
-                               $contactNumber, $temporalNumber, $contractId, $language, $userId) {
+                               $contactNumber, $temporalNumber, $contractId, $language, $portingDateTime, $userId) {
 
         // Construct subscriber info
 
@@ -769,7 +764,7 @@ class PortingOperationService  {
 
         // Make Order Porting Operation
 
-        $portingDateTime = getRecipientPortingDateTime();
+        //$portingDateTime = getRecipientPortingDateTime();
 
         $orderResponse = $this->order($donorOperator, $portingDateTime, $portingMsisdn, $rio, $subscriberInfo);
 
