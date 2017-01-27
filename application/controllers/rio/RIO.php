@@ -32,9 +32,7 @@ class RIO extends CI_Controller {
 
         if($subsInfo){
 
-            $contractId = $subsInfo['CONTRACT_ID'];
-
-            return RIO::calculateRIO($contractId, $msisdn);
+            return RIO::calculateRIO($subsInfo, $msisdn);
 
         }else{
             return false;
@@ -58,7 +56,7 @@ class RIO extends CI_Controller {
 
             if($subsInfo['TYPE_CLIENT'] == 'C'){
 
-                return RIO::calculateRIO($contractId, $msisdn);
+                return RIO::calculateRIO($subsInfo, $msisdn);
 
             }else{
 
@@ -92,7 +90,7 @@ class RIO extends CI_Controller {
 
                 $contractId = $subsInfo['CONTRACT_ID'];
 
-                $result = RIO::calculateRIO($contractId, $msisdn);
+                $result = RIO::calculateRIO($subsInfo, $msisdn);
 
             }else{
 
@@ -126,9 +124,7 @@ class RIO extends CI_Controller {
 
         if($subsInfo){
 
-            $contractId = $subsInfo['CONTRACT_ID'];
-
-            $response['rio'] = RIO::calculateRIO($contractId, $msisdn);
+            $response['rio'] = RIO::calculateRIO($subsInfo, $msisdn);
 
             $response['language'] = $subsInfo['LANGUE'];
 
@@ -149,13 +145,25 @@ class RIO extends CI_Controller {
         }
     }
 
-    private static function calculateRIO($contractId, $msisdn){
+    private static function calculateRIO($subsInfo, $msisdn){
+
+        $contractId = $subsInfo['CONTRACT_ID'];
 
         // RIO == OOQRRRRRRCCC
 
         $OO = Operator::ORANGE_NETWORK_ID; // Operator ID
 
         $Q = 'P'; // Subscriber Type :: P == Personal / E == Enterprise
+
+        if($subsInfo['TYPE_CLIENT'] == 'B'){
+
+            $Q = 'E';
+
+        }else{
+
+            return false;
+
+        }
 
         $Q_NC = $Q == 'E' ? '0' : '1';
 

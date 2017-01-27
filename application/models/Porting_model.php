@@ -5,6 +5,7 @@
  */
 
 require_once APPPATH . "controllers/cadb/Porting.php";
+require_once APPPATH . "controllers/cadb/Common.php";
 
  
 class Porting_model extends CI_Model
