@@ -303,6 +303,8 @@ class BatchOperationService extends CI_Controller {
 
             $subscriberMSISDN = $orderedPort['startMSISDN'];
 
+            $recipientNetworkId = $orderedPort['recipientNetworkId'];
+
             $subscriberInfo = $bscsOperationService->loadNumberInfo($subscriberMSISDN);
 
             $portingDenialReason = null;
@@ -320,6 +322,49 @@ class BatchOperationService extends CI_Controller {
                     );
 
                     $this->Porting_model->update_porting($portingId, $portingParams);
+
+                    // Send SMS to Subscriber
+
+                    if($recipientNetworkId == Operator::MTN_NETWORK_ID){
+
+                        $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_MTN;
+
+                    }elseif($recipientNetworkId == Operator::NEXTTEL_NETWORK_ID){
+
+                        $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_NEXTTEL;
+
+                    }
+
+                    $smsResponse = SMS::OPD_Inform_Subcriber($subscriberInfo['LANGUE'], $subscriberMSISDN, $denom_OPR, $portingId);
+
+                    if($smsResponse['success'] == true){
+
+                        // Insert Porting SMS Notification
+                        $smsNotificationparams = array(
+                            'portingId' => $portingId,
+                            'smsType' => SMSType::OPD_PORTING_INIT,
+                            'message' => $smsResponse['message'],
+                            'msisdn' => $smsResponse['msisdn'],
+                            'creationDateTime' => date('c'),
+                            'status' => smsState::SENT,
+                            'attemptCount' => 1,
+                            'sendDateTime' => date('c')
+                        );
+
+                    }else{
+
+                        $smsNotificationparams = array(
+                            'portingId' => $portingId,
+                            'smsType' => SMSType::OPD_PORTING_INIT,
+                            'message' => $smsResponse['message'],
+                            'msisdn' => $smsResponse['msisdn'],
+                            'creationDateTime' => date('c'),
+                            'status' => smsState::PENDING,
+                            'attemptCount' => 1,
+                        );
+                    }
+
+                    $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
 
                     // Number Owned by Orange
 

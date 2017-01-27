@@ -68,13 +68,9 @@ class PortingNotificationService extends CI_Controller
      */
     public function notifyOrdered($notifyOrderedRequest){
 
-        $bscsOperationService = new BscsOperationService();
-
         $rio = $notifyOrderedRequest->portingTransaction->rio;
 
         $portingId = $notifyOrderedRequest->portingTransaction->portingId;
-
-        $recipientNetworkId =  $notifyOrderedRequest->portingTransaction->recipientNrn->networkId;
 
         $subscriberType = getSubscriberType($rio);
 
@@ -128,48 +124,6 @@ class PortingNotificationService extends CI_Controller
 
         $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
 
-        // Send SMS to Subscriber
-
-        if($recipientNetworkId == Operator::MTN_NETWORK_ID){
-
-            $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_MTN;
-
-        }elseif($recipientNetworkId == Operator::NEXTTEL_NETWORK_ID){
-
-            $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_NEXTTEL;
-
-        }
-
-        $smsResponse = SMS::OPD_Inform_Subcriber($language, $startMSISDN, $denom_OPR, $portingId);
-
-        if($smsResponse['success'] == true){
-
-            // Insert Porting SMS Notification
-            $smsNotificationparams = array(
-                'portingId' => $portingId,
-                'smsType' => SMSType::OPD_PORTING_INIT,
-                'message' => $smsResponse['message'],
-                'msisdn' => $smsResponse['msisdn'],
-                'creationDateTime' => date('c'),
-                'status' => smsState::SENT,
-                'attemptCount' => 1,
-                'sendDateTime' => date('c')
-            );
-
-        }else{
-
-            $smsNotificationparams = array(
-                'portingId' => $portingId,
-                'smsType' => SMSType::OPD_PORTING_INIT,
-                'message' => $smsResponse['message'],
-                'msisdn' => $smsResponse['msisdn'],
-                'creationDateTime' => date('c'),
-                'status' => smsState::PENDING,
-                'attemptCount' => 1,
-            );
-        }
-
-        $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
 
         if ($this->db->trans_status() === FALSE) {
 
