@@ -26,7 +26,7 @@ class Numberreturn_model extends CI_Model
     */
     function search_numberreturn($msisdn)
     {
-        return $this->db->order_by('recipientSubmissionDateTime', 'desc')->get_where('NumberReturn',array('returnMSISDN'=>$msisdn))->result_array();
+        return $this->db->order_by('openDateTime', 'desc')->get_where('NumberReturn',array('returnMSISDN'=>$msisdn))->result_array();
     }
 
     /*

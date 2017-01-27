@@ -94,7 +94,7 @@ class KPSAParams {
 }
 
 class params {
-    const DENIED_REJECTED_MAX_COUNT = 100;
+    const DENIED_REJECTED_MAX_COUNT = 50;
 }
 
 /**

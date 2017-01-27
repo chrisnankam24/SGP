@@ -777,7 +777,7 @@ class ReturnOperationService {
      * TODO: getCADBNumberReturns
      * API to retrieve all NRs from CADB
      */
-    private function getCADBNumberReturns(){
+    public function getCADBNumberReturns(){
 
         $response = [];
 
@@ -795,8 +795,6 @@ class ReturnOperationService {
         else{
 
             $fault = $currentNRResponse->error;
-
-            $emailService = new EmailService();
 
             switch ($fault) {
 

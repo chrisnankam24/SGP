@@ -168,6 +168,4 @@ class RIO extends CI_Controller {
         return $rio;
     }
 
-
-
 }

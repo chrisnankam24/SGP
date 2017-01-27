@@ -993,7 +993,7 @@ class RollbackOperationService {
      * TODO: getCADBRollbacks
      * API to retrieve all rollbacks from CADB
      */
-    private function getCADBRollbacks(){
+    public function getCADBRollbacks(){
 
         $response = [];
 

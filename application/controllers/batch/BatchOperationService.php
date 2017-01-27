@@ -204,7 +204,7 @@ class BatchOperationService extends CI_Controller {
                     $error = $this->db->error();
                     fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
-                    $emailService->adminSubmissionReport('PORTING_SUBMISSION_ORDERED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
+                    $emailService->adminErrorReport('PORTING_SUBMISSION_ORDERED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
 
                 }else{
 
@@ -1342,7 +1342,7 @@ class BatchOperationService extends CI_Controller {
 
                     $rollbackParams = array_merge($rollbackParams, $portingParams);
 
-                    $emailService->adminSubmissionReport('ROLLBACK_SUBMISSION_OPENED_BUT_DB_FILLED_INCOMPLETE', $rollbackParams, processType::ROLLBACK);
+                    $emailService->adminErrorReport('ROLLBACK_SUBMISSION_OPENED_BUT_DB_FILLED_INCOMPLETE', $rollbackParams, processType::ROLLBACK);
 
                 }else{
 
@@ -1399,7 +1399,7 @@ class BatchOperationService extends CI_Controller {
 
                         $rollbackParams = array_merge($submissionParams, $portingParams);
 
-                        $emailService->adminSubmissionReport($fault, $rollbackParams, processType::ROLLBACK);
+                        $emailService->adminErrorReport($fault, $rollbackParams, processType::ROLLBACK);
                 }
             }
 
@@ -2171,7 +2171,7 @@ class BatchOperationService extends CI_Controller {
                     $error = $this->db->error();
                     fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
-                    $emailService->adminSubmissionReport('NR_SUBMISSION_OPENED_BUT_DB_FILLED_INCOMPLETE', $nrParams, processType::_RETURN);
+                    $emailService->adminErrorReport('NR_SUBMISSION_OPENED_BUT_DB_FILLED_INCOMPLETE', $nrParams, processType::_RETURN);
 
                 }else {
 
@@ -2213,7 +2213,7 @@ class BatchOperationService extends CI_Controller {
                             'returnNumberState' => 'N/A'
                         );
 
-                        $emailService->adminSubmissionReport($fault, $nrParams, processType::_RETURN);
+                        $emailService->adminErrorReport($fault, $nrParams, processType::_RETURN);
                 }
 
             }
@@ -2964,6 +2964,95 @@ class BatchOperationService extends CI_Controller {
      */
     public function systemAPIUpdater(){
 
+        $emailService = new EmailService();
+
+        /*
+         * Porting Updater
+         */
+        $portingOperationService = new PortingOperationService();
+
+        // Portings
+        $cadbPortings = $portingOperationService->getCADBPortings();
+
+        $cadbPortings = $cadbPortings['data'];
+
+        foreach ($cadbPortings as $cadbPorting){
+
+            // Verify if porting in porting table
+            $dbPorting = $this->Porting_model->get_porting($cadbPorting['portingId']);
+
+            if($dbPorting && $dbPorting['portingState'] == $cadbPorting['portingState']){
+                // Porting found in the DB and in correct state. Perfect :)
+            }else{
+
+                $portingParams = $this->getPortingParams($dbPorting);
+
+                fileLogAction('9006', 'BatchOperationService::systemAPIUpdater', 'Porting[' . $cadbPorting['portingId'] . '] is '  . $cadbPorting['portingState'] . ' in CADB but ' . $dbPorting['portingState'] . ' in LDB: ' . json_encode($cadbPorting));
+
+                $emailService->adminErrorReport($cadbPorting['portingId'] . ' PORTING IN CADB BUT ' . $cadbPorting['portingState'] . ' IN LDB', $portingParams, processType::PORTING);
+
+            }
+
+        }
+
+        /*
+         * Rollback Updater
+         */
+        $rollbackOperationService = new RollbackOperationService();
+
+        // Rollbacks
+        $cadbRollbacks = $rollbackOperationService->getCADBRollbacks();
+
+        $cadbRollbacks = $cadbRollbacks['data'];
+
+        foreach ($cadbRollbacks as $cadbRollback){
+
+            // Verify if rollback in rollback table
+            $dbRollback = $this->Rollback_model->get_rollback($cadbRollback['rollbackId']);
+
+            if($dbRollback && $dbRollback['rollbackState'] == $cadbRollback['rollbackState']){
+                // Rollback found in the DB and in correct state. Perfect :)
+            }else{
+
+                $rollbackParams = $this->getRollbackParams($dbRollback);
+
+                fileLogAction('9006', 'BatchOperationService::systemAPIUpdater', 'Rollback[' . $cadbRollback['rollbackId'] . '] is '  . $cadbRollback['rollbackState'] . ' in CADB but ' . $dbRollback['rollbackState'] . ' in LDB: ' . json_encode($cadbRollback));
+
+                $emailService->adminErrorReport($cadbRollback['rollbackId'] . ' ROLLBACK IN CADB BUT ' . $cadbRollback['rollbackState'] . ' IN LDB', $rollbackParams, processType::ROLLBACK);
+
+            }
+
+        }
+
+        /*
+         * Return Updater
+         */
+        $returnOperationService = new ReturnOperationService();
+
+        // Current Returning Transactions
+        $cadbReturns =$returnOperationService->getCADBNumberReturns();
+
+        $cadbReturns = $cadbReturns['data'];
+
+        foreach ($cadbReturns as $cadbReturn){
+
+            // Verify if return in return table
+            $dbReturn = $this->Numberreturn_model->get_numberreturn($cadbReturn['returnId']);
+
+            if($dbReturn && $dbReturn['returnNumberState'] == $cadbReturn['returnNumberState']){
+                // Rollback found in the DB and in correct state. Perfect :)
+            }else{
+
+                $returnParams = $this->getReturnParams($dbReturn);
+
+                fileLogAction('9006', 'BatchOperationService::systemAPIUpdater', 'Rollback[' . $cadbReturn['returnId'] . '] is '  . $cadbReturn['rollbackState'] . ' in CADB but ' . $dbReturn['returnNumberState'] . ' in LDB: ' . json_encode($cadbReturn));
+
+                $emailService->adminErrorReport($cadbReturn['returnId'] . ' RETURN IN CADB BUT ' . $cadbReturn['returnNumberState'] . ' IN LDB', $returnParams, processType::ROLLBACK);
+
+            }
+
+        }
+
     }
 
     /**
@@ -3109,6 +3198,83 @@ class BatchOperationService extends CI_Controller {
      */
     public function yearlyEmailAlerter(){
 
+    }
+
+    /**
+     * Returns porting params array from CADB porting transsaction
+     * @param $porting
+     */
+    private function getPortingParams($porting){
+
+        $portingParams = array(
+            'portingId' => $porting->portingTransaction->portingId,
+            'recipientNetworkId' => $porting->portingTransaction->recipientNrn->networkId,
+            'recipientRoutingNumber' => $porting->portingTransaction->recipientNrn->routingNumber,
+            'donorNetworkId' => $porting->portingTransaction->donorNrn->networkId,
+            'donorRoutingNumber' => $porting->portingTransaction->recipientNrn->routingNumber,
+            'recipientSubmissionDateTime' => $porting->portingTransaction->recipientSubmissionDateTime,
+            'portingDateTime' => $porting->portingTransaction->portingDateTime,
+            'rio' =>  $porting->portingTransaction->rio,
+            'startMSISDN' =>  $porting->portingTransaction->numberRanges->numberRange->startNumber,
+            'endMSISDN' =>  $porting->portingTransaction->numberRanges->numberRange->endNumber,
+            'cadbOrderDateTime' => $porting->portingTransaction->cadbOrderDateTime,
+            'lastChangeDateTime' => $porting->portingTransaction->lastChangeDateTime,
+            'portingState' => $porting->portingTransaction->portingState,
+            'contractId' => null,
+            'language' => null,
+            'portingSubmissionId' => null,
+        );
+
+        if(isset($porting->portingTransaction->subscriberInfo->physicalPersonFirstName)) {
+            $portingParams['physicalPersonFirstName'] = $porting->portingTransaction->subscriberInfo->physicalPersonFirstName;
+            $portingParams['physicalPersonLastName'] = $porting->portingTransaction->subscriberInfo->physicalPersonLastName;
+            $portingParams['physicalPersonIdNumber'] = $porting->portingTransaction->subscriberInfo->physicalPersonIdNumber;
+
+        }
+        else{
+            $portingParams['legalPersonName'] = $porting->portingTransaction->subscriberInfo->legalPersonName;
+            $portingParams['legalPersonTin'] = $porting->portingTransaction->subscriberInfo->legalPersonTin;
+            $portingParams['contactNumber'] = $porting->portingTransaction->subscriberInfo->contactNumber;
+        }
+
+        return $portingParams;
+
+    }
+
+    private function getRollbackParams($rollback){
+
+        $rollbackParams = array(
+            'rollbackId' => $rollback->rollbackTransaction->rollbackId,
+            'originalPortingId' => $rollback->rollbackTransaction->originalPortingId,
+            'donorSubmissionDateTime' => $rollback->rollbackTransaction->donorSubmissionDateTime,
+            'preferredRollbackDateTime' => $rollback->rollbackTransaction->preferredRollbackDateTime,
+            'rollbackDateAndTime' => $rollback->rollbackTransaction->rollbackDateTime,
+            'cadbOpenDateTime' => $rollback->rollbackTransaction->cadbOpenDateTime,
+            'lastChangeDateTime' => $rollback->rollbackTransaction->lastChangeDateTime,
+            'rollbackState' => $rollback->rollbackTransaction->rollbackState,
+            'rollbackSubmissionId' => null,
+        );
+
+        return $rollbackParams;
+
+    }
+    
+    private function getReturnParams($return){
+
+        $nrParams = array(
+            'returnId' => $return->returnTransaction->returnId,
+            'openDateTime' => $return->returnTransaction->openDateTime,
+            'ownerNetworkId' => $return->returnTransaction->ownerNrn->networkId,
+            'ownerRoutingNumber' => $return->returnTransaction->ownerNrn->routingNumber,
+            'primaryOwnerNetworkId' => $return->returnTransaction->primaryOwnerNrn->networkId,
+            'primaryOwnerRoutingNumber' => $return->returnTransaction->primaryOwnerNrn->routingNumber,
+            'returnMSISDN' => null,
+            'returnNumberState' => $return->returnTransaction->returnNumberState,
+            'numberReturnSubmissionId' => null,
+        );
+        
+        return $nrParams;
+    
     }
 
 }

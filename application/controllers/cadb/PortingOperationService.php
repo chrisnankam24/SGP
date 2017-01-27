@@ -1448,12 +1448,13 @@ class PortingOperationService  {
      * TODO: getCADBPortings
      * API to retrieve all portings from CADB
      */
-    private function getCADBPortings(){
+    public function getCADBPortings(){
 
         $response = [];
 
+        $response['success'] = true;
         $response['data'] = [];
-        
+
         // Load ORDERED Portings
 
         $orderedResponse = $this->getOrderedPortings(Operator::ORANGE_NETWORK_ID);
@@ -1466,8 +1467,6 @@ class PortingOperationService  {
         else{
 
             $fault = $orderedResponse->error;
-
-            $emailService = new EmailService();
 
             switch ($fault) {
 

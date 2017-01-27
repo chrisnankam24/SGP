@@ -236,10 +236,6 @@ class EmailService {
 
     }
 
-    public function adminSubmissionReport($faultcode, $params, $processType){
-
-    }
-
     public function adminConfirmReport($confirmCode, $params, $processType){
 
         $subject = '';
