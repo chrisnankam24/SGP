@@ -159,10 +159,6 @@ class RIO extends CI_Controller {
 
             $Q = 'E';
 
-        }else{
-
-            return false;
-
         }
 
         $Q_NC = $Q == 'E' ? '0' : '1';
