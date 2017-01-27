@@ -31,6 +31,7 @@ class RioAPI extends CI_Controller {
         if(isset($_POST)) {
 
             $msisdn = $this->input->post('MSISDN');
+            $userId = $this->input->post('userId');
 
             $response = $this->getIndivRIO($msisdn);
 
@@ -49,27 +50,13 @@ class RioAPI extends CI_Controller {
      */
     public function getRioFile()
     {
-        /*$config['upload_path'] = './uploads/';
-        $config['allowed_types'] = 'csv';
-        $config['max_size'] = 100;
-
-        $this->load->library('upload', $config);
-
-        if (!$this->upload->do_upload('rioFile')) {
-            $error = array('error' => $this->upload->display_errors());
-        }else
-        {
-            $data = array('upload_data' => $this->upload->data());
-
-            $file_name = $data['upload_data']['file_name'];
-
-        }*/
 
         $response = [];
 
         if(isset($_POST)) {
 
             $file_name = $this->input->post('fileName');
+            $userId = $this->input->post('userId');
 
             if($file_name != ''){
                 $row = 1;

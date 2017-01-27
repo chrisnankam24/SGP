@@ -149,6 +149,12 @@ class RIO extends CI_Controller {
 
         $contractId = $subsInfo['CONTRACT_ID'];
 
+        if(strlen($msisdn) == 12){
+
+            $msisdn = substr($msisdn, 3);
+
+        }
+
         // RIO == OOQRRRRRRCCC
 
         $OO = Operator::ORANGE_NETWORK_ID; // Operator ID
