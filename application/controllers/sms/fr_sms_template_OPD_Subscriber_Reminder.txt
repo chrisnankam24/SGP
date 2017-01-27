@@ -1,3 +1,1 @@
-Nous vous rappelons que la portabilité de votre numéro [subs_msisdn] vers [OPR] sera effectuée le [day]. A cette date vous ne
-bénéficierez plus de notre service à compter de [end_time]. Il vous est demandé de changer votre SIM
-à [start_time].
+Nous vous rappelons que la portabilité de votre numéro [subs_msisdn] vers [OPR] sera effectuée le [day]. A cette date vous ne bénéficierez plus de notre service à compter de [end_time]. Il vous est demandé de changer votre SIM à [start_time].

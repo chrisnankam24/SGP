@@ -29,6 +29,12 @@ class BSCS_model extends CI_Model{
     function get_msisdn_info($msisdn)
     {
 
+        if(strlen($msisdn) == 12){
+
+            $msisdn = substr($msisdn, 3);
+
+        }
+
         $response = -1; // $response remains this way if request fails
 
        /* $sql = "SELECT a.dn_num MSISDN, c.co_id CONTRACT_ID, cos.ch_status STATUT, cu.CSCUSTTYPE TYPE_CLIENT,

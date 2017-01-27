@@ -1,3 +1,2 @@
 Conformément à votre demande souscrite auprès de l’opérateur [OPR], la résiliation avec portabilité du numéro [porting_id] sera effectuée d’ici 24 heures
-ouvrables, Si vous n’êtes pas à l’origine de cette demande, contactez très rapidement notre service
-client au numéro [customer_service_num]
+ouvrables, Si vous n’êtes pas à l’origine de cette demande, contactez très rapidement notre service client au numéro [customer_service_num]

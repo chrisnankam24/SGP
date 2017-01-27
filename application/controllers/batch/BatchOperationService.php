@@ -312,6 +312,15 @@ class BatchOperationService extends CI_Controller {
 
                 if($subscriberInfo != null){ // Connection to BSCS successful and User found
 
+                    // Update Porting table
+
+                    $portingParams = array(
+                        'contractId' => $subscriberInfo['CONTRACT_ID'],
+                        'language' => $subscriberInfo['LANGUE']
+                    );
+
+                    $this->Porting_model->update_porting($portingId, $portingParams);
+
                     // Number Owned by Orange
 
                     $subscriberRIO = RIO::get_rio($subscriberMSISDN);

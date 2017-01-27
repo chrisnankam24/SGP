@@ -1,3 +1,1 @@
-Conformément à votre demande souscrite auprès de l’opérateur [OPD], la résiliation avec retour-arriere du numéro [rollback_id] sera effectuée d’ici 24 heures
-ouvrables, Si vous n’êtes pas à l’origine de cette demande, contactez très rapidement notre service
-client au numéro [customer_service_num]
+Conformément à votre demande souscrite auprès de l’opérateur [OPD], la résiliation avec retour-arriere du numéro [rollback_id] sera effectuée d’ici 24 heures ouvrables, Si vous n’êtes pas à l’origine de cette demande, contactez très rapidement notre service client au numéro [customer_service_num]
