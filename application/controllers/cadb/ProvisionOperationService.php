@@ -52,6 +52,8 @@ class ProvisionOperationService {
 
                 $response = $this->client->confirmRoutingData($request);
 
+                $response->success = true;
+
                 return $response;
 
             }catch (SoapFault $e){

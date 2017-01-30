@@ -242,6 +242,7 @@ class BscsOperationService {
                 $request->MSISDN = $portingMSISDN;
                 $request->endUserName = BscsParams::cmsUserName;
                 $request->NPCODE = 1;
+                $request->HMCODE = BscsParams::HMCODE;
 
                 if($sourceOperatorId == Operator::MTN_NETWORK_ID){
                     $request->SRC_PLCODE = BscsParams::MTN_PLCODE;

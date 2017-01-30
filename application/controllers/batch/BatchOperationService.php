@@ -99,7 +99,7 @@ class BatchOperationService extends CI_Controller {
             $legalPersonTin = $startedPort['legalPersonTin'];
             $contactNumber = $startedPort['contactNumber'];
             $portingDateTime = $startedPort['portingDateTime'];
-            $orderedDateTime = $startedPort['orderedDateTime'];
+            $subscriberSubmissionDateTime = $startedPort['subscriberSubmissionDateTime'];
             $contractId = $startedPort['contractId'];
             $language = $startedPort['language'];
 
@@ -225,7 +225,7 @@ class BatchOperationService extends CI_Controller {
                         $currentDateTime = date('c');
 
                         $start_time = date('y-d-m h:i:s', strtotime($currentDateTime));
-                        $end_time = date('y-d-m h:i:s', strtotime($orderedDateTime));
+                        $end_time = date('y-d-m h:i:s', strtotime($subscriberSubmissionDateTime));
 
                         $start_time = date_create_from_format('y-d-m h:i:s', $start_time);
                         $end_time = date_create_from_format('y-d-m h:i:s', $end_time);
@@ -235,7 +235,7 @@ class BatchOperationService extends CI_Controller {
                         // More than 20 minutes difference
                         if($diff->i > 20){
 
-                            $params = array('errorMessage' => 'Retarded porting submission encountered');
+                            $params = array('errorMessage' => 'Retarded porting submission encountered for ' . $portingMsisdn);
 
                             $emailService->error('RETARDED PORTING SUBMISSION DETECTED', $params);
 
@@ -323,49 +323,6 @@ class BatchOperationService extends CI_Controller {
 
                     $this->Porting_model->update_porting($portingId, $portingParams);
 
-                    // Send SMS to Subscriber
-
-                    if($recipientNetworkId == Operator::MTN_NETWORK_ID){
-
-                        $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_MTN;
-
-                    }elseif($recipientNetworkId == Operator::NEXTTEL_NETWORK_ID){
-
-                        $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_NEXTTEL;
-
-                    }
-
-                    $smsResponse = SMS::OPD_Inform_Subcriber($subscriberInfo['LANGUE'], $subscriberMSISDN, $denom_OPR, $portingId);
-
-                    if($smsResponse['success'] == true){
-
-                        // Insert Porting SMS Notification
-                        $smsNotificationparams = array(
-                            'portingId' => $portingId,
-                            'smsType' => SMSType::OPD_PORTING_INIT,
-                            'message' => $smsResponse['message'],
-                            'msisdn' => $smsResponse['msisdn'],
-                            'creationDateTime' => date('c'),
-                            'status' => smsState::SENT,
-                            'attemptCount' => 1,
-                            'sendDateTime' => date('c')
-                        );
-
-                    }else{
-
-                        $smsNotificationparams = array(
-                            'portingId' => $portingId,
-                            'smsType' => SMSType::OPD_PORTING_INIT,
-                            'message' => $smsResponse['message'],
-                            'msisdn' => $smsResponse['msisdn'],
-                            'creationDateTime' => date('c'),
-                            'status' => smsState::PENDING,
-                            'attemptCount' => 1,
-                        );
-                    }
-
-                    $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
-
                     // Number Owned by Orange
 
                     $subscriberRIO = RIO::get_rio($subscriberMSISDN);
@@ -373,6 +330,49 @@ class BatchOperationService extends CI_Controller {
                     if($subscriberRIO == $orderedPort['rio']){
 
                         // Subscriber RIO Valid
+
+                        // Send SMS to Subscriber
+
+                        if($recipientNetworkId == Operator::MTN_NETWORK_ID){
+
+                            $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_MTN;
+
+                        }elseif($recipientNetworkId == Operator::NEXTTEL_NETWORK_ID){
+
+                            $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_NEXTTEL;
+
+                        }
+
+                        $smsResponse = SMS::OPD_Inform_Subcriber($subscriberInfo['LANGUE'], $subscriberMSISDN, $denom_OPR, $portingId);
+
+                        if($smsResponse['success'] == true){
+
+                            // Insert Porting SMS Notification
+                            $smsNotificationparams = array(
+                                'portingId' => $portingId,
+                                'smsType' => SMSType::OPD_PORTING_INIT,
+                                'message' => $smsResponse['message'],
+                                'msisdn' => $smsResponse['msisdn'],
+                                'creationDateTime' => date('c'),
+                                'status' => smsState::SENT,
+                                'attemptCount' => 1,
+                                'sendDateTime' => date('c')
+                            );
+
+                        }else{
+
+                            $smsNotificationparams = array(
+                                'portingId' => $portingId,
+                                'smsType' => SMSType::OPD_PORTING_INIT,
+                                'message' => $smsResponse['message'],
+                                'msisdn' => $smsResponse['msisdn'],
+                                'creationDateTime' => date('c'),
+                                'status' => smsState::PENDING,
+                                'attemptCount' => 1,
+                            );
+                        }
+
+                        $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
 
                         /*// Check subscriber type
                         if($orderedPort['physicalPersonFirstName']){
@@ -1063,7 +1063,7 @@ class BatchOperationService extends CI_Controller {
             $diff = date_diff($start_time, $end_time);
 
             // End time >= start time, less than 30 minutes difference
-            if($diff->invert == 0 && $diff->i < 30){
+            if($diff->i < 30 && $diff->h == 0){
 
                 // Start porting moving to MSISDN_IMPORT_CONFIRMED state. Import Porting MSISDN into BSCS
                 $subscriberMSISDN = $acceptedPort['startMSISDN'];
@@ -1153,7 +1153,8 @@ class BatchOperationService extends CI_Controller {
 
                 }
 
-            }else if($diff->invert == 0 && $diff->h > 0){
+            }
+            else if($diff->invert == 1 && $diff->h > 0){
 
                 // More than 1hrs late, alert Admin
 

@@ -341,6 +341,11 @@ class ImportMSISDN {
      */
     public $SRC_PLCODE;
 
+    /**
+     * @var int
+     */
+    public $HMCODE;
+
 }
 
 /**

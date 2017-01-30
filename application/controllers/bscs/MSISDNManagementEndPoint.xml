@@ -14,6 +14,7 @@ Built on Apr 22, 2006 (06:55:48 PDT)-->
       <element name="MSISDN" type="xsd:string"/>
       <element name="NPCODE" type="xsd:long"/>
       <element name="SRC_PLCODE" type="xsd:long"/>
+      <element name="HMCODE" type="xsd:long"/>
      </sequence>
     </complexType>
    </element>
