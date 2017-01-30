@@ -572,7 +572,7 @@ class EmailService {
 
         $this->CI->load->library('email');
 
-        $this->CI->email->from('SGP', 'SGP Notification Center');
+        $this->CI->email->from('alpha@orange.com', 'SGP Notification Center');
         $this->CI->email->to($to);
         $this->CI->email->cc($cc);
 

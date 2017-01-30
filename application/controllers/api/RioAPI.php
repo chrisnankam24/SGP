@@ -14,7 +14,7 @@ class RioAPI extends CI_Controller {
     function _construct()
     {
         parent::__construct();
-        $this->load->helper(array('form', 'url'));
+
     }
 
     public function index(){

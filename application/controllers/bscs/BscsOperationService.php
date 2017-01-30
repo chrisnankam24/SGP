@@ -68,13 +68,6 @@ class BscsOperationService {
 
     }
 
-    public function test() {
-        $bscsOperationService = new BscsOperationService();
-        //$temporalMSISDN = '694975166';
-        //$response = $this->loadNumberInfo($temporalMSISDN);
-        //var_dump($response);
-    }
-
     /**
      * Loads BSCS info on MSISDN
      * @param $temporalNumber string msisdn of temporal number in BSCS
@@ -164,6 +157,14 @@ class BscsOperationService {
 
             if($logonResponse->success){
 
+                if(strlen($temporalMSISDN) == 12){
+                    $temporalMSISDN = substr($temporalMSISDN, 3);
+                }
+
+                if(strlen($portingMSISDN) == 12){
+                    $portingMSISDN = substr($portingMSISDN, 3);
+                }
+
                 // Make ChangeImportMSISDN request
                 $request = new BscsTypes\ChangeImportMSISDN();
 
@@ -229,6 +230,10 @@ class BscsOperationService {
             $logonResponse = $this->logonMSISDN();
 
             if($logonResponse->success){
+
+                if(strlen($portingMSISDN) == 12){
+                    $portingMSISDN = substr($portingMSISDN, 3);
+                }
 
                 // Make ChangeImportMSISDN request
                 $request = new BscsTypes\ImportMSISDN();
@@ -301,6 +306,10 @@ class BscsOperationService {
 
             if($logonResponse->success){
 
+                if(strlen($returnMSISDN) == 12){
+                    $returnMSISDN = substr($returnMSISDN, 3);
+                }
+
                 // Make ChangeImportMSISDN request
                 $request = new BscsTypes\ReturnMSISDN();
 
@@ -372,6 +381,10 @@ class BscsOperationService {
             $logonResponse = $this->logonMSISDN();
 
             if($logonResponse->success){
+
+                if(strlen($MSISDN) == 12){
+                    $MSISDN = substr($MSISDN, 3);
+                }
 
                 // Make ExportMSISDN request
                 $request = new BscsTypes\ExportMSISDN();
