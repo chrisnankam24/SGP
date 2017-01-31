@@ -37,8 +37,6 @@ class ProvisionNotificationService  extends CI_Controller {
         $this->load->model('Rollbacksubmission_model');
         $this->load->model('Rollbackstateevolution_model');
 
-        $this->load->model('Numberreturn_model');
-
         $this->load->model('Provisioning_model');
 
     }
@@ -198,20 +196,6 @@ class ProvisionNotificationService  extends CI_Controller {
 
             }
 
-
-        }
-
-        if($processType == processType::_RETURN){
-
-            // Verify if process with this ID in Return Table. If found, set to COMPLETE
-
-            $returnElement = $this->Numberreturn_model->get_numberreturn($processId);
-
-            if($returnElement){
-
-                $provisionState = ProvisionNotification\provisionStateType::COMPLETED;
-
-            }
 
         }
 

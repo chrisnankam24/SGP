@@ -237,6 +237,9 @@ class Porting extends CI_Controller
                     $response['data'] = $tmpData;
 
                     fclose($handle);
+
+                    unlink(FCPATH . 'uploads/' .$file_name);
+
                 }
 
             }else{
@@ -383,6 +386,9 @@ class Porting extends CI_Controller
                     $response['data'] = $tmpData;
 
                     fclose($handle);
+
+                    unlink(FCPATH . 'uploads/' .$file_name);
+
                 }
 
             }else{
