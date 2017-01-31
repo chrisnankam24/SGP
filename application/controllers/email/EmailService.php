@@ -32,7 +32,7 @@ class EmailService {
         //$template = file_get_contents(__DIR__ . '/templates/process_error_template.html');
         $template = file_get_contents(__DIR__ . '/templates/porting-confirm-template.html');
 
-        $to = array('christian.nankam@orange.com', 'chp.testbed@gmail.com');
+        $to = array('christian.nankam@orange.com');
         $cc = array();
         $subject = 'Great';
 
@@ -229,7 +229,7 @@ class EmailService {
 
         }
 
-        $to = array('christian.nankam@orange.com', 'chp.testbed@gmail.com');
+        $to = array('christian.nankam@orange.com');
         $cc = array();
 
         $this->send_mail($to, $cc, $subject, $message);
@@ -341,7 +341,7 @@ class EmailService {
 
         }
 
-        $to = array('christian.nankam@orange.com', 'chp.testbed@gmail.com');
+        $to = array('christian.nankam@orange.com');
         $cc = array();
 
         $this->send_mail($to, $cc, $subject, $message);
@@ -416,7 +416,7 @@ class EmailService {
         $portingDateTime = date('l, M d Y, H:i:s', strtotime($params['portingDateTime']));
         $message = str_replace('[portingDateTime]', $portingDateTime, $template);
 
-        $to = array('christian.nankam@orange.com', 'chp.testbed@gmail.com');
+        $to = array('christian.nankam@orange.com');
         $cc = array();
 
         return $this->send_mail($to, $cc, $subject, $message);
@@ -485,7 +485,7 @@ class EmailService {
         $preferredRollbackDateTime = date('l, M d Y, H:i:s', strtotime($params['preferredRollbackDateTime']));
         $message = str_replace('[rollbackDateTime]', $preferredRollbackDateTime, $template);
 
-        $to = array('christian.nankam@orange.com', 'chp.testbed@gmail.com');
+        $to = array('christian.nankam@orange.com');
 
         $cc = array();
 
@@ -524,7 +524,7 @@ class EmailService {
 
         $message = str_replace('[submissionDateTime]', $submissionDateTime, $template);
 
-        $to = array('christian.nankam@orange.com', 'chp.testbed@gmail.com');
+        $to = array('christian.nankam@orange.com');
 
         $cc = array();
 
@@ -555,7 +555,7 @@ class EmailService {
         // Set errorMessage
         $message = str_replace('[errorMessage]', $params['errorMessage'], $template);
 
-        $to = array('christian.nankam@orange.com', 'chp.testbed@gmail.com');
+        $to = array('christian.nankam@orange.com');
         $cc = array();
 
         $this->send_mail($to, $cc, $subject, $message);

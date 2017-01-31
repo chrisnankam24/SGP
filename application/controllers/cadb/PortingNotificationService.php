@@ -316,8 +316,8 @@ class PortingNotificationService extends CI_Controller
         $portingDateTime = $notifyAcceptedRequest->portingTransaction->portingDateTime;
 
         $day = date('d/m/Y', strtotime($portingDateTime));
-        $start_time = date('h:i:s', strtotime($portingDateTime));
-        $end_time = date('h:i:s', strtotime('+2 hours', strtotime($portingDateTime)));
+        $start_time = date('H:i:s', strtotime($portingDateTime));
+        $end_time = date('H:i:s', strtotime('+2 hours', strtotime($portingDateTime)));
 
         $smsResponse = SMS::OPR_Subscriber_OK($language, $subscriberMSISDN, $day, $start_time, $end_time);
 
@@ -422,8 +422,8 @@ class PortingNotificationService extends CI_Controller
         $portingDateTime = $notifyAutoAcceptRequest->portingTransaction->portingDateTime;
 
         $day = date('d/m/Y', strtotime($portingDateTime));
-        $start_time = date('h:i:s', strtotime($portingDateTime));
-        $end_time = date('h:i:s', strtotime('+2 hours', strtotime($portingDateTime)));
+        $start_time = date('H:i:s', strtotime($portingDateTime));
+        $end_time = date('H:i:s', strtotime('+2 hours', strtotime($portingDateTime)));
 
         $smsResponse = SMS::OPR_Subscriber_OK($language, $subscriberMSISDN, $day, $start_time, $end_time);
 

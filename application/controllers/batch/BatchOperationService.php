@@ -224,11 +224,11 @@ class BatchOperationService extends CI_Controller {
 
                         $currentDateTime = date('c');
 
-                        $start_time = date('y-d-m h:i:s', strtotime($currentDateTime));
-                        $end_time = date('y-d-m h:i:s', strtotime($subscriberSubmissionDateTime));
+                        $start_time = date('y-d-m H:i:s', strtotime($currentDateTime));
+                        $end_time = date('y-d-m H:i:s', strtotime($subscriberSubmissionDateTime));
 
-                        $start_time = date_create_from_format('y-d-m h:i:s', $start_time);
-                        $end_time = date_create_from_format('y-d-m h:i:s', $end_time);
+                        $start_time = date_create_from_format('y-d-m H:i:s', $start_time);
+                        $end_time = date_create_from_format('y-d-m H:i:s', $end_time);
 
                         $diff = date_diff($start_time, $end_time);
 
@@ -1054,11 +1054,11 @@ class BatchOperationService extends CI_Controller {
 
             $currentDateTime = date('c');
 
-            $start_time = date('y-d-m h:i:s', strtotime($portingDateTime));
-            $end_time = date('y-d-m h:i:s', strtotime($currentDateTime));
+            $start_time = date('y-d-m H:i:s', strtotime($portingDateTime));
+            $end_time = date('y-d-m H:i:s', strtotime($currentDateTime));
 
-            $start_time = date_create_from_format('y-d-m h:i:s', $start_time);
-            $end_time = date_create_from_format('y-d-m h:i:s', $end_time);
+            $start_time = date_create_from_format('y-d-m H:i:s', $start_time);
+            $end_time = date_create_from_format('y-d-m H:i:s', $end_time);
 
             $diff = date_diff($start_time, $end_time);
 
@@ -1366,7 +1366,7 @@ class BatchOperationService extends CI_Controller {
                     'originalPortingId' => $openResponse->rollbackTransaction->originalPortingId,
                     'donorSubmissionDateTime' => $openResponse->rollbackTransaction->donorSubmissionDateTime,
                     'preferredRollbackDateTime' => $openResponse->rollbackTransaction->preferredRollbackDateTime,
-                    'rollbackDateAndTime' => $openResponse->rollbackTransaction->rollbackDateTime,
+                    'rollbackDateTime' => $openResponse->rollbackTransaction->rollbackDateTime,
                     'cadbOpenDateTime' => $openResponse->rollbackTransaction->cadbOpenDateTime,
                     'lastChangeDateTime' => $openResponse->rollbackTransaction->lastChangeDateTime,
                     'rollbackState' => \RollbackService\Rollback\rollbackStateType::OPENED,
@@ -1401,7 +1401,7 @@ class BatchOperationService extends CI_Controller {
 
                 }else{
 
-                }
+                    }
 
                 $this->db->trans_complete();
 
@@ -1417,11 +1417,11 @@ class BatchOperationService extends CI_Controller {
 
                         $currentDateTime = date('c');
 
-                        $start_time = date('y-d-m h:i:s', strtotime($currentDateTime));
-                        $end_time = date('y-d-m h:i:s', strtotime($openedDateTime));
+                        $start_time = date('y-d-m H:i:s', strtotime($currentDateTime));
+                        $end_time = date('y-d-m H:i:s', strtotime($openedDateTime));
 
-                        $start_time = date_create_from_format('y-d-m h:i:s', $start_time);
-                        $end_time = date_create_from_format('y-d-m h:i:s', $end_time);
+                        $start_time = date_create_from_format('y-d-m H:i:s', $start_time);
+                        $end_time = date_create_from_format('y-d-m H:i:s', $end_time);
 
                         $diff = date_diff($start_time, $end_time);
 
@@ -1866,11 +1866,11 @@ class BatchOperationService extends CI_Controller {
 
             $currentDateTime = date('c');
 
-            $start_time = date('y-d-m h:i:s', strtotime($rollbackDateTime));
-            $end_time = date('y-d-m h:i:s', strtotime($currentDateTime));
+            $start_time = date('y-d-m H:i:s', strtotime($rollbackDateTime));
+            $end_time = date('y-d-m H:i:s', strtotime($currentDateTime));
 
-            $start_time = date_create_from_format('y-d-m h:i:s', $start_time);
-            $end_time = date_create_from_format('y-d-m h:i:s', $end_time);
+            $start_time = date_create_from_format('y-d-m H:i:s', $start_time);
+            $end_time = date_create_from_format('y-d-m H:i:s', $end_time);
 
             $diff = date_diff($start_time, $end_time);
 
@@ -2230,10 +2230,22 @@ class BatchOperationService extends CI_Controller {
 
                 }else {
 
-                    $params = array('errorMessage' => 'Retarded number return submission encountered');
+                    $start_time = date('y-d-m H:i:s', strtotime($startedReturn['submissionDateTime']));
+                    $end_time = date('y-d-m H:i:s', strtotime(date('c')));
 
-                    $emailService->error('RETARDED NUMBER RETURN SUBMISSION DETECTED', $params);
+                    $start_time = date_create_from_format('y-d-m H:i:s', $start_time);
+                    $end_time = date_create_from_format('y-d-m H:i:s', $end_time);
 
+                    $diff = date_diff($start_time, $end_time);
+
+                    // End time >= start time, less than 30 minutes difference
+                    if($diff->h > 0){
+
+                        $params = array('errorMessage' => 'Retarded number return submission encountered');
+
+                        $emailService->error('RETARDED NUMBER RETURN SUBMISSION DETECTED', $params);
+
+                    }
                 }
 
                 $this->db->trans_complete();
@@ -3303,7 +3315,7 @@ class BatchOperationService extends CI_Controller {
             'originalPortingId' => $rollback->rollbackTransaction->originalPortingId,
             'donorSubmissionDateTime' => $rollback->rollbackTransaction->donorSubmissionDateTime,
             'preferredRollbackDateTime' => $rollback->rollbackTransaction->preferredRollbackDateTime,
-            'rollbackDateAndTime' => $rollback->rollbackTransaction->rollbackDateTime,
+            'rollbackDateTime' => $rollback->rollbackTransaction->rollbackDateTime,
             'cadbOpenDateTime' => $rollback->rollbackTransaction->cadbOpenDateTime,
             'lastChangeDateTime' => $rollback->rollbackTransaction->lastChangeDateTime,
             'rollbackState' => $rollback->rollbackTransaction->rollbackState,

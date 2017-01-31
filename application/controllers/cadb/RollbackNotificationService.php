@@ -78,7 +78,7 @@ class RollbackNotificationService extends CI_Controller {
             'originalPortingId' => $originalPortingId,
             'donorSubmissionDateTime' => $notifyOpenedRequest->rollbackTransaction->donorSubmissionDateTime,
             'preferredRollbackDateTime' => $notifyOpenedRequest->rollbackTransaction->preferredRollbackDateTime,
-            'rollbackDateAndTime' => $notifyOpenedRequest->rollbackTransaction->rollbackDateTime,
+            'rollbackDateTime' => $notifyOpenedRequest->rollbackTransaction->rollbackDateTime,
             'cadbOpenDateTime' => $notifyOpenedRequest->rollbackTransaction->cadbOpenDateTime,
             'lastChangeDateTime' => $notifyOpenedRequest->rollbackTransaction->lastChangeDateTime,
             'rollbackNotificationMailSendStatus' => smsState::PENDING,
@@ -171,7 +171,7 @@ class RollbackNotificationService extends CI_Controller {
         $rollbackParams = array(
             'rollbackId' => $rollbackId,
             'preferredRollbackDateTime' => $notifyAcceptedRequest->rollbackTransaction->preferredRollbackDateTime,
-            'rollbackDateAndTime' => $notifyAcceptedRequest->rollbackTransaction->rollbackDateTime,
+            'rollbackDateTime' => $notifyAcceptedRequest->rollbackTransaction->rollbackDateTime,
             'lastChangeDateTime' => $notifyAcceptedRequest->rollbackTransaction->lastChangeDateTime,
             'rollbackState' => \RollbackService\Rollback\rollbackStateType::ACCEPTED
         );
@@ -216,8 +216,8 @@ class RollbackNotificationService extends CI_Controller {
         $rollbackDateTime = $notifyAcceptedRequest->rollbackTransaction->rollbackDateTime;
 
         $day = date('d/m/Y', strtotime($rollbackDateTime));
-        $start_time = date('h:i:s', strtotime($rollbackDateTime));
-        $end_time = date('h:i:s', strtotime('+2 hours', strtotime($rollbackDateTime)));
+        $start_time = date('H:i:s', strtotime($rollbackDateTime));
+        $end_time = date('H:i:s', strtotime('+2 hours', strtotime($rollbackDateTime)));
 
         $smsResponse = SMS::OPD_Subscriber_OK($language, $subscriberMSISDN, $day, $start_time, $end_time);
 
@@ -273,7 +273,7 @@ class RollbackNotificationService extends CI_Controller {
         $rollbackParams = array(
             'rollbackId' => $rollbackId,
             'preferredRollbackDateTime' => $notifyAutoAcceptRequest->rollbackTransaction->preferredRollbackDateTime,
-            'rollbackDateAndTime' => $notifyAutoAcceptRequest->rollbackTransaction->rollbackDateTime,
+            'rollbackDateTime' => $notifyAutoAcceptRequest->rollbackTransaction->rollbackDateTime,
             'lastChangeDateTime' => $notifyAutoAcceptRequest->rollbackTransaction->lastChangeDateTime,
             'rollbackState' => \RollbackService\Rollback\rollbackStateType::ACCEPTED
         );
@@ -321,8 +321,8 @@ class RollbackNotificationService extends CI_Controller {
         $rollbackDateTime = $notifyAutoAcceptRequest->rollbackTransaction->rollbackDateTime;
 
         $day = date('d/m/Y', strtotime($rollbackDateTime));
-        $start_time = date('h:i:s', strtotime($rollbackDateTime));
-        $end_time = date('h:i:s', strtotime('+2 hours', strtotime($rollbackDateTime)));
+        $start_time = date('H:i:s', strtotime($rollbackDateTime));
+        $end_time = date('H:i:s', strtotime('+2 hours', strtotime($rollbackDateTime)));
 
         $smsResponse = SMS::OPD_Subscriber_OK($language, $subscriberMSISDN, $day, $start_time, $end_time);
 
@@ -400,7 +400,7 @@ class RollbackNotificationService extends CI_Controller {
             $rollbackParams = array(
                 'rollbackId' => $rollbackId,
                 'preferredRollbackDateTime' => $notifyAutoConfirmRequest->rollbackTransaction->preferredRollbackDateTime,
-                'rollbackDateAndTime' => $notifyAutoConfirmRequest->rollbackTransaction->rollbackDateTime,
+                'rollbackDateTime' => $notifyAutoConfirmRequest->rollbackTransaction->rollbackDateTime,
                 'lastChangeDateTime' => $notifyAutoConfirmRequest->rollbackTransaction->lastChangeDateTime,
                 'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_IMPORT_CONFIRMED
             );
@@ -493,7 +493,7 @@ class RollbackNotificationService extends CI_Controller {
         $rollbackParams = array(
             'rollbackId' => $rollbackId,
             'preferredRollbackDateTime' => $notifyRejectedRequest->rollbackTransaction->preferredRollbackDateTime,
-            'rollbackDateAndTime' => $notifyRejectedRequest->rollbackTransaction->rollbackDateTime,
+            'rollbackDateTime' => $notifyRejectedRequest->rollbackTransaction->rollbackDateTime,
             'lastChangeDateTime' => $notifyRejectedRequest->rollbackTransaction->lastChangeDateTime,
             'rollbackState' => \RollbackService\Rollback\rollbackStateType::REJECTED
         );
@@ -596,7 +596,7 @@ class RollbackNotificationService extends CI_Controller {
         $rollbackParams = array(
             'rollbackId' => $rollbackId,
             'preferredRollbackDateTime' => $notifyAbandonedRequest->rollbackTransaction->preferredRollbackDateTime,
-            'rollbackDateAndTime' => $notifyAbandonedRequest->rollbackTransaction->rollbackDateTime,
+            'rollbackDateTime' => $notifyAbandonedRequest->rollbackTransaction->rollbackDateTime,
             'lastChangeDateTime' => $notifyAbandonedRequest->rollbackTransaction->lastChangeDateTime,
             'rollbackState' => \RollbackService\Rollback\rollbackStateType::ABANDONED
         );

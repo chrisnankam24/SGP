@@ -1080,8 +1080,8 @@ class PortingOperationService  {
                     $portingDateTime = $acceptResponse->portingTransaction->portingDateTime;
 
                     $day = date('d/m/Y', strtotime($portingDateTime));
-                    $start_time = date('h:i:s', strtotime($portingDateTime));
-                    $end_time = date('h:i:s', strtotime('+2 hours', strtotime($portingDateTime)));
+                    $start_time = date('H:i:s', strtotime($portingDateTime));
+                    $end_time = date('H:i:s', strtotime('+2 hours', strtotime($portingDateTime)));
 
                     if($acceptResponse->portingTransaction->recipientNrn->networkId == Operator::MTN_NETWORK_ID){
                         $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_MTN;
