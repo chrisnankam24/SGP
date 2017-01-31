@@ -1008,7 +1008,7 @@ class BatchOperationService extends CI_Controller {
 
             else{
 
-                $emailService->adminKPSAError($kpsaResponse['message']);
+                $emailService->adminKPSAError($kpsaResponse['message']. ' :: ' . $subscriberMSISDN);
 
             }
 
@@ -1309,7 +1309,7 @@ class BatchOperationService extends CI_Controller {
 
             else{
 
-                $emailService->adminKPSAError($kpsaResponse['message']);
+                $emailService->adminKPSAError($kpsaResponse['message']. ' :: ' . $subscriberMSISDN);
 
             }
 
@@ -1820,7 +1820,7 @@ class BatchOperationService extends CI_Controller {
 
             else{
 
-                $emailService->adminKPSAError($kpsaResponse['message']);
+                $emailService->adminKPSAError($kpsaResponse['message']. ' :: ' . $subscriberMSISDN);
 
             }
 
@@ -2136,7 +2136,7 @@ class BatchOperationService extends CI_Controller {
 
             else{
 
-                $emailService->adminKPSAError($kpsaResponse['message']);
+                $emailService->adminKPSAError($kpsaResponse['message']. ' :: ' . $subscriberMSISDN);
 
             }
 
@@ -2241,7 +2241,7 @@ class BatchOperationService extends CI_Controller {
                     // End time >= start time, less than 30 minutes difference
                     if($diff->h > 0){
 
-                        $params = array('errorMessage' => 'Retarded number return submission encountered');
+                        $params = array('errorMessage' => 'Retarded number return submission encountered for ' . $returnMSISDN);
 
                         $emailService->error('RETARDED NUMBER RETURN SUBMISSION DETECTED', $params);
 
@@ -2533,7 +2533,7 @@ class BatchOperationService extends CI_Controller {
 
             else{
 
-                $emailService->adminKPSAError($kpsaResponse['message']);
+                $emailService->adminKPSAError($kpsaResponse['message'] . ' :: ' . $returnMSISDN);
 
             }
 
@@ -2737,7 +2737,7 @@ class BatchOperationService extends CI_Controller {
 
             else{
 
-                $emailService->adminKPSAError($kpsaResponse['message']);
+                $emailService->adminKPSAError($kpsaResponse['message']. ' :: ' . $returnMSISDN);
 
             }
 
@@ -2827,7 +2827,7 @@ class BatchOperationService extends CI_Controller {
 
             else{
 
-                $emailService->adminKPSAError($kpsaResponse['message']);
+                $emailService->adminKPSAError($kpsaResponse['message']. ' :: ' . $subscriberMSISDN);
 
             }
 
