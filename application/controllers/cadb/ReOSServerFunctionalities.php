@@ -30,8 +30,8 @@ class ReOSServerFunctionalities extends CI_Controller  {
         // Create a new soap server in WSDL mode
         $server = new SoapServer( __DIR__ . '/wsdl/ReturnOperationService.wsdl');
 
-        // Set the class for the soap server
-        $server->setClass("ReOSServerFunctionalities");
+        // Set the object for the soap server
+        $server->setObject($this);
 
         // Handle soap operations
         $server->handle();

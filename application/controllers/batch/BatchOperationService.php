@@ -66,7 +66,9 @@ class BatchOperationService extends CI_Controller {
 
     public function index(){
 
-        echo date('Ymd');
+        $portingOperationService = new PortingOperationService();
+
+        var_dump($portingOperationService->getPorting('20170110-02-237694975166-633'));
 
     }
 

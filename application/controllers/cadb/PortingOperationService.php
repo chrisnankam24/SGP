@@ -427,9 +427,11 @@ class PortingOperationService  {
 
                 $response = new errorResponse();
 
-                $fault = key($e->detail);
+                var_dump($e->xdebug_message);
 
-                $response->error = $fault;
+                //$fault = key($e->detail);
+
+                //$response->error = $fault;
 
                 return $response;
 
