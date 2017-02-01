@@ -16,8 +16,6 @@ class KpsaOperationService extends CI_Controller {
     {
         parent::__construct();
 
-        $this->load->model('FileLog_model');
-
     }
 
     /**

@@ -7,7 +7,6 @@
  * Time: 9:31 AM
  */
 
-require_once APPPATH . "third_party/PHPMailer/PHPMailerAutoload.php";
 require_once APPPATH . "controllers/cadb/Common.php";
 
 
@@ -23,20 +22,6 @@ class EmailService {
     public function __construct()
     {
         $this->CI =& get_instance();
-    }
-
-    public function test(){
-
-
-        // Load template
-        //$template = file_get_contents(__DIR__ . '/templates/process_error_template.html');
-        $template = file_get_contents(__DIR__ . '/templates/porting-confirm-template.html');
-
-        $to = array('christian.nankam@orange.com');
-        $cc = array();
-        $subject = 'Great';
-
-        $this->send_mail($to, $cc, $subject, $template);
 
     }
 

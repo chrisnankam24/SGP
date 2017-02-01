@@ -34,6 +34,7 @@ class PortingNotificationService extends CI_Controller
 
         // Load required models
         $this->load->model('Porting_model');
+        $this->load->model('FileLog_model');
         $this->load->model('Portingsubmission_model');
         $this->load->model('Portingstateevolution_model');
         $this->load->model('Portingsmsnotification_model');
@@ -54,11 +55,15 @@ class PortingNotificationService extends CI_Controller
 
     }
 
-    public function test(){
-        $kpsaOperationService = new KpsaOperationService();
-        $response = $kpsaOperationService->viewSubscriberTEKELEC('694975166');
-        print_r($response);
+    /**
+     * Log action/error to file
+     */
+    private function fileLogAction($code, $class, $message){
+
+        $this->FileLog_model->write_log($code, $class, $message);
+
     }
+
 
     /**
      * TODO: OK
@@ -129,7 +134,7 @@ class PortingNotificationService extends CI_Controller
 
             $error = $this->db->error();
 
-            fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
+            $this->fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
             $emailService = new EmailService();
             $emailService->adminErrorReport('ORDERED_PORTING_RECEIVED_BUT_DB_FILLING_ERROR', $portingParams, processType::PORTING);
@@ -185,7 +190,7 @@ class PortingNotificationService extends CI_Controller
         if ($this->db->trans_status() === false) {
 
             $error = $this->db->error();
-            fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
+            $this->fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
             $portingParams = $this->Porting_model->get_porting($portingId);
 
@@ -246,7 +251,7 @@ class PortingNotificationService extends CI_Controller
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
-            fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
+            $this->fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
             $portingParams = $this->Porting_model->get_porting($portingId);
 
@@ -355,7 +360,7 @@ class PortingNotificationService extends CI_Controller
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
-            fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
+            $this->fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
             $portingParams = $this->Porting_model->get_porting($portingId);
 
@@ -463,7 +468,7 @@ class PortingNotificationService extends CI_Controller
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
-            fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
+            $this->fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
             $portingParams = $this->Porting_model->get_porting($portingId);
 
@@ -535,7 +540,7 @@ class PortingNotificationService extends CI_Controller
             if ($this->db->trans_status() === FALSE) {
 
                 $error = $this->db->error();
-                fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
+                $this->fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
                 $portingParams = $this->Porting_model->get_porting($portingId);
 
@@ -688,7 +693,7 @@ class PortingNotificationService extends CI_Controller
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
-            fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
+            $this->fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
             $portingParams = $this->Porting_model->get_porting($portingId);
 
@@ -797,7 +802,7 @@ class PortingNotificationService extends CI_Controller
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
-            fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
+            $this->fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
             $portingParams = $this->Porting_model->get_porting($portingId);
 
@@ -905,7 +910,7 @@ class PortingNotificationService extends CI_Controller
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
-            fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
+            $this->fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
             $portingParams = $this->Porting_model->get_porting($portingId);
 

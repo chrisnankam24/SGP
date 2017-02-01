@@ -27,6 +27,15 @@ class USSD extends CI_Controller {
     }
 
     /**
+     * Log action/error to file
+     */
+    private function fileLogAction($code, $class, $message){
+
+        $this->FileLog_model->write_log($code, $class, $message);
+
+    }
+
+    /**
      * Called by USSD gateway. Retrieves subscriber MSISDN, generates RIO and sends it back.
      */
     public function index(){
@@ -47,6 +56,8 @@ class USSD extends CI_Controller {
             $gotLanguage = true;
 
         }
+
+        $this->fileLogAction('8001', 'USSD', 'USSD Request received from ' . $msisdn);
 
         $template = '';
 
@@ -116,6 +127,8 @@ class USSD extends CI_Controller {
 
         self::send_response($response);
 
+        $this->fileLogAction('8001', 'USSD', 'USSD Response sent to ' . $msisdn);
+
         if($rio && !$gotLanguage){
             // Load en template
             $template = file_get_contents(__DIR__ . '/en_ussd_template_rio.txt');
@@ -130,6 +143,9 @@ class USSD extends CI_Controller {
         $response = SMS::USSD_SMS($message, $msisdn);
 
         if($response['success']){
+
+            $this->fileLogAction('8001', 'USSD', 'USSD SMS successfully sent to ' . $msisdn);
+
             // Save SMS in USSDNotificationTable in state SENT
 
             $smsNotificationparams = array(
@@ -142,6 +158,9 @@ class USSD extends CI_Controller {
             );
 
         }else{
+
+            $this->fileLogAction('8001', 'USSD', 'USSD SMS failed sending to ' . $msisdn);
+
             // Save SMS in USSDNotificationTable in state PENDING
 
             $smsNotificationparams = array(

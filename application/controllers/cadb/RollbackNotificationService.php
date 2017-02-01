@@ -28,6 +28,7 @@ class RollbackNotificationService extends CI_Controller {
 
         // Load required models
         $this->load->model('Porting_model');
+        $this->load->model('FileLog_model');
         $this->load->model('Rollback_model');
         $this->load->model('Rollbacksubmission_model');
         $this->load->model('Rollbackstateevolution_model');
@@ -46,6 +47,15 @@ class RollbackNotificationService extends CI_Controller {
 
         // Handle soap operations
         $server->handle();
+
+    }
+
+    /**
+     * Log action/error to file
+     */
+    private function fileLogAction($code, $class, $message){
+
+        $this->FileLog_model->write_log($code, $class, $message);
 
     }
 
@@ -101,7 +111,7 @@ class RollbackNotificationService extends CI_Controller {
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
-            fileLogAction($error['code'], 'RollbackNotificationService', $error['message']);
+            $this->fileLogAction($error['code'], 'RollbackNotificationService', $error['message']);
 
             $emailService = new EmailService();
             $emailService->adminErrorReport('OPENED_ROLLBACK_RECEIVED_BUT_DB_FILLING_ERROR', $rollbackParams, processType::ROLLBACK);
@@ -192,7 +202,7 @@ class RollbackNotificationService extends CI_Controller {
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
-            fileLogAction($error['code'], 'RollbackNotificationService', $error['message']);
+            $this->fileLogAction($error['code'], 'RollbackNotificationService', $error['message']);
 
             $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
 
@@ -298,7 +308,7 @@ class RollbackNotificationService extends CI_Controller {
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
-            fileLogAction($error['code'], 'RollbackNotificationService', $error['message']);
+            $this->fileLogAction($error['code'], 'RollbackNotificationService', $error['message']);
 
             $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
 
@@ -421,7 +431,7 @@ class RollbackNotificationService extends CI_Controller {
             if ($this->db->trans_status() === FALSE) {
 
                 $error = $this->db->error();
-                fileLogAction($error['code'], 'RollbackNotificationService', $error['message']);
+                $this->fileLogAction($error['code'], 'RollbackNotificationService', $error['message']);
 
                 $emailService->adminErrorReport('ROLLBACK_AUTO_CONFIRMED_BUT_DB_FILLED_INCOMPLETE', $nrollbackParams, processType::ROLLBACK);
 
@@ -524,7 +534,7 @@ class RollbackNotificationService extends CI_Controller {
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
-            fileLogAction($error['code'], 'RollbackNotificationService', $error['message']);
+            $this->fileLogAction($error['code'], 'RollbackNotificationService', $error['message']);
 
             $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
 
@@ -670,7 +680,7 @@ class RollbackNotificationService extends CI_Controller {
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
-            fileLogAction($error['code'], 'RollbackNotificationService', $error['message']);
+            $this->fileLogAction($error['code'], 'RollbackNotificationService', $error['message']);
 
             $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
 

@@ -27,6 +27,7 @@ class ReturnOperationService {
 
     private $db = null;
     private $Numberreturn_model = null;
+    private $FileLog_model = null;
     private $Returnrejection_model = null;
     private $Numberreturnsubmission_model = null;
     private $Numberreturnstateevolution_model = null;
@@ -38,11 +39,13 @@ class ReturnOperationService {
 
         $this->db = $CI->db;
 
+        $CI->load->model('FileLog_model');
         $CI->load->model('Numberreturn_model');
         $CI->load->model('Returnrejection_model');
         $CI->load->model('Numberreturnsubmission_model');
         $CI->load->model('Numberreturnstateevolution_model');
 
+        $this->FileLog_model = $CI->FileLog_model;
         $this->Numberreturn_model = $CI->Numberreturn_model;
         $this->Returnrejection_model = $CI->Returnrejection_model;
         $this->Numberreturnsubmission_model = $CI->Numberreturnsubmission_model;
@@ -55,6 +58,15 @@ class ReturnOperationService {
         $this->client = new SoapClient(__DIR__ . '/wsdl/ReturnOperationService.wsdl', array(
             "trace" => false
         ));
+
+    }
+
+    /**
+     * Log action/error to file
+     */
+    private function fileLogAction($code, $class, $message){
+
+        $this->FileLog_model->write_log($code, $class, $message);
 
     }
 
@@ -335,7 +347,7 @@ class ReturnOperationService {
                 if ($this->db->trans_status() === FALSE) {
 
                     $error = $this->db->error();
-                    fileLogAction($error['code'], 'ReturnOperationService', $error['message']);
+                    $this->fileLogAction($error['code'], 'ReturnOperationService', $error['message']);
 
                     $emailService = new EmailService();
                     $emailService->adminErrorReport('RETURN_OPENED_BUT_DB_FILLED_INCOMPLETE', $nrParams, processType::_RETURN);
@@ -392,7 +404,7 @@ class ReturnOperationService {
                         if ($this->db->trans_status() === FALSE) {
 
                             $error = $this->db->error();
-                            fileLogAction($error['code'], 'ReturnOperationService', $error['message']);
+                            $this->fileLogAction($error['code'], 'ReturnOperationService', $error['message']);
 
                             $nrParams = array(
                                 'ownerNetworkId' => Operator::ORANGE_NETWORK_ID,
@@ -513,7 +525,7 @@ class ReturnOperationService {
                     if ($this->db->trans_status() === FALSE) {
 
                         $error = $this->db->error();
-                        fileLogAction($error['code'], 'ReturnOperationService', $error['message']);
+                        $this->fileLogAction($error['code'], 'ReturnOperationService', $error['message']);
 
                         $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
 
@@ -637,7 +649,7 @@ class ReturnOperationService {
                     if ($this->db->trans_status() === FALSE) {
 
                         $error = $this->db->error();
-                        fileLogAction($error['code'], 'ReturnOperationService', $error['message']);
+                        $this->fileLogAction($error['code'], 'ReturnOperationService', $error['message']);
 
                         $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
 

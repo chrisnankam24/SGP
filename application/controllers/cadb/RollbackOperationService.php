@@ -24,6 +24,7 @@ class RollbackOperationService {
 
     private $db = null;
     private $Porting_model = null;
+    private $FileLog_model = null;
     private $Rollback_model = null;
     private $Rollbacksubmission_model = null;
     private $Rollbackstateevolution_model = null;
@@ -37,12 +38,14 @@ class RollbackOperationService {
         $this->db = $CI->db;
 
         $CI->load->model('Porting_model');
+        $CI->load->model('FileLog_model');
         $CI->load->model('Rollback_model');
         $CI->load->model('Rollbacksubmission_model');
         $CI->load->model('Rollbackstateevolution_model');
         $CI->load->model('Rollbackrejectionabandon_model');
 
         $this->Porting_model = $CI->Porting_model;
+        $this->FileLog_model = $CI->FileLog_model;
         $this->Rollback_model = $CI->Rollback_model;
         $this->Rollbacksubmission_model = $CI->Rollbacksubmission_model;
         $this->Rollbackstateevolution_model = $CI->Rollbackstateevolution_model;
@@ -59,6 +62,15 @@ class RollbackOperationService {
     }
 
     public function index(){
+
+    }
+
+    /**
+     * Log action/error to file
+     */
+    private function fileLogAction($code, $class, $message){
+
+        $this->FileLog_model->write_log($code, $class, $message);
 
     }
 
@@ -526,7 +538,7 @@ class RollbackOperationService {
                 if ($this->db->trans_status() === FALSE) {
 
                     $error = $this->db->error();
-                    fileLogAction($error['code'], 'RollbackOperationService', $error['message']);
+                    $this->fileLogAction($error['code'], 'RollbackOperationService', $error['message']);
 
                     $portingParams = $this->Porting_model->get_porting($originalPortingId);
 
@@ -580,7 +592,7 @@ class RollbackOperationService {
                         if ($this->db->trans_status() === FALSE) {
 
                             $error = $this->db->error();
-                            fileLogAction($error['code'], 'RollbackOperationService', $error['message']);
+                            $this->fileLogAction($error['code'], 'RollbackOperationService', $error['message']);
 
                             $portingParams = $this->Porting_model->get_porting($originalPortingId);
 
@@ -695,7 +707,7 @@ class RollbackOperationService {
                     if ($this->db->trans_status() === FALSE) {
 
                         $error = $this->db->error();
-                        fileLogAction($error['code'], 'RollbackOperationService', $error['message']);
+                        $this->fileLogAction($error['code'], 'RollbackOperationService', $error['message']);
 
                         $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
 
@@ -831,7 +843,7 @@ class RollbackOperationService {
 
                             $error = $this->db->error();
 
-                            fileLogAction($error['code'], 'RollbackOperationService', $error['message']);
+                            $this->fileLogAction($error['code'], 'RollbackOperationService', $error['message']);
 
                             $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
 

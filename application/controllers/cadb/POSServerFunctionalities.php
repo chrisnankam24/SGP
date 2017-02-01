@@ -21,9 +21,6 @@ use PortingService\Porting as Porting;
  */
 class POSServerFunctionalities extends CI_Controller  {
 
-    // Declare client
-    private $client = null;
-
     public function __construct()
     {
         parent::__construct();
@@ -75,7 +72,7 @@ class POSServerFunctionalities extends CI_Controller  {
         $response->portingTransaction->donorNrn = $orderRequest->donorNrn;
         $response->portingTransaction->numberRanges = $orderRequest->numberRanges;
         $response->portingTransaction->portingDateTime = $orderRequest->portingDateTime;
-        $response->portingTransaction->portingId = '20170110-02-237694975166-' . mt_rand(100,999);
+        $response->portingTransaction->portingId = date('Ymd') . '-'. $orderRequest->recipientNrn->networkId .'-' . $orderRequest->numberRanges->numberRange->startNumber . '-' . mt_rand(100,999);
 
         $response->portingTransaction->portingState = Porting\portingStateType::ORDERED;
         $response->portingTransaction->recipientNrn = $orderRequest->recipientNrn;
@@ -107,25 +104,8 @@ class POSServerFunctionalities extends CI_Controller  {
 
         $response->portingTransaction->lastChangeDateTime = date('c');
         $response->portingTransaction->cadbOrderDateTime = date('c');
-        $response->portingTransaction->donorNrn = new nrnType();
-        $response->portingTransaction->donorNrn->networkId = '02';
-        $response->portingTransaction->donorNrn->routingNumber = '1601';
 
-        $response->portingTransaction->recipientNrn = new nrnType();
-        $response->portingTransaction->recipientNrn->networkId = '02';
-        $response->portingTransaction->recipientNrn->routingNumber = '1601';
-
-        $response->portingTransaction->portingDateTime = date('c');
         $response->portingTransaction->portingId = $approveRequest->portingId;
-
-        $response->portingTransaction->portingState = Porting\portingStateType::ORDERED;
-        $response->portingTransaction->recipientSubmissionDateTime = date('c');
-        $response->portingTransaction->rio = '02P058M709YS';
-
-        $response->portingTransaction->subscriberInfo = new Porting\subscriberInfoType();
-        $response->portingTransaction->subscriberInfo->physicalPersonFirstName = 'Nankam';
-        $response->portingTransaction->subscriberInfo->physicalPersonLastName = 'Christian';
-        $response->portingTransaction->subscriberInfo->physicalPersonIdNumber = '110328054';
 
         return $response;
 

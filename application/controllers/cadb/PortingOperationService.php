@@ -29,6 +29,7 @@ class PortingOperationService  {
 
     private $db = null;
     private $Porting_model = null;
+    private $FileLog_model = null;
     private $Portingstateevolution_model = null;
     private $Portingsmsnotification_model = null;
     private $Portingdenyrejectionabandon_model = null;
@@ -41,12 +42,14 @@ class PortingOperationService  {
         $this->db = $CI->db;
 
         $CI->load->model('Porting_model');
+        $CI->load->model('FileLog_model');
         $CI->load->model('Portingsubmission_model');
         $CI->load->model('Portingstateevolution_model');
         $CI->load->model('Portingsmsnotification_model');
         $CI->load->model('Portingdenyrejectionabandon_model');
 
         $this->Porting_model = $CI->Porting_model;
+        $this->FileLog_model = $CI->FileLog_model;
         $this->Portingsubmission_model = $CI->Portingsubmission_model;
         $this->Portingstateevolution_model = $CI->Portingstateevolution_model;
         $this->Portingsmsnotification_model = $CI->Portingsmsnotification_model;
@@ -62,19 +65,13 @@ class PortingOperationService  {
 
     }
 
-    public function test(){
-        $portingOperationService = new PortingOperationService();
+    /**
+     * Log action/error to file
+     */
+    private function fileLogAction($code, $class, $message){
 
-        $response = $portingOperationService->order(1, 'df', 'sef', 'sfsd', 'sdf');
+        $this->FileLog_model->write_log($code, $class, $message);
 
-        $date = "2016-12-08T14:29:51+01:00";
-
-        $date1 = date('c', strtotime('+4 hours', strtotime(date('c'))));
-        $date2 = date('c', strtotime(date('c')));
-
-        var_dump($date1);
-        echo '<br>';
-        var_dump($date2);
     }
 
     /**
@@ -859,7 +856,7 @@ class PortingOperationService  {
             if ($this->db->trans_status() === FALSE) {
 
                 $error = $this->db->error();
-                fileLogAction($error['code'], 'PortingOperationService', $error['message']);
+                $this->fileLogAction($error['code'], 'PortingOperationService', $error['message']);
 
                 $emailService = new EmailService();
                 $emailService->adminErrorReport('PORTING_ORDERED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
@@ -935,7 +932,7 @@ class PortingOperationService  {
 
                         $error = $this->db->error();
 
-                        fileLogAction($error['code'], 'PortingOperationService', $error['message']);
+                        $this->fileLogAction($error['code'], 'PortingOperationService', $error['message']);
 
                         $response['success'] = false;
 
@@ -1124,7 +1121,7 @@ class PortingOperationService  {
                     if ($this->db->trans_status() === FALSE) {
 
                         $error = $this->db->error();
-                        fileLogAction($error['code'], 'PortingOperationService', $error['message']);
+                        $this->fileLogAction($error['code'], 'PortingOperationService', $error['message']);
 
                         $portingParams = $this->Porting_model->get_porting($portingId);
 
@@ -1262,7 +1259,7 @@ class PortingOperationService  {
                         if ($this->db->trans_status() === FALSE) {
 
                             $error = $this->db->error();
-                            fileLogAction($error['code'], 'PortingOperationService', $error['message']);
+                            $this->fileLogAction($error['code'], 'PortingOperationService', $error['message']);
 
                             $portingParams = $this->Porting_model->get_porting($portingId);
 

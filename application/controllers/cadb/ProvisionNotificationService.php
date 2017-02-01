@@ -38,9 +38,11 @@ class ProvisionNotificationService  extends CI_Controller {
         $this->load->model('Rollbackstateevolution_model');
 
         $this->load->model('Provisioning_model');
+        
+        $this->load->model('FileLog_model');
 
     }
-
+    
     public function index(){
 
         // Create a new soap server in WSDL mode
@@ -54,6 +56,15 @@ class ProvisionNotificationService  extends CI_Controller {
 
     }
 
+    /**
+     * Log action/error to file
+     */
+    private function fileLogAction($code, $class, $message){
+
+        $this->FileLog_model->write_log($code, $class, $message);
+
+    }
+    
     /**
      * TODO: OK
      * @param $notifyRoutingDataRequest
@@ -110,7 +121,7 @@ class ProvisionNotificationService  extends CI_Controller {
                     if ($this->db->trans_status() === FALSE) {
 
                         $error = $this->db->error();
-                        fileLogAction($error['code'], 'ProvisionNotificationService', $error['message']);
+                        $this->fileLogAction($error['code'], 'ProvisionNotificationService', $error['message']);
 
                         $portingParams = $this->Porting_model->get_porting($processId);
 
@@ -160,7 +171,7 @@ class ProvisionNotificationService  extends CI_Controller {
                     if ($this->db->trans_status() === FALSE) {
 
                         $error = $this->db->error();
-                        fileLogAction($error['code'], 'ProvisionNotificationService', $error['message']);
+                        $this->fileLogAction($error['code'], 'ProvisionNotificationService', $error['message']);
 
                         $rollbackParams = $this->Rollback_model->get_full_rollback($processId);
 
@@ -218,7 +229,7 @@ class ProvisionNotificationService  extends CI_Controller {
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
-            fileLogAction($error['code'], 'ProvisionNotificationService', $error['message']);
+            $this->fileLogAction($error['code'], 'ProvisionNotificationService', $error['message']);
 
             $emailService = new EmailService();
 

@@ -26,19 +26,20 @@ class ProblemReportOperationService {
 
     private $db = null;
     private $Error_model = null;
+    private $FileLog_model = null;
 
     public function __construct()
     {
-
-        $this->load->model('Error_model');
 
         $CI =& get_instance();
 
         $this->db = $CI->db;
 
         $CI->load->model('Error_model');
+        $CI->load->model('FileLog_model');
 
         $this->Error_model = $CI->Error_model;
+        $this->FileLog_model = $CI->FileLog_model;
 
         // Disable wsdl cache
         ini_set("soap.wsdl_cache_enabled", "0");
@@ -50,6 +51,15 @@ class ProblemReportOperationService {
 
     }
 
+    /**
+     * Log action/error to file
+     */
+    private function fileLogAction($code, $class, $message){
+
+        $this->FileLog_model->write_log($code, $class, $message);
+
+    }
+    
     /**
      * @param $reporterNetworkId
      * @param $cadbNumber
@@ -142,7 +152,7 @@ class ProblemReportOperationService {
             if ($this->db->trans_status() === FALSE) {
 
                 $error = $this->db->error();
-                fileLogAction($error['code'], 'ProblemReportOperationService', $error['message']);
+                $this->fileLogAction($error['code'], 'ProblemReportOperationService', $error['message']);
 
                 $eParams['processType'] = '';
                 $emailService = new EmailService();

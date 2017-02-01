@@ -22,6 +22,7 @@ class ProblemReportNotificationService extends CI_Controller {
         parent::__construct();
 
         $this->load->model('Error_model');
+        $this->load->model('FileLog_model');
 
     }
 
@@ -38,6 +39,15 @@ class ProblemReportNotificationService extends CI_Controller {
 
     }
 
+    /**
+     * Log action/error to file
+     */
+    private function fileLogAction($code, $class, $message){
+
+        $this->FileLog_model->write_log($code, $class, $message);
+
+    }
+    
     /**
      * TODO: OK
      * @param $notifyProblemReportedRequest
@@ -91,7 +101,7 @@ class ProblemReportNotificationService extends CI_Controller {
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
-            fileLogAction($error['code'], 'ProblemReportNotificationService', $error['message']);
+            $this->fileLogAction($error['code'], 'ProblemReportNotificationService', $error['message']);
 
             $params = $this->Error_model->get_error($errorReportId);
 

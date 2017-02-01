@@ -23,6 +23,7 @@ class ReturnNotificationService extends CI_Controller {
     {
         parent::__construct();
 
+        $this->load->model('FileLog_model');
         $this->load->model('Numberreturn_model');
         $this->load->model('Returnrejection_model');
         $this->load->model('Numberreturnsubmission_model');
@@ -40,6 +41,15 @@ class ReturnNotificationService extends CI_Controller {
 
         // Handle soap operations
         $server->handle();
+
+    }
+
+    /**
+     * Log action/error to file
+     */
+    private function fileLogAction($code, $class, $message){
+
+        $this->FileLog_model->write_log($code, $class, $message);
 
     }
 
@@ -84,7 +94,7 @@ class ReturnNotificationService extends CI_Controller {
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
-            fileLogAction($error['code'], 'ReturnNotificationService', $error['message']);
+            $this->fileLogAction($error['code'], 'ReturnNotificationService', $error['message']);
 
             $emailService = new EmailService();
             $emailService->adminErrorReport('OPENED_RETURN_RECEIVED_BUT_DB_FILLING_ERROR', $nrParams, processType::_RETURN);
@@ -129,7 +139,7 @@ class ReturnNotificationService extends CI_Controller {
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
-            fileLogAction($error['code'], 'ReturnNotificationService', $error['message']);
+            $this->fileLogAction($error['code'], 'ReturnNotificationService', $error['message']);
 
             $emailService = new EmailService();
 
@@ -189,7 +199,7 @@ class ReturnNotificationService extends CI_Controller {
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
-            fileLogAction($error['code'], 'ReturnNotificationService', $error['message']);
+            $this->fileLogAction($error['code'], 'ReturnNotificationService', $error['message']);
 
             $emailService = new EmailService();
 
