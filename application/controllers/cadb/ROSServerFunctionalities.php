@@ -23,6 +23,9 @@ class ROSServerFunctionalities extends CI_Controller  {
     {
         parent::__construct();
 
+        $this->load->model('Porting_model');
+        $this->load->model('Rollback_model');
+
     }
 
     public function index(){
@@ -53,12 +56,17 @@ class ROSServerFunctionalities extends CI_Controller  {
 
         $response = new rollback\openResponse();
 
+        $openRequest = new rollback\openRequest();
+
+        $portingInfo = $this->Porting_model->get_porting($openRequest->originalPortingId);
+
         $response->rollbackTransaction = new rollback\rollbackTransactionType();
         $response->rollbackTransaction->lastChangeDateTime = date('c');
         $response->rollbackTransaction->donorSubmissionDateTime = date('c');
         $response->rollbackTransaction->preferredRollbackDateTime = date('c');
         $response->rollbackTransaction->rollbackDateTime = date('c');
-        $response->rollbackTransaction->rollbackId = '20161208-03-237694975166-' . mt_rand(100,999);
+        $response->rollbackTransaction->rollbackId = date('Ymd') . '-'. $portingInfo['donorNetworkId'] .'-' . $portingInfo['startMSISDN'] . '-' . mt_rand(100,999);
+
         $response->rollbackTransaction->originalPortingId = $openRequest->originalPortingId;
 
         return $response;
@@ -144,12 +152,14 @@ class ROSServerFunctionalities extends CI_Controller  {
 
         $response = new rollback\getRollbackResponse();
 
+        $rollbackInfo = $this->Rollback_model->get_rollback($getRollbackRequest->rollbackId);
+
         $response->rollbackTransaction = new rollback\rollbackTransactionType();
         $response->rollbackTransaction->lastChangeDateTime = date('c');
-        $response->rollbackTransaction->donorSubmissionDateTime = date('c');
-        $response->rollbackTransaction->preferredRollbackDateTime = date('c');
-        $response->rollbackTransaction->rollbackDateTime = date('c');
-        $response->rollbackTransaction->originalPortingId = '20170110-02-237694975166-480';
+        $response->rollbackTransaction->donorSubmissionDateTime = $rollbackInfo['donorSubmissionDateTime'];
+        $response->rollbackTransaction->preferredRollbackDateTime = $rollbackInfo['preferredRollbackDateTime'];
+        $response->rollbackTransaction->rollbackDateTime = $rollbackInfo['rollbackDateTime'];
+        $response->rollbackTransaction->originalPortingId = $rollbackInfo['originalPortingId'];
         $response->rollbackTransaction->rollbackId = $getRollbackRequest->rollbackId;
 
         return $response;

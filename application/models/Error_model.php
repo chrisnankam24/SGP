@@ -24,7 +24,7 @@ class Error_model extends CI_Model
      */
     function get_errorbyStatus($status)
     {
-            return $this->db->get_where('Error',array('notificationMailSendStatus'=>$status))->result_array();
+            return $this->db->get_where('Error',array('errorNotificationMailSendStatus'=>$status))->result_array();
     }
 
 

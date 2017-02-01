@@ -25,6 +25,8 @@ class POSServerFunctionalities extends CI_Controller  {
     {
         parent::__construct();
 
+        $this->load->model('Porting_model');
+
     }
 
     public function index(){
@@ -131,18 +133,20 @@ class POSServerFunctionalities extends CI_Controller  {
         $response->portingTransaction->portingId = $acceptRequest->portingId;
         $response->portingTransaction->portingState = Porting\portingStateType::ACCEPTED;
 
+        $portingInfo = $this->Porting_model->get_porting($acceptRequest->portingId);
+
         $response->portingTransaction->donorNrn = new nrnType();
-        $response->portingTransaction->donorNrn->networkId = '02';
-        $response->portingTransaction->donorNrn->routingNumber = '1601';
+        $response->portingTransaction->donorNrn->networkId = $portingInfo['donorNetworkId'];
+        $response->portingTransaction->donorNrn->routingNumber = $portingInfo['donorRoutingNumber'];
 
         $response->portingTransaction->recipientNrn = new nrnType();
-        $response->portingTransaction->recipientNrn->networkId = '02';
-        $response->portingTransaction->recipientNrn->routingNumber = '1601';
+        $response->portingTransaction->recipientNrn->networkId = $portingInfo['recipientNetworkId'];
+        $response->portingTransaction->recipientNrn->routingNumber = $portingInfo['recipientRoutingNumber'];
 
         // numberRange
         $numRange = new numberRangeType();
-        $numRange->endNumber = '237694975166';
-        $numRange->startNumber = '237694975166';
+        $numRange->endNumber = $portingInfo['startMSISDN'];
+        $numRange->startNumber = $portingInfo['endMSISDN'];
         $response->portingTransaction->numberRanges = array($numRange);
 
         return $response;
@@ -231,34 +235,39 @@ class POSServerFunctionalities extends CI_Controller  {
 
         $response->portingTransaction = new Porting\portingTransactionType();
 
-        //$orderRequest = new Porting\orderRequest();
+        //$getPortingRequest = new Porting\getPortingRequest();
+
+        $portingInfo = $this->Porting_model->get_porting($getPortingRequest->portingId);
 
         $response->portingTransaction->lastChangeDateTime = date('c');
-        $response->portingTransaction->cadbOrderDateTime = date('c');
+        $response->portingTransaction->cadbOrderDateTime = $portingInfo['cadbOrderDateTime'];
         $response->portingTransaction->donorNrn = new nrnType();
-        $response->portingTransaction->donorNrn->networkId = '02';
-        $response->portingTransaction->donorNrn->routingNumber = '1601';
+        $response->portingTransaction->donorNrn->networkId = $portingInfo['donorNetworkId'];
+        $response->portingTransaction->donorNrn->routingNumber = $portingInfo['donorRoutingNumber'];
 
         $response->portingTransaction->recipientNrn = new nrnType();
-        $response->portingTransaction->recipientNrn->networkId = '02';
-        $response->portingTransaction->recipientNrn->routingNumber = '1601';
+        $response->portingTransaction->recipientNrn->networkId = $portingInfo['recipientNetworkId'];
+        $response->portingTransaction->recipientNrn->routingNumber = $portingInfo['recipientRoutingNumber'];
 
-        $response->portingTransaction->portingDateTime = date('c');
+        $response->portingTransaction->portingDateTime = $portingInfo['portingDateTime'];
         $response->portingTransaction->portingId = $getPortingRequest->portingId;
 
-        $response->portingTransaction->portingState = Porting\portingStateType::ORDERED;
-        $response->portingTransaction->recipientSubmissionDateTime = date('c');
-        $response->portingTransaction->rio = '02P058M709YS';
+        $response->portingTransaction->portingState = $portingInfo['portingState'];
+        $response->portingTransaction->recipientSubmissionDateTime = $portingInfo['recipientSubmissionDateTime'];
+        $response->portingTransaction->rio = $portingInfo['rio'];
 
         $response->portingTransaction->subscriberInfo = new Porting\subscriberInfoType();
-        $response->portingTransaction->subscriberInfo->physicalPersonFirstName = 'Nankam';
-        $response->portingTransaction->subscriberInfo->physicalPersonLastName = 'Christian';
-        $response->portingTransaction->subscriberInfo->physicalPersonIdNumber = '110328054';
+        $response->portingTransaction->subscriberInfo->physicalPersonFirstName = $portingInfo['physicalPersonFirstName'];
+        $response->portingTransaction->subscriberInfo->physicalPersonLastName = $portingInfo['physicalPersonLastName'];
+        $response->portingTransaction->subscriberInfo->physicalPersonIdNumber = $portingInfo['physicalPersonIdNumber'];
+        $response->portingTransaction->subscriberInfo->legalPersonName = $portingInfo['legalPersonName'];
+        $response->portingTransaction->subscriberInfo->legalPersonTin = $portingInfo['legalPersonTin'];
+        $response->portingTransaction->subscriberInfo->contactNumber = $portingInfo['contactNumber'];
 
         // numberRange
         $numRange = new numberRangeType();
-        $numRange->endNumber = '237694975166';
-        $numRange->startNumber = '237694975166';
+        $numRange->endNumber = $portingInfo['startMSISDN'];
+        $numRange->startNumber = $portingInfo['endMSISDN'];
         $response->portingTransaction->numberRanges = array($numRange);
 
         return $response;

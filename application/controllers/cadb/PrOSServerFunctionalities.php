@@ -57,7 +57,7 @@ class PrOSServerFunctionalities extends CI_Controller  {
 
         $response->returnTransaction->reporterNetworkId = $reportProblemRequest->reporterNetworkId;
         $response->returnTransaction->submissionDateTime = date('c');
-        $response->returnTransaction->errorReportId = '20170110-02-2342-' . mt_rand(100,999);
+        $response->returnTransaction->errorReportId =  date('Ymd') . '-'. $reportProblemRequest->reporterNetworkId .'-' . $reportProblemRequest->cadbNumber . '-' . mt_rand(100,999);
         $response->returnTransaction->cadbNumber = $reportProblemRequest->cadbNumber;
         $response->returnTransaction->problem = $reportProblemRequest->problem;
 

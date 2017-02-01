@@ -62,10 +62,13 @@ class ReOSServerFunctionalities extends CI_Controller  {
 
         $response->returnTransaction = new _Return\returnTransactionType();
 
+        $openRequest = new _Return\openRequest();
+
         $response->returnTransaction->ownerNrn = $openRequest->ownerNrn;
         $response->returnTransaction->primaryOwnerNrn = $openRequest->primaryOwnerNrn;
         $response->returnTransaction->openDateTime = date('c');
-        $response->returnTransaction->returnId = '20170113-03-237694975166-' . mt_rand(100,999);
+        $response->returnTransaction->returnId = date('Ymd') . '-'. $openRequest->primaryOwnerNrn->networkId .'-' . $openRequest->numberRanges->numberRange->startNumber . '-' . mt_rand(100,999);
+
 
         return $response;
 
