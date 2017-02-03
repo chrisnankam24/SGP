@@ -60,6 +60,10 @@ class ROSServerFunctionalities extends CI_Controller  {
 
         $portingInfo = $this->Porting_model->get_porting($openRequest->originalPortingId);
 
+        if($portingInfo == null){
+            throw new unknownPortingIdFault();
+        }
+
         $response->rollbackTransaction = new rollback\rollbackTransactionType();
         $response->rollbackTransaction->lastChangeDateTime = date('c');
         $response->rollbackTransaction->donorSubmissionDateTime = date('c');
