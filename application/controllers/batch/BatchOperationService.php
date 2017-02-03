@@ -78,7 +78,6 @@ class BatchOperationService extends CI_Controller {
     }
 
     /**
-     * TODO: OK
      * Executed as OPR
      * BATCH_002
      * Checks for all ports in Submission table in STARTED state and attempts making Orders for them
@@ -298,7 +297,6 @@ class BatchOperationService extends CI_Controller {
     }
 
     /**
-     * TODO: OK
      * Executed as OPD
      * BATCH_001
      * Checks for all ports in ORDERED state, performs actions for Approval / Denial
@@ -664,7 +662,6 @@ class BatchOperationService extends CI_Controller {
     }
 
     /**
-     * TODO: OK
      * Executed as OPD
      * BATCH_003
      * Checks for all individual ports in APPROVED state and sends mail for their Acceptance / Rejection
@@ -760,7 +757,6 @@ class BatchOperationService extends CI_Controller {
     }
 
     /**
-     * TODO: OK
      * Executed as OPD
      * BATCH_004_{A, B, C}
      * Checks for all ports in ACCEPTED state, if any performs porting to CONTRACT_DELETED_CONFIRMED state
@@ -1105,7 +1101,6 @@ class BatchOperationService extends CI_Controller {
     }
 
     /**
-     * TODO: OK
      * Executed as OPR
      * BATCH_004_{C, D, E}
      * Checks for all ports in ACCEPTED state, if any check porting date and performs porting to MSISDN_IMPORT_CONFIRMED state
@@ -1476,7 +1471,6 @@ class BatchOperationService extends CI_Controller {
     }
 
     /**
-     * TODO: OK
      * Executed as OPD
      * BATCH_005
      * Checks for all rollbacks in Submission table in STARTED state and attempts making open for them
@@ -1628,7 +1622,6 @@ class BatchOperationService extends CI_Controller {
     }
 
     /**
-     * TODO: OK
      * Executed as OPR
      * BATCH_007
      * Checks for all rollbacks in OPENED state and sends mail for their Acceptance / Rejection
@@ -1679,7 +1672,6 @@ class BatchOperationService extends CI_Controller {
     }
 
     /**
-     * TODO: OK
      * Executed as OPR
      * BATCH_008_{A, B}
      * Checks for all rollbacks in ACCEPTED state, if any performs rollbacks to CONTRACT_DELETED_CONFIRMED state
@@ -2034,7 +2026,6 @@ class BatchOperationService extends CI_Controller {
     }
 
     /**
-     * TODO: OK
      * Executed as OPD
      * BATCH_008_{C, D, E}
      * Checks for all rollbacks in ACCEPTED state, if any perform rollback to MSISDN_IMPORT_CONFIRMED state
@@ -2421,7 +2412,6 @@ class BatchOperationService extends CI_Controller {
     }
 
     /**
-     * TODO: OK
      * Executed as CO
      * BATCH_009
      * Checks for all NRs in Submission table in STARTED state and attempts making open for them
@@ -2576,7 +2566,6 @@ class BatchOperationService extends CI_Controller {
     }
 
     /**
-     * TODO: OK
      * Executed as PO
      * BATCH_010
      * Checks for all NRs in OPENED state and sends mail for their Acceptance / Rejection
@@ -2627,7 +2616,6 @@ class BatchOperationService extends CI_Controller {
     }
 
     /**
-     * TODO: OK
      * Executed as CO
      * BATCH_011_{A, B}
      * Checks for all NRs in ACCEPTED state, if any, perform NR to MSISDN_EXPORT_CONFIRMED state
@@ -2873,7 +2861,6 @@ class BatchOperationService extends CI_Controller {
     }
 
     /**
-     * TODO: OK
      * Executed as PO
      * BATCH_011_{C, D}
      * Checks for all NRs in ACCEPTED state, if any, perform NR to MSISDN_RETURN_CONFIRMED state
@@ -3108,7 +3095,6 @@ class BatchOperationService extends CI_Controller {
     }
 
     /**
-     * TODO: OK
      * Executed as Other Operator
      * BATCH_012
      * Checks for all Provisions in STARTED state in which we are not end operator nor donor or recipient but
