@@ -78,11 +78,10 @@ class portingSubmissionStateType {
     const TERMINATED = 'TERMINATED';
 }
 
-
 //////////////////////// Validation functions
 
 /**
- * Validates input rioType based on porting.xsd file definition
+ * Validates input rioType based on porting.xsd_1_4 file definition
  * @param $rioType
  * @return bool|string
  */
@@ -105,7 +104,7 @@ function isValidRioType($rioType) {
 }
 
 /**
- * Validates input portingStateType based on porting.xsd file definition
+ * Validates input portingStateType based on porting.xsd_1_4 file definition
  * @param $portingStateType
  * @return bool
  */

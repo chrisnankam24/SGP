@@ -51,12 +51,17 @@ class ReturnOperationService {
         $this->Numberreturnsubmission_model = $CI->Numberreturnsubmission_model;
         $this->Numberreturnstateevolution_model = $CI->Numberreturnstateevolution_model;
 
-        // Disable wsdl cache
+        // Disable wsdl_1_4 cache
         ini_set("soap.wsdl_cache_enabled", "0");
 
         // Define soap client object
         $this->client = new SoapClient(__DIR__ . '/wsdl/ReturnOperationService.wsdl', array(
-            "trace" => false
+            "trace" => false,
+            'stream_context' => stream_context_create(array(
+                'http' => array(
+                    'header' => 'Authorization: Bearer ' . Auth::CADB_AUTH_BEARER
+                ),
+            )),
         ));
 
     }
@@ -278,7 +283,6 @@ class ReturnOperationService {
     }
 
     /**
-     * TODO: OK
      * Open Return for given number
      * @param $returnMSISDN
      * @param $returnOperator
@@ -347,6 +351,9 @@ class ReturnOperationService {
                 if ($this->db->trans_status() === FALSE) {
 
                     $error = $this->db->error();
+
+                    $this->fileLogAction($error['code'], 'ReturnOperationService', "Number Return [$returnId] opening failed");
+
                     $this->fileLogAction($error['code'], 'ReturnOperationService', $error['message']);
 
                     $emailService = new EmailService();
@@ -358,6 +365,8 @@ class ReturnOperationService {
 
                 logAction($userId, "Number Return [$returnId] opening Successfully");
 
+                $this->fileLogAction('8010', 'ReturnOperationService', "Number Return [$returnId] opening Successfully");
+
                 $response['message'] = 'Return has been OPENED successfully!';
 
             }
@@ -367,6 +376,8 @@ class ReturnOperationService {
                 $fault = $openResponse->error;
 
                 $emailService = new EmailService();
+
+                $this->fileLogAction('8010', 'ReturnOperationService', "Number Return OPENING failed with $fault");
 
                 $response['success'] = false;
 
@@ -404,6 +415,9 @@ class ReturnOperationService {
                         if ($this->db->trans_status() === FALSE) {
 
                             $error = $this->db->error();
+
+                            $this->fileLogAction($error['code'], 'ReturnOperationService', "Number Return submission OPENING failed with $error");
+
                             $this->fileLogAction($error['code'], 'ReturnOperationService', $error['message']);
 
                             $nrParams = array(
@@ -417,6 +431,8 @@ class ReturnOperationService {
                             $response['message'] = 'Operator is currently Inactive. We have nonetheless encountered problems saving your request. Please contact Back Office';
 
                         }else{
+
+                            $this->fileLogAction('8010', 'ReturnOperationService', "Number Return submission OPENING successful");
 
                             $response['message'] = 'Operator is currently Inactive. You request has been saved and will be performed as soon as possible';
 
@@ -459,7 +475,9 @@ class ReturnOperationService {
                         $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
                 }
 
-                logAction($userId, "Number Return Open Failed with [$fault] Fault");
+                logAction($userId, "Number Return OPEN Failed with [$fault] Fault");
+
+
 
             }
 
@@ -476,7 +494,6 @@ class ReturnOperationService {
     }
 
     /**
-     * TODO: OK
      * Accept Return for given number
      * @param $returnId
      * @return array
@@ -525,11 +542,15 @@ class ReturnOperationService {
                     if ($this->db->trans_status() === FALSE) {
 
                         $error = $this->db->error();
+
+                        $this->fileLogAction($error['code'], 'ReturnOperationService', "Number Return [$returnId] ACCEPT failed " . $error['message']);
+
                         $this->fileLogAction($error['code'], 'ReturnOperationService', $error['message']);
 
                         $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
 
                         $emailService = new EmailService();
+
                         $emailService->adminErrorReport('RETURN_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', $nrParams, processType::_RETURN);
 
                     }
@@ -538,6 +559,8 @@ class ReturnOperationService {
 
                     logAction($userId, "Number Return [$returnId] acceptance Successfully");
 
+                    $this->fileLogAction('8010', 'ReturnOperationService', "Number Return [$returnId] ACCEPT Successfully");
+
                     $response['message'] = 'Return has been ACCEPTED successfully!';
 
                 }
@@ -545,6 +568,8 @@ class ReturnOperationService {
                 else{
 
                     $fault = $acceptResponse->error;
+
+                    $this->fileLogAction('8010', 'ReturnOperationService', "Number Return [$returnId] ACCEPT failed with $fault");
 
                     $emailService = new EmailService();
 
@@ -590,7 +615,6 @@ class ReturnOperationService {
     }
 
     /**
-     * TODO: OK
      * Reject Return for given number
      * @param $returnId
      * @param $cause
@@ -649,6 +673,9 @@ class ReturnOperationService {
                     if ($this->db->trans_status() === FALSE) {
 
                         $error = $this->db->error();
+
+                        $this->fileLogAction($error['code'], 'ReturnOperationService', "Number Return [$returnId] ACCEPT failed");
+
                         $this->fileLogAction($error['code'], 'ReturnOperationService', $error['message']);
 
                         $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
@@ -662,6 +689,8 @@ class ReturnOperationService {
 
                     logAction($userId, "Number Return [$returnId] rejection Successfully");
 
+                    $this->fileLogAction('8010', 'ReturnOperationService', "Number Return [$returnId] REJECT successful");
+
                     $response['message'] = 'Return has been REJECTED successfully!';
 
                 }
@@ -669,6 +698,8 @@ class ReturnOperationService {
                 else{
 
                     $fault = $rejectResponse->error;
+
+                    $this->fileLogAction('8010', 'ReturnOperationService', "Number Return [$returnId] REJECT failed with $fault");
 
                     $emailService = new EmailService();
 
@@ -679,7 +710,7 @@ class ReturnOperationService {
                         case Fault::RETURN_ACTION_NOT_AVAILABLE:
                         case Fault::INVALID_RETURN_ID:
                         case Fault::INVALID_REQUEST_FORMAT:
-                        case Fault::UNKNOWN_NUMBER:
+                        case Fault::CAUSE_MISSING:
                         default:
 
                             $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
@@ -777,7 +808,6 @@ class ReturnOperationService {
                     $response['message'] = 'Error from CADB';
 
             }
-
 
         }
 

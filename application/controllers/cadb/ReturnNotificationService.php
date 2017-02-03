@@ -13,7 +13,6 @@ require_once "Return.php";
 require_once "Common.php";
 require_once "ReturnNotification.php";
 require_once APPPATH . "controllers/email/EmailService.php";
-require_once APPPATH . "controllers/kpsa/KpsaOperationService.php";
 
 use ReturnService\_ReturnNotification as _ReturnNotification;
 
@@ -34,10 +33,32 @@ class ReturnNotificationService extends CI_Controller {
     public function index(){
 
         // Create a new soap server in WSDL mode
-        $server = new SoapServer( __DIR__ . '/wsdl/ReturnNotificationService.wsdl');
+        $server = new SoapServer(__DIR__ . '/wsdl/ReturnNotificationService.wsdl');
 
         // Set the object for the soap server
         $server->setObject($this);
+
+        $headers = getallheaders();
+
+        $cadbAuth = null;
+
+        if(isset($headers['Authorization'])){
+
+            $bearerAuth = $headers['Authorization'];
+
+            $bearerAuth = explode(' ', trim($bearerAuth));
+
+            $auth = $bearerAuth[count($bearerAuth)-1];
+
+            if($auth == Auth::LDB_AUTH_BEARER){
+                // Authorized
+            }else{
+                // Not Authorized
+            }
+
+        }else{
+            // Not Authorized
+        }
 
         // Handle soap operations
         $server->handle();
@@ -54,7 +75,6 @@ class ReturnNotificationService extends CI_Controller {
     }
 
     /**
-     * TODO: OK
      * @param $notifyOpenedRequest
      * @return _ReturnNotification\notifyOpenedResponse
      * @throws ldbAdministrationServiceFault
@@ -62,6 +82,8 @@ class ReturnNotificationService extends CI_Controller {
     public function notifyOpened($notifyOpenedRequest){
 
         $returnId = $notifyOpenedRequest->returnTransaction->returnId;
+
+        $this->fileLogAction('8010', 'ReturnNotificationService', 'Number return OPEN received with ID ' . $returnId);
 
         $this->db->trans_start();
 
@@ -94,10 +116,18 @@ class ReturnNotificationService extends CI_Controller {
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
+
+            $this->fileLogAction($error['code'], 'ReturnNotificationService', "Number Return [$returnId] OPEN failed saving");
+
             $this->fileLogAction($error['code'], 'ReturnNotificationService', $error['message']);
 
             $emailService = new EmailService();
             $emailService->adminErrorReport('OPENED_RETURN_RECEIVED_BUT_DB_FILLING_ERROR', $nrParams, processType::_RETURN);
+
+        }else{
+
+            $this->fileLogAction('8010', 'ReturnNotificationService', "Number Return [$returnId] OPEN saved successfully");
+
         }
 
         $this->db->trans_complete();
@@ -109,7 +139,6 @@ class ReturnNotificationService extends CI_Controller {
     }
 
     /**
-     * TODO: OK
      * @param $notifyAcceptedRequest
      * @return _ReturnNotification\notifyAcceptedResponse
      * @throws ldbAdministrationServiceFault
@@ -117,6 +146,8 @@ class ReturnNotificationService extends CI_Controller {
     public function notifyAccepted($notifyAcceptedRequest){
 
         $returnId = $notifyAcceptedRequest->returnTransaction->returnId;
+
+        $this->fileLogAction('8010', 'ReturnNotificationService', 'Number return ACCEPT received for ID ' . $returnId);
 
         // Update NR table
 
@@ -139,6 +170,9 @@ class ReturnNotificationService extends CI_Controller {
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
+
+            $this->fileLogAction($error['code'], 'ReturnNotificationService', "Number Return [$returnId] ACCEPT failed save");
+
             $this->fileLogAction($error['code'], 'ReturnNotificationService', $error['message']);
 
             $emailService = new EmailService();
@@ -146,6 +180,10 @@ class ReturnNotificationService extends CI_Controller {
             $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
 
             $emailService->adminErrorReport('RETURN_REJECTED_BUT_DB_FILLED_INCOMPLETE', $nrParams, processType::_RETURN);
+
+        }else{
+
+            $this->fileLogAction('8010', 'ReturnNotificationService', "Number Return [$returnId] ACCEPT saved successfully");
 
         }
 
@@ -158,7 +196,6 @@ class ReturnNotificationService extends CI_Controller {
     }
 
     /**
-     * TODO: OK
      * @param $notifyRejectedRequest
      * @return _ReturnNotification\notifyRejectedResponse
      * @throws ldbAdministrationServiceFault
@@ -166,6 +203,8 @@ class ReturnNotificationService extends CI_Controller {
     public function notifyRejected($notifyRejectedRequest){
 
         $returnId = $notifyRejectedRequest->returnTransaction->returnId;
+
+        $this->fileLogAction('8010', 'ReturnNotificationService', 'Number return REJECT received for ID ' . $returnId);
 
         $this->db->trans_start();
 
@@ -190,7 +229,7 @@ class ReturnNotificationService extends CI_Controller {
         // Insert into return rejection
 
         $rrParams = array(
-            'cause' => $notifyRejectedRequest->cause,
+            'casuse' => $notifyRejectedRequest->cause,
             'returnId' => $returnId,
         );
 
@@ -199,6 +238,9 @@ class ReturnNotificationService extends CI_Controller {
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
+
+            $this->fileLogAction($error['code'], 'ReturnNotificationService', "Number Return [$returnId] REJECT failed save");
+
             $this->fileLogAction($error['code'], 'ReturnNotificationService', $error['message']);
 
             $emailService = new EmailService();
@@ -206,6 +248,10 @@ class ReturnNotificationService extends CI_Controller {
             $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
 
             $emailService->adminErrorReport('RETURN_REJECTED_BUT_DB_FILLED_INCOMPLETE', $nrParams, processType::_RETURN);
+
+        }else{
+
+            $this->fileLogAction('8010', 'ReturnNotificationService', "Number Return [$returnId] REJECT saved successfully");
 
         }
 

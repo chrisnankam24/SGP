@@ -30,7 +30,7 @@
 		<sequence>
 			<element name="originalPortingId" type="string" minOccurs="1" maxOccurs="1"/>
 			<element name="donorSubmissionDateTime" type="dateTime" minOccurs="1" maxOccurs="1"/>
-			<element name="preferredRollbackDateTime" type="dateTime" minOccurs="1" maxOccurs="1"/>
+			<element name="rollbackDateTime" type="dateTime" minOccurs="1" maxOccurs="1"/>
 		</sequence>
 	</complexType>
 
@@ -46,7 +46,6 @@
 					<element name="cadbOpenDateTime" type="dateTime" minOccurs="1" maxOccurs="1" nillable="false"/>
 					<element name="lastChangeDateTime" type="dateTime" minOccurs="1" maxOccurs="1" nillable="false"/>
 					<element name="rollbackState" type="tns:rollbackStateType" minOccurs="1" maxOccurs="1" nillable="false"/>
-					<element name="rollbackDateTime" type="dateTime" minOccurs="1" maxOccurs="1" nillable="false"/>
 				</sequence>
 			</extension>
 		</complexContent>
@@ -88,7 +87,7 @@
 		<complexType>
 			<sequence>
 				<element name="rollbackId" type="string" minOccurs="1" maxOccurs="1" nillable="false"/>
-				<element name="rollbackDateAndTime" type="dateTime" minOccurs="1" maxOccurs="1" nillable="false"/>
+				<element name="rollbackDateTime" type="dateTime" minOccurs="1" maxOccurs="1" nillable="false"/>
 			</sequence>
 		</complexType>
 	</element>
@@ -97,7 +96,6 @@
 		<complexType>
 			<sequence>
 				<element name="rollbackTransaction" type="tns:rollbackTransactionType" minOccurs="1" maxOccurs="1" nillable="false"/>
-				<element name="rollbackDateTime" type="dateTime" minOccurs="1" maxOccurs="1" nillable="false"/>
 			</sequence>
 		</complexType>
 	</element>

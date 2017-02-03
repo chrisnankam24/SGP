@@ -28,7 +28,7 @@ class PrOSServerFunctionalities extends CI_Controller  {
     public function index(){
 
         // Create a new soap server in WSDL mode
-        $server = new SoapServer( __DIR__ . '/wsdl/ProblemReportOperationService.wsdl');
+        $server = new SoapServer(__DIR__ . '/wsdl/ProblemReportOperationService.wsdl');
 
         // Set the object for the soap server
         $server->setObject($this);

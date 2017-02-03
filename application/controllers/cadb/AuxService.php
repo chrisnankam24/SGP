@@ -2,6 +2,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once '_Aux.php';
+require_once 'Common.php';
 require_once 'Fault.php';
 
 use AuxService\Aux as Aux;
@@ -17,27 +18,26 @@ use AuxService\Aux as Aux;
  * Simulating Controller for AuxService made by CADB
  * Class AuxService
  */
-class AuxService extends CI_Controller {
+class AuxService {
 
     // Declare client
     private $client = null;
 
     public function __construct()
     {
-        parent::__construct();
 
-        // Disable wsdl cache
+        // Disable wsdl_1_4 cache
         ini_set("soap.wsdl_cache_enabled", "0");
 
         // Define soap client object
         $this->client = new SoapClient(__DIR__ . '/wsdl/AuxService.wsdl', array(
-            "location" => 'http://localhost/SGP/index.php/cadb/AuxService',
-            "trace" => false
+            "trace" => true,
+            'stream_context' => stream_context_create(array(
+                'http' => array(
+                    'header' => 'Authorization: Bearer ' . Auth::CADB_AUTH_BEARER
+                ),
+            )),
         ));
-
-    }
-
-    public function index(){
 
     }
 
@@ -59,6 +59,8 @@ class AuxService extends CI_Controller {
                 $response = $this->client->getOperator($request);
 
                 $response->success = true;
+
+                var_dump($this->client->__getLastRequestHeaders());
 
                 return $response;
 

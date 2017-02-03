@@ -45,10 +45,32 @@ class PortingNotificationService extends CI_Controller
     public function index(){
 
         // Create a new soap server in WSDL mode
-        $server = new SoapServer( __DIR__ . '/wsdl/PortingNotificationService.wsdl');
+        $server = new SoapServer(__DIR__ . '/wsdl/PortingNotificationService.wsdl');
 
         // Set the class for the soap server
         $server->setObject($this);
+
+        $headers = getallheaders();
+
+        $cadbAuth = null;
+
+        if(isset($headers['Authorization'])){
+
+            $bearerAuth = $headers['Authorization'];
+
+            $bearerAuth = explode(' ', trim($bearerAuth));
+
+            $auth = $bearerAuth[count($bearerAuth)-1];
+
+            if($auth == Auth::LDB_AUTH_BEARER){
+                // Authorized
+            }else{
+                // Not Authorized
+            }
+
+        }else{
+            // Not Authorized
+        }
 
         // Handle soap operations
         $server->handle();
@@ -64,9 +86,7 @@ class PortingNotificationService extends CI_Controller
 
     }
 
-
     /**
-     * TODO: OK
      * @param $notifyOrderedRequest
      * @return PortingNotification\notifyOrderedResponse
      * @throws ldbAdministrationServiceFault
@@ -76,6 +96,8 @@ class PortingNotificationService extends CI_Controller
         $rio = $notifyOrderedRequest->portingTransaction->rio;
 
         $portingId = $notifyOrderedRequest->portingTransaction->portingId;
+
+        $this->fileLogAction('8060', 'PortingNotificationService', 'Porting ORDER received for ID ' . $portingId);
 
         $subscriberType = getSubscriberType($rio);
 
@@ -134,6 +156,8 @@ class PortingNotificationService extends CI_Controller
 
             $error = $this->db->error();
 
+            $this->fileLogAction($error['code'], 'PortingNotificationService', 'Porting ORDER saving failed for ID ' . $portingId);
+
             $this->fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
             $emailService = new EmailService();
@@ -142,6 +166,8 @@ class PortingNotificationService extends CI_Controller
             throw new ldbAdministrationServiceFault();
 
         }else{
+
+            $this->fileLogAction('8060', 'PortingNotificationService', 'Porting ORDER saving successful for ID ' . $portingId);
 
             $this->db->trans_complete();
 
@@ -154,7 +180,6 @@ class PortingNotificationService extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * @param $notifyApprovedRequest
      * @return PortingNotification\notifyApprovedResponse
      * @throws ldbAdministrationServiceFault
@@ -166,6 +191,8 @@ class PortingNotificationService extends CI_Controller
         // Fill in portingStateEvolution table with state approved
 
         $portingId = $notifyApprovedRequest->portingTransaction->portingId;
+
+        $this->fileLogAction('8060', 'PortingNotificationService', 'Porting APPROVE received for ID ' . $portingId);
 
         $portingEvolutionParams = array(
             'lastChangeDateTime' => $notifyApprovedRequest->portingTransaction->lastChangeDateTime,
@@ -190,6 +217,9 @@ class PortingNotificationService extends CI_Controller
         if ($this->db->trans_status() === false) {
 
             $error = $this->db->error();
+
+            $this->fileLogAction($error['code'], 'PortingNotificationService', 'Porting APPROVE saving failed for ID ' . $portingId);
+
             $this->fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
             $portingParams = $this->Porting_model->get_porting($portingId);
@@ -202,6 +232,8 @@ class PortingNotificationService extends CI_Controller
 
         }else{
 
+            $this->fileLogAction('8060', 'PortingNotificationService', 'Porting APPROVE successful for ID ' . $portingId);
+
             $this->db->trans_complete();
 
             $response = new PortingNotification\notifyApprovedResponse();
@@ -213,7 +245,6 @@ class PortingNotificationService extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * @param $notifyAutoApproveRequest
      * @return PortingNotification\notifyAutoApproveResponse
      * @throws ldbAdministrationServiceFault
@@ -225,6 +256,8 @@ class PortingNotificationService extends CI_Controller
         // Insert into porting Evolution state table
 
         $portingId = $notifyAutoApproveRequest->portingTransaction->portingId;
+
+        $this->fileLogAction('8060', 'PortingNotificationService', 'Porting AUTO APPROVE received for ID ' . $portingId);
 
         $portingEvolutionParams = array(
             'lastChangeDateTime' => $notifyAutoApproveRequest->portingTransaction->lastChangeDateTime,
@@ -251,6 +284,9 @@ class PortingNotificationService extends CI_Controller
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
+
+            $this->fileLogAction($error['code'], 'PortingNotificationService', 'Porting AUTO APPROVE saving failed for ID ' . $portingId);
+
             $this->fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
             $portingParams = $this->Porting_model->get_porting($portingId);
@@ -260,6 +296,8 @@ class PortingNotificationService extends CI_Controller
             throw new ldbAdministrationServiceFault();
 
         }else{
+
+            $this->fileLogAction('8060', 'PortingNotificationService', 'Porting AUTO APPROVE successful for ID ' . $portingId);
 
             $this->db->trans_complete();
 
@@ -275,7 +313,6 @@ class PortingNotificationService extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * @param $notifyAcceptedRequest
      * @return PortingNotification\notifyAcceptedResponse
      * @throws ldbAdministrationServiceFault
@@ -285,6 +322,8 @@ class PortingNotificationService extends CI_Controller
         $this->db->trans_start();
 
         $portingId = $notifyAcceptedRequest->portingTransaction->portingId;
+
+        $this->fileLogAction('8060', 'PortingNotificationService', 'Porting ACCEPT received for ID ' . $portingId);
 
         // Insert into porting Evolution state table
 
@@ -328,6 +367,8 @@ class PortingNotificationService extends CI_Controller
 
         if($smsResponse['success']){
 
+            $this->fileLogAction('8060', 'PortingNotificationService', "Porting ACCEPT SMS sent successful for $portingId");
+
             // Insert Porting SMS Notification
             $smsNotificationparams = array(
                 'portingId' => $portingId,
@@ -342,6 +383,8 @@ class PortingNotificationService extends CI_Controller
 
         }
         else{
+
+            $this->fileLogAction('8060', 'PortingNotificationService', "Porting ACCEPT SMS sent failed for $portingId");
 
             $smsNotificationparams = array(
                 'portingId' => $portingId,
@@ -360,6 +403,9 @@ class PortingNotificationService extends CI_Controller
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
+
+            $this->fileLogAction($error['code'], 'PortingNotificationService', 'Porting ACCEPT saving failed for ID ' . $portingId);
+
             $this->fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
             $portingParams = $this->Porting_model->get_porting($portingId);
@@ -370,6 +416,8 @@ class PortingNotificationService extends CI_Controller
             throw new ldbAdministrationServiceFault();
 
         }else{
+
+            $this->fileLogAction('8060', 'PortingNotificationService', 'Porting ACCEPT successful for ID ' . $portingId);
 
             $this->db->trans_complete();
 
@@ -392,6 +440,8 @@ class PortingNotificationService extends CI_Controller
         $this->db->trans_start();
 
         $portingId = $notifyAutoAcceptRequest->portingTransaction->portingId;
+
+        $this->fileLogAction('8060', 'PortingNotificationService', 'Porting AUTO ACCEPT received for ID ' . $portingId);
 
         // Insert into porting Evolution state table
 
@@ -434,6 +484,8 @@ class PortingNotificationService extends CI_Controller
 
         if($smsResponse['success']){
 
+            $this->fileLogAction('8060', 'PortingNotificationService', "Porting AUTO ACCEPT SMS sent successful for $portingId");
+
             // Insert Porting SMS Notification
             $smsNotificationparams = array(
                 'portingId' => $portingId,
@@ -448,6 +500,8 @@ class PortingNotificationService extends CI_Controller
 
         }
         else{
+
+            $this->fileLogAction('8060', 'PortingNotificationService', "Porting AUTO ACCEPT SMS sent failed for $portingId");
 
             $smsNotificationparams = array(
                 'portingId' => $portingId,
@@ -468,6 +522,9 @@ class PortingNotificationService extends CI_Controller
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
+
+            $this->fileLogAction($error['code'], 'PortingNotificationService', 'Porting AUTO ACCEPT saving failed for ID ' . $portingId);
+
             $this->fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
             $portingParams = $this->Porting_model->get_porting($portingId);
@@ -477,6 +534,8 @@ class PortingNotificationService extends CI_Controller
         }
 
         $this->db->trans_complete();
+
+        $this->fileLogAction('8060', 'PortingNotificationService', 'Porting AUTO ACCEPT successful for ID ' . $portingId);
 
         $portingParams = $this->Porting_model->get_porting($portingId);
 
@@ -496,6 +555,8 @@ class PortingNotificationService extends CI_Controller
     public function notifyAutoConfirm($notifyAutoConfirmRequest){
 
         $portingId = $notifyAutoConfirmRequest->portingTransaction->portingId;
+
+        $this->fileLogAction('8060', 'PortingNotificationService', 'Porting AUTO CONFIRM received for ID ' . $portingId);
 
         $donorNetworkId = $notifyAutoConfirmRequest->portingTransaction->donorNrn->networkId;
 
@@ -540,6 +601,9 @@ class PortingNotificationService extends CI_Controller
             if ($this->db->trans_status() === FALSE) {
 
                 $error = $this->db->error();
+
+                $this->fileLogAction($error['code'], 'PortingNotificationService', 'Porting AUTO CONFIRM saving failed for ID ' . $portingId);
+
                 $this->fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
                 $portingParams = $this->Porting_model->get_porting($portingId);
@@ -551,6 +615,8 @@ class PortingNotificationService extends CI_Controller
             }else{
 
                 $this->db->trans_complete();
+
+                $this->fileLogAction('8060', 'PortingNotificationService', 'Porting AUTO CONFIRM successful for ID ' . $portingId);
 
                 $response = new PortingNotification\notifyAutoConfirmResponse();
 
@@ -618,6 +684,8 @@ class PortingNotificationService extends CI_Controller
 
         $portingId = $notifyDeniedRequest->portingTransaction->portingId;
 
+        $this->fileLogAction('8060', 'PortingNotificationService', 'Porting DENY received for ID ' . $portingId);
+
         // Insert into porting Evolution state table
 
         $portingEvolutionParams = array(
@@ -661,7 +729,9 @@ class PortingNotificationService extends CI_Controller
 
         $smsResponse = SMS::OPR_Subscriber_KO($language, $subscriberMSISDN);
 
-        if($smsResponse->success){
+        if($smsResponse['success']){
+
+            $this->fileLogAction('8060', 'PortingNotificationService', "Porting DENY SMS sent successful for $portingId");
 
             // Insert Porting SMS Notification
             $smsNotificationparams = array(
@@ -676,6 +746,8 @@ class PortingNotificationService extends CI_Controller
             );
 
         }else{
+
+            $this->fileLogAction('8060', 'PortingNotificationService', "Porting DENY SMS sent failed for $portingId");
 
             $smsNotificationparams = array(
                 'portingId' => $portingId,
@@ -693,6 +765,9 @@ class PortingNotificationService extends CI_Controller
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
+
+            $this->fileLogAction($error['code'], 'PortingNotificationService', 'Porting DENY saving failed for ID ' . $portingId);
+
             $this->fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
             $portingParams = $this->Porting_model->get_porting($portingId);
@@ -706,6 +781,8 @@ class PortingNotificationService extends CI_Controller
 
             $this->db->trans_complete();
 
+            $this->fileLogAction('8060', 'PortingNotificationService', 'Porting DENY successful for ID ' . $portingId);
+
             $response = new PortingNotification\notifyDeniedResponse();
 
             return $response;
@@ -715,16 +792,17 @@ class PortingNotificationService extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * @param $notifyRejectedRequest
      * @return PortingNotification\notifyRejectedResponse
      * @throws ldbAdministrationServiceFault
      */
     public function notifyRejected($notifyRejectedRequest){
 
-        $this->db->trans_start();
-
         $portingId = $notifyRejectedRequest->portingTransaction->portingId;
+
+        $this->fileLogAction('8060', 'PortingNotificationService', 'Porting REJECT received for ID ' . $portingId);
+
+        $this->db->trans_start();
 
         // Insert into porting Evolution state table
 
@@ -771,6 +849,8 @@ class PortingNotificationService extends CI_Controller
 
         if($smsResponse['success']){
 
+            $this->fileLogAction('8060', 'PortingNotificationService', "Porting REJECT SMS sent successful for $portingId");
+
             // Insert Porting SMS Notification
             $smsNotificationparams = array(
                 'portingId' => $portingId,
@@ -784,6 +864,8 @@ class PortingNotificationService extends CI_Controller
             );
 
         }else{
+
+            $this->fileLogAction('8060', 'PortingNotificationService', "Porting REJECT SMS sent failed for $portingId");
 
             $smsNotificationparams = array(
                 'portingId' => $portingId,
@@ -802,6 +884,9 @@ class PortingNotificationService extends CI_Controller
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
+
+            $this->fileLogAction($error['code'], 'PortingNotificationService', 'Porting REJECT saving failed for ID ' . $portingId);
+
             $this->fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
             $portingParams = $this->Porting_model->get_porting($portingId);
@@ -815,6 +900,8 @@ class PortingNotificationService extends CI_Controller
 
             $this->db->trans_complete();
 
+            $this->fileLogAction('8060', 'PortingNotificationService', 'Porting REJECT successful for ID ' . $portingId);
+
             $response = new PortingNotification\notifyRejectedResponse();
 
             return $response;
@@ -824,7 +911,6 @@ class PortingNotificationService extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * @param notifyAbandonedRequest
      * @return PortingNotification\notifyAbandonedResponse
      * @throws ldbAdministrationServiceFault
@@ -834,6 +920,8 @@ class PortingNotificationService extends CI_Controller
         $this->db->trans_start();
 
         $portingId = $notifyAbandonedRequest->portingTransaction->portingId;
+
+        $this->fileLogAction('8060', 'PortingNotificationService', 'Porting ABANDON received for ID ' . $portingId);
 
         // Insert into porting Evolution state table
 
@@ -877,6 +965,8 @@ class PortingNotificationService extends CI_Controller
 
         if($smsResponse['success']){
 
+            $this->fileLogAction('8060', 'PortingNotificationService', "Porting ABANDON SMS sent successful for $portingId");
+
             // Insert Porting SMS Notification
             $smsNotificationparams = array(
                 'portingId' => $portingId,
@@ -890,6 +980,8 @@ class PortingNotificationService extends CI_Controller
             );
 
         } else{
+
+            $this->fileLogAction('8060', 'PortingNotificationService', "Porting ABANDON SMS sent failed for $portingId");
 
             $smsNotificationparams = array(
                 'portingId' => $portingId,
@@ -910,6 +1002,9 @@ class PortingNotificationService extends CI_Controller
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
+
+            $this->fileLogAction($error['code'], 'PortingNotificationService', 'Porting ABANDON saving failed for ID ' . $portingId);
+
             $this->fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
             $portingParams = $this->Porting_model->get_porting($portingId);
@@ -923,6 +1018,8 @@ class PortingNotificationService extends CI_Controller
         }else{
 
             $this->db->trans_complete();
+
+            $this->fileLogAction('8060', 'PortingNotificationService', 'Porting ABANDON successful for ID ' . $portingId);
 
             $portingParams = $this->Porting_model->get_porting($portingId);
 

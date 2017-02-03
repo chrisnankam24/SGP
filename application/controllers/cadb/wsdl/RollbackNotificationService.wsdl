@@ -56,6 +56,14 @@
 		<part name="body" element="tns:notifyRejectedResponse"/>
 	</message>
 
+	<message name="NotifyAbandonedRequestMessage">
+		<part name="body" element="tns:notifyAbandonedRequest"/>
+	</message>
+
+	<message name="NotifyAbandonedResponseMessage">
+		<part name="body" element="tns:notifyAbandonedResponse"/>
+	</message>
+
 	<message name="LdbAdministrationServiceFaultMessage">
 		<part name="body" element="fault:ldbAdministrationServiceFault"/>
 	</message>
@@ -83,6 +91,11 @@
 		</operation>
 		<operation name="notifyRejected">
 			<input message="tns:NotifyRejectedRequestMessage"/>
+			<output message="tns:NotifyRejectedResponseMessage"/>
+			<fault name="ldbAdministrationServiceFault" message="tns:LdbAdministrationServiceFaultMessage"/>
+		</operation>
+		<operation name="notifyAbandoned">
+			<input message="tns:NotifyAbandonedRequestMessage"/>
 			<output message="tns:NotifyRejectedResponseMessage"/>
 			<fault name="ldbAdministrationServiceFault" message="tns:LdbAdministrationServiceFaultMessage"/>
 		</operation>
@@ -145,6 +158,19 @@
 
 		<operation name="notifyRejected">
 			<soap:operation soapAction="notifyRejected"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="ldbAdministrationServiceFault">
+				<soap:fault name="ldbAdministrationServiceFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="notifyAbandoned">
+			<soap:operation soapAction="notifyAbandoned"/>
 			<input>
 				<soap:body use="literal"/>
 			</input>

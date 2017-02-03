@@ -36,7 +36,7 @@ class BscsOperationService {
 
         $this->BSCS_model = $CI->BSCS_model;
 
-        // Disable wsdl cache
+        // Disable wsdl_1_4 cache
         ini_set("soap.wsdl_cache_enabled", "0");
 
         // Define soap client object

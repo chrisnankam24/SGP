@@ -42,7 +42,7 @@ class returnSubmissionStateType {
 ////////////////////// Return Types and Functions
 
 /**
- * Validates input returnStateType based on return.xsd file definition
+ * Validates input returnStateType based on return.xsd_1_4 file definition
  * @param $returnStateType
  * @return bool
  */

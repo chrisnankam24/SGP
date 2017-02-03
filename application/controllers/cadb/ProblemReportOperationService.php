@@ -41,12 +41,17 @@ class ProblemReportOperationService {
         $this->Error_model = $CI->Error_model;
         $this->FileLog_model = $CI->FileLog_model;
 
-        // Disable wsdl cache
+        // Disable wsdl_1_4 cache
         ini_set("soap.wsdl_cache_enabled", "0");
 
         // Define soap client object
         $this->client = new SoapClient(__DIR__ . '/wsdl/ProblemReportOperationService.wsdl', array(
-            "trace" => false
+            "trace" => false,
+            'stream_context' => stream_context_create(array(
+                'http' => array(
+                    'header' => 'Authorization: Bearer ' . Auth::CADB_AUTH_BEARER
+                ),
+            )),
         ));
 
     }
@@ -111,7 +116,6 @@ class ProblemReportOperationService {
     }
 
     /**
-     * TODO: OK
      * @param $reporterNetworkId
      * @param $cadbNumber
      * @param $problem
@@ -164,6 +168,8 @@ class ProblemReportOperationService {
 
             logAction($userId, "Problem Report [$errorReportId] reported Successfully");
 
+            $this->fileLogAction('8002', 'ProblemReportOperationService',"Problem Report [$errorReportId] reported Successfully by $userId");
+
             $response['message'] = 'Error has been REPORTED successfully!';
 
         }
@@ -202,12 +208,13 @@ class ProblemReportOperationService {
                     'processType' => ''
                 );
 
-
                 $emailService->adminErrorReport($fault, $eParams, processType::ERROR);
                     $response['message'] = 'Fatal Error Encountered. Please contact Administrator';
             }
 
             logAction($userId, "Error Report Failed with [$fault] Fault");
+
+            $this->fileLogAction('8002', 'ProblemReportOperationService', "Error Report Failed with [$fault] Fault by $userId");
 
         }
 

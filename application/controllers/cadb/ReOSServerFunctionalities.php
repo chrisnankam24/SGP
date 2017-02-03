@@ -23,12 +23,14 @@ class ReOSServerFunctionalities extends CI_Controller  {
     {
         parent::__construct();
 
+        $this->load->model('Numberreturn_model');
+
     }
 
     public function index(){
 
         // Create a new soap server in WSDL mode
-        $server = new SoapServer( __DIR__ . '/wsdl/ReturnOperationService.wsdl');
+        $server = new SoapServer(__DIR__ . '/wsdl/ReturnOperationService.wsdl');
 
         // Set the object for the soap server
         $server->setObject($this);
@@ -62,17 +64,14 @@ class ReOSServerFunctionalities extends CI_Controller  {
 
         $response->returnTransaction = new _Return\returnTransactionType();
 
-        $openRequest = new _Return\openRequest();
-
         $response->returnTransaction->ownerNrn = $openRequest->ownerNrn;
         $response->returnTransaction->primaryOwnerNrn = $openRequest->primaryOwnerNrn;
         $response->returnTransaction->openDateTime = date('c');
         $response->returnTransaction->returnId = date('Ymd') . '-'. $openRequest->primaryOwnerNrn->networkId .'-' . $openRequest->numberRanges->numberRange->startNumber . '-' . mt_rand(100,999);
 
-
         return $response;
 
-        //throw new invalidRequestFormatFault();
+        //throw new invalidOperatorFault();
 
     }
 
@@ -103,7 +102,7 @@ class ReOSServerFunctionalities extends CI_Controller  {
      * @throws returnActionNotAvailableFault
      * @throws invalidReturnIdFault
      * @throws invalidRequestFormatFault
-     * @throws unknownNumberFault
+     * @throws causeMissingFault
      */
     public function reject($rejectRequest){
 
@@ -128,6 +127,28 @@ class ReOSServerFunctionalities extends CI_Controller  {
     public function getReturningTransaction($getReturningTransactionRequest){
 
         $response = new _Return\getReturningTransactionResponse();
+
+        $return = $this->Numberreturn_model->get_numberreturn($getReturningTransactionRequest->returnId);
+
+        $response->returnTransaction = new _Return\returnTransactionType();
+
+        $response->returnTransaction->returnId = $getReturningTransactionRequest->returnId;
+        $response->returnTransaction->openDateTime = $return['openDateTime'];
+        $response->returnTransaction->returnNumberState = $return['returnNumberState'];
+
+        $numRange = new numberRangeType();
+        $numRange->endNumber = $return['returnMSISDN'];
+        $numRange->startNumber = $return['returnMSISDN'];
+
+        $response->returnTransaction->ownerNrn = new nrnType();
+        $response->returnTransaction->ownerNrn->networkId = $return['ownerNetworkId'];
+        $response->returnTransaction->ownerNrn->routingNumber = $return['ownerRoutingNumber'];
+
+        $response->returnTransaction->primaryOwnerNrn = new nrnType();
+        $response->returnTransaction->primaryOwnerNrn->networkId = $return['primaryOwnerNetworkId'];
+        $response->returnTransaction->primaryOwnerNrn->routingNumber = $return['primaryOwnerRoutingNumber'];
+
+        $response->returnTransaction->numberRanges = array($numRange);
 
         return $response;
 

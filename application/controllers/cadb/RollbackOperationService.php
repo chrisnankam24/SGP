@@ -51,17 +51,18 @@ class RollbackOperationService {
         $this->Rollbackstateevolution_model = $CI->Rollbackstateevolution_model;
         $this->Rollbackrejectionabandon_model = $CI->Rollbackrejectionabandon_model;
 
-        // Disable wsdl cache
+        // Disable wsdl_1_4 cache
         ini_set("soap.wsdl_cache_enabled", "0");
 
         // Define soap client object
         $this->client = new SoapClient(__DIR__ . '/wsdl/RollbackOperationService.wsdl', array(
-            "trace" => false
+            "trace" => false,
+            'stream_context' => stream_context_create(array(
+                'http' => array(
+                    'header' => 'Authorization: Bearer ' . Auth::CADB_AUTH_BEARER
+                ),
+            )),
         ));
-
-    }
-
-    public function index(){
 
     }
 
@@ -77,10 +78,10 @@ class RollbackOperationService {
     /**
      * @param $originalPortingId string porting id of original porting process
      * @param $donorSubmissionDateTime string of submission process
-     * @param $preferredRollbackDateTime string of preferred porting process
+     * @param $rollbackDateTime string of preferred porting process
      * @return errorResponse
      */
-    public function open($originalPortingId, $donorSubmissionDateTime, $preferredRollbackDateTime) {
+    public function open($originalPortingId, $donorSubmissionDateTime, $rollbackDateTime) {
 
         if($this->client) {
 
@@ -91,7 +92,7 @@ class RollbackOperationService {
 
             $request->donorSubmissionDateTime = $donorSubmissionDateTime;
 
-            $request->preferredRollbackDateTime = $preferredRollbackDateTime;
+            $request->rollbackDateTime = $rollbackDateTime;
 
             try {
 
@@ -445,16 +446,14 @@ class RollbackOperationService {
     }
 
     /**
-     * TODO: OK
      * Make rollback open for given portingId
      * @param $originalPortingId
      * @param $contractId
      * @param $temporalNumber
-     * @param $language
      * @param $donorSubmissionDateTime
      * @param $preferredRollbackDateTime
      */
-    public function makeOpen($originalPortingId, $temporalNumber, $language, $userId){
+    public function makeOpen($originalPortingId, $temporalNumber, $userId){
 
         $response = [];
 
@@ -475,11 +474,11 @@ class RollbackOperationService {
         }else{
 
             $donorSubmissionDateTime = date('c');
-            $preferredRollbackDateTime = date('c', strtotime('+2 hours', strtotime(date('c'))));
+            $rollbackDateTime = date('c', strtotime('+2 hours', strtotime(date('c'))));
 
             // Make Open Rollback Operation
 
-            $openResponse = $this->open($originalPortingId, $donorSubmissionDateTime, $preferredRollbackDateTime);
+            $openResponse = $this->open($originalPortingId, $donorSubmissionDateTime, $rollbackDateTime);
 
             // Verify response
 
@@ -491,11 +490,10 @@ class RollbackOperationService {
 
                 $submissionParams = array(
                     'originalPortingId' => $originalPortingId,
-                    'preferredRollbackDateTime' => $openResponse->rollbackTransaction->preferredRollbackDateTime,
+                    'preferredRollbackDateTime' => $openResponse->rollbackTransaction->rollbackDateTime,
                     'submissionState' => \RollbackService\Rollback\rollbackSubmissionStateType::OPENED,
                     'openedDateTime' => date('c'),
                     'contractId' => $contractId,
-                    'language' => $language,
                     'temporalMSISDN' => $temporalNumber,
                     'userId' => $userId
                 );
@@ -510,7 +508,6 @@ class RollbackOperationService {
                      'rollbackId' => $rollbackId,
                      'originalPortingId' => $originalPortingId,
                      'donorSubmissionDateTime' => $openResponse->rollbackTransaction->donorSubmissionDateTime,
-                     'preferredRollbackDateTime' => $openResponse->rollbackTransaction->preferredRollbackDateTime,
                      'rollbackDateTime' => $openResponse->rollbackTransaction->rollbackDateTime,
                      'cadbOpenDateTime' => $openResponse->rollbackTransaction->cadbOpenDateTime,
                      'lastChangeDateTime' => $openResponse->rollbackTransaction->lastChangeDateTime,
@@ -538,6 +535,9 @@ class RollbackOperationService {
                 if ($this->db->trans_status() === FALSE) {
 
                     $error = $this->db->error();
+
+                    $this->fileLogAction($error['code'], 'RollbackOperationService', "Rollback OPEN save failed for $rollbackId");
+
                     $this->fileLogAction($error['code'], 'RollbackOperationService', $error['message']);
 
                     $portingParams = $this->Porting_model->get_porting($originalPortingId);
@@ -554,6 +554,8 @@ class RollbackOperationService {
 
                 logAction($userId, "Rollback [$rollbackId] Opened Successfully");
 
+                $this->fileLogAction('8040', 'RollbackOperationService', "Rollback OPEN successful for $rollbackId");
+
                 $response['message'] = 'Rollback has been OPENED successfully!';
 
             }
@@ -561,6 +563,8 @@ class RollbackOperationService {
             else{
 
                 $fault = $openResponse->error;
+
+                $this->fileLogAction('8040', 'RollbackOperationService', "Rollback OPEN failed with $fault");
 
                 $emailService = new EmailService();
 
@@ -576,11 +580,10 @@ class RollbackOperationService {
 
                         $submissionParams = array(
                             'originalPortingId' => $originalPortingId,
-                            'preferredRollbackDateTime' => $preferredRollbackDateTime,
+                            'preferredRollbackDateTime' => $rollbackDateTime,
                             'submissionState' => \RollbackService\Rollback\rollbackSubmissionStateType::STARTED,
                             'openedDateTime' => date('c'),
                             'contractId' => $contractId,
-                            'language' => $language,
                             'temporalMSISDN' => $temporalNumber,
                             'userId' => $userId
                         );
@@ -655,7 +658,6 @@ class RollbackOperationService {
     }
 
     /**
-     * TODO: OK
      * Make rollback accept for given rollbackId
      * @param $rollbackId
      */
@@ -683,7 +685,6 @@ class RollbackOperationService {
                     // Update Rollback table
 
                     $rollbackParams = array(
-                        'preferredRollbackDateTime' => $acceptResponse->rollbackTransaction->preferredRollbackDateTime,
                         'rollbackDateTime' => $acceptResponse->rollbackTransaction->rollbackDateTime,
                         'lastChangeDateTime' => $acceptResponse->rollbackTransaction->lastChangeDateTime,
                         'rollbackState' => \RollbackService\Rollback\rollbackStateType::ACCEPTED
@@ -707,6 +708,9 @@ class RollbackOperationService {
                     if ($this->db->trans_status() === FALSE) {
 
                         $error = $this->db->error();
+
+                        $this->fileLogAction('8040', 'RollbackOperationService', "Rollback ACCEPT save failed for $rollbackId");
+
                         $this->fileLogAction($error['code'], 'RollbackOperationService', $error['message']);
 
                         $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
@@ -721,6 +725,8 @@ class RollbackOperationService {
 
                     logAction($userId, "Rollback [$rollbackId] Accepted Successfully");
 
+                    $this->fileLogAction('8040', 'RollbackOperationService', "Rollback ACCEPT successful for $rollbackId");
+
                     $response['message'] = 'Rollback has been ACCEPTED successfully!';
 
                 }
@@ -728,6 +734,8 @@ class RollbackOperationService {
                 else{
 
                     $fault = $acceptResponse->error;
+
+                    $this->fileLogAction('8040', 'RollbackOperationService', "Rollback OPEN failed with $fault");
 
                     $emailService = new EmailService();
 
@@ -776,7 +784,6 @@ class RollbackOperationService {
     }
 
     /**
-     * TODO: OK
      * Make rollback reject
      * @param $rollbackId
      * @param $rejectionReason
@@ -808,7 +815,6 @@ class RollbackOperationService {
                         // Update Rollback table
 
                         $rollbackParams = array(
-                            'preferredRollbackDateTime' => $rejectResponse->rollbackTransaction->preferredRollbackDateTime,
                             'rollbackDateTime' => $rejectResponse->rollbackTransaction->rollbackDateTime,
                             'lastChangeDateTime' => $rejectResponse->rollbackTransaction->lastChangeDateTime,
                             'rollbackState' => \RollbackService\Rollback\rollbackStateType::REJECTED
@@ -843,6 +849,8 @@ class RollbackOperationService {
 
                             $error = $this->db->error();
 
+                            $this->fileLogAction($error['code'], 'RollbackOperationService', "Rollback REJECT save failed for $rollbackId");
+
                             $this->fileLogAction($error['code'], 'RollbackOperationService', $error['message']);
 
                             $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
@@ -858,6 +866,8 @@ class RollbackOperationService {
 
                         logAction($userId, "Rollback [$rollbackId] Rejected Successfully");
 
+                        $this->fileLogAction('8040', 'RollbackOperationService', "Rollback REJECT successful for $rollbackId");
+
                         $response['message'] = 'Rollback has been REJECTED successfully!';
 
                     }
@@ -865,6 +875,8 @@ class RollbackOperationService {
                     else{
 
                         $fault = $rejectResponse->error;
+
+                        $this->fileLogAction('8040', 'RollbackOperationService', "Rollback REJECT failed for $fault");
 
                         $emailService = new EmailService();
 
@@ -964,7 +976,6 @@ class RollbackOperationService {
             $data['rollbackId'] = $tmpData->rollbackId;
             $data['originalPortingId'] = $tmpData->originalPortingId;
             $data['donorSubmissionDateTime'] = $tmpData->donorSubmissionDateTime;
-            $data['preferredRollbackDateTime'] = $tmpData->preferredRollbackDateTime;
             $data['rollbackDateTime'] = $tmpData->rollbackDateTime;
             $data['lastChangeDateTime'] = $tmpData->lastChangeDateTime;
             $data['cadbOpenDateTime'] = $tmpData->cadbOpenDateTime;

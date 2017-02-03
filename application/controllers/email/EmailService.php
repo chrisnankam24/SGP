@@ -368,6 +368,9 @@ class EmailService {
         // Set PortingId
         $template = str_replace('[portingId]', $params['portingId'], $template);
 
+        // Set PortingLocation
+        $template = str_replace('[portingLocation]', 'SGP/Porting/detail/' . $params['portingId'], $template);
+
         // Set Recipient Network
 
         $recipientNetwork = '';
@@ -442,6 +445,9 @@ class EmailService {
         // Set rollbackId
         $template = str_replace('[rollbackId]', $params['rollbackId'], $template);
 
+        // Set PortingLocation
+        $template = str_replace('[portingLocation]', 'SGP/Rollback/detail/' . $params['rollbackId'], $template);
+
         // Set Donor Network
 
         $donorNetwork = '';
@@ -467,8 +473,8 @@ class EmailService {
         $template = str_replace('[submissionDateTime]', $submissionDateTime, $template);
 
         // Set preferred rollback Date
-        $preferredRollbackDateTime = date('l, M d Y, H:i:s', strtotime($params['preferredRollbackDateTime']));
-        $message = str_replace('[rollbackDateTime]', $preferredRollbackDateTime, $template);
+        $rollbackDateTime = date('l, M d Y, H:i:s', strtotime($params['rollbackDateTime']));
+        $message = str_replace('[rollbackDateTime]', $rollbackDateTime, $template);
 
         $to = array('christian.nankam@orange.com');
 
@@ -486,6 +492,9 @@ class EmailService {
 
         // Set ReturnId
         $template = str_replace('[returnId]', $params['returnId'], $template);
+
+        // Set PortingLocation
+        $template = str_replace('[portingLocation]', 'SGP/NReturn/detail/' . $params['returnId'], $template);
 
         // Set Return MSISDN
         $template = str_replace('[returnMSISDN]', $params['returnMSISDN'], $template);
@@ -506,6 +515,54 @@ class EmailService {
 
         // Set Submission Date
         $submissionDateTime = date('l, M d Y, H:i:s', strtotime($params['openDateTime']));
+
+        $message = str_replace('[submissionDateTime]', $submissionDateTime, $template);
+
+        $to = array('christian.nankam@orange.com');
+
+        $cc = array();
+
+        return $this->send_mail($to, $cc, $subject, $message);
+
+    }
+
+    public function backOfficeErrorReport($params){
+
+        $subject = 'Error Report : ' . $params['errorReportId'];
+
+        $template = file_get_contents(__DIR__ . '/templates/error-template.html');
+
+        // Set errorText
+        $template = str_replace('[errorText]', "Eror Encountered with " . $params['cadbNumber'], $template);
+
+        // Set errorId
+        $template = str_replace('[errorId]', $params['errorReportId'], $template);
+
+        // Set CADB Number
+        $template = str_replace('[cadbNumber]', $params['cadbNumber'], $template);
+
+        // Set Process type
+        $template = str_replace('[processType]', $params['processType'], $template);
+
+        // Set Problem
+        $template = str_replace('[problem]', $params['problem'], $template);
+
+        // Set Reporter  Network
+
+        $reporterNetwork = '';
+
+        if($params['reporterNetworkId'] == Operator::MTN_NETWORK_ID){
+            $reporterNetwork = Operator::MTN_OPERATOR_NAME;
+        }elseif ($params['reporterNetworkId'] == Operator::NEXTTEL_NETWORK_ID){
+            $reporterNetwork = Operator::NEXTTEL_OPERATOR_NAME;
+        }elseif ($params['reporterNetworkId'] == Operator::ORANGE_NETWORK_ID){
+            $reporterNetwork = Operator::ORANGE_OPERATOR_NAME;
+        }
+
+        $template = str_replace('[reporterNetwork]', $reporterNetwork, $template);
+
+        // Set Submission Date
+        $submissionDateTime = date('l, M d Y, H:i:s', strtotime($params['submissionDateTime']));
 
         $message = str_replace('[submissionDateTime]', $submissionDateTime, $template);
 

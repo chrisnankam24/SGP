@@ -112,6 +112,10 @@
 		<part name="body" element="fault:invalidReturnIdFault"/>
 	</message>
 
+	<message name="CauseMissingFaultMessage">
+		<part name="body" element="fault:causeMissingFault"/>
+	</message>
+
 	<portType name="ReturnOperationServicePortType">
 		<operation name="open">
 			<input message="tns:OpenRequestMessage"/>
@@ -142,7 +146,7 @@
 			<fault name="returnActionNotAvailableFault" message="tns:ReturnActionNotAvailableFaultMessage"/>
 			<fault name="invalidReturnIdFault" message="tns:InvalidReturnIdFaultMessage"/>
 			<fault name="invalidRequestFormatFault" message="tns:InvalidRequestFormatFaultMessage"/>
-			<fault name="unknownNumberFault" message="tns:UnknownNumberFaultMessage"/>
+			<fault name="causeMissingFault" message="tns:CauseMissingFaultMessage"/>
 		</operation>
 		<operation name="getReturningTransaction">
 			<input message="tns:getReturningTransactionRequestMessage"/>
@@ -251,8 +255,8 @@
 			<fault name="invalidRequestFormatFault">
 				<soap:fault name="invalidRequestFormatFault" use="literal"/>
 			</fault>
-			<fault name="unknownNumberFault">
-				<soap:fault name="unknownNumberFault" use="literal"/>
+			<fault name="causeMissingFault">
+				<soap:fault name="causeMissingFault" use="literal"/>
 			</fault>
 		</operation>
 

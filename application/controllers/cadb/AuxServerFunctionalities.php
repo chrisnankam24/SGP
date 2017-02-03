@@ -24,13 +24,22 @@ class AuxServerFunctionalities extends CI_Controller {
     public function index(){
 
         // Create a new soap server in WSDL mode
-        $server = new SoapServer( __DIR__ . '/wsdl/AuxService.wsdl');
+        $server = new SoapServer(__DIR__ . '/wsdl/AuxService.wsdl');
 
-        // Set the class for the soap server
-        $server->setClass("AuxServerFunctionalities");
+        // Set the object for the soap server
+        $server->setObject($this);
+
+        $headers = getallheaders();
+
+        $cadbAuth = null;
+
+        if(isset($headers['Authorization'])){
+            $cadbAuth = $headers['Authorization'];
+        }
 
         // Handle soap operations
         $server->handle();
+
     }
 
     ////////////////////////////////////////// Define Server methods
@@ -45,7 +54,16 @@ class AuxServerFunctionalities extends CI_Controller {
 
         $response = new Aux\getOperatorResponse();
 
+        $operator = new Aux\operatorType();
+
+        $operator->networkId = '01';
+        $operator->operatorName = 'MTN Cameroon';
+        $operator->routingNumber = '1601';
+
+        $response->cadbOperator = $operator;
+
         return $response;
+
     }
 
     /**

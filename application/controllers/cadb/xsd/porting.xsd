@@ -49,7 +49,7 @@
 			<element name="physicalPersonIdNumber" type="string" minOccurs="0" maxOccurs="1"/>
 			<element name="legalPersonName" type="string" minOccurs="0" maxOccurs="1"/>
 			<element name="legalPersonTin" type="string" minOccurs="0" maxOccurs="1"/>
-			<element name="contactNumber" type="string" minOccurs="0" maxOccurs="1"/>
+			<element name="contactNumber" type="common:numberType" minOccurs="0" maxOccurs="1"/>
 		</sequence>
 	</complexType>
 

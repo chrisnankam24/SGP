@@ -51,7 +51,7 @@ class rejectionReasonType {
 ////////////////////// Return Types and Functions
 
 /**
- * Validates input rollbackStateType based on rollback.xsd file definition
+ * Validates input rollbackStateType based on rollback.xsd_1_4 file definition
  * @param $rollbackStateType
  * @return bool
  */
@@ -89,7 +89,7 @@ abstract class baseRollbackTransactionType {
     /**
      * @var \DateTime
      */
-    public $preferredRollbackDateTime;
+    public $rollbackDateTime;
 
 }
 
@@ -137,11 +137,6 @@ class rollbackTransactionType extends baseRollbackTransactionType {
      * @var RollbackStateType
      */
     public $rollbackState;
-
-    /**
-     * @var \DateTime
-     */
-    public $rollbackDateTime;
 
 }
 
@@ -214,11 +209,6 @@ class confirmResponse {
      * @var rollbackTransactionType
      */
     public $rollbackTransaction;
-
-    /**
-     * @var \DateTime
-     */
-    public $rollbackDateTime;
 
 }
 

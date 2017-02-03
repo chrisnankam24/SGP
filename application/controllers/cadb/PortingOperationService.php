@@ -55,12 +55,17 @@ class PortingOperationService  {
         $this->Portingsmsnotification_model = $CI->Portingsmsnotification_model;
         $this->Portingdenyrejectionabandon_model = $CI->Portingdenyrejectionabandon_model;
 
-        // Disable wsdl cache
+        // Disable wsdl_1_4 cache
         ini_set("soap.wsdl_cache_enabled", "0");
 
         // Define soap client object
         $this->client = new SoapClient(__DIR__ . '/wsdl/PortingOperationService.wsdl', array(
-            "trace" => false
+            "trace" => false,
+            'stream_context' => stream_context_create(array(
+                'http' => array(
+                    'header' => 'Authorization: Bearer ' . Auth::CADB_AUTH_BEARER
+                ),
+            )),
         ));
 
     }
@@ -75,7 +80,6 @@ class PortingOperationService  {
     }
 
     /**
-     * TODO: OK
      * @param $donorOperator
      * @param $portingDateTime
      * @param $msisdn
@@ -159,7 +163,6 @@ class PortingOperationService  {
     }
 
     /**
-     * TODO: OK
      * @param $portingId string Id of porting process to approve
      * @return mixed
      */
@@ -204,7 +207,6 @@ class PortingOperationService  {
     }
 
     /**
-     * TODO: OK
      * @param $portingId string id of porting process to accept
      * @return errorResponse
      */
@@ -351,7 +353,6 @@ class PortingOperationService  {
     }
 
     /**
-     * TODO: OK
      * @param $porting_id string porting process to deny
      * @param $rejectionReason string reson of denial
      * @param $cause string description of the denial
@@ -725,7 +726,6 @@ class PortingOperationService  {
     }
 
     /**
-     * TODO: OK
      * Make port order for given msisdn
      * @param $donorOperator
      * @param $portingMsisdn
@@ -1019,7 +1019,6 @@ class PortingOperationService  {
     }
 
     /**
-     * TODO: OK
      * Make port accept for given portingId
      * @param $portingId
      * @return array
@@ -1192,7 +1191,6 @@ class PortingOperationService  {
     }
 
     /**
-     * TODO: OK
      * Make port reject
      * @param $portingId
      * @param $rejectionReason

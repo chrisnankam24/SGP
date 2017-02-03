@@ -25,12 +25,11 @@ class Rollback extends CI_Controller
 
             $originalPortingId = $this->input->post('originalPortingId');
             $temporalNumber = $this->input->post('temporalNumber');
-            $language = $this->input->post('language'); // EN or FR
             $userId = $this->input->post('userId');
 
             $rollbackOperationService = new RollbackOperationService();
 
-            $response = $rollbackOperationService->makeOpen($originalPortingId, $temporalNumber, $language, $userId);
+            $response = $rollbackOperationService->makeOpen($originalPortingId, $temporalNumber, $userId);
 
         }else{
 
@@ -77,9 +76,6 @@ class Rollback extends CI_Controller
                             if(isset($data[1]) && strtolower($data[1]) != 'temporalnumber'){
                                 $errorFound = true;
                             }
-                            if(isset($data[2]) && strtolower($data[2]) != 'language'){
-                                $errorFound = true;
-                            }
                             if($errorFound){
                                 $response['success'] = false;
                                 $response['message'] = 'Invalid file content format. Columns do not match defined template. If you have difficulties creating file, please contact administrator';
@@ -92,9 +88,8 @@ class Rollback extends CI_Controller
 
                             $originalPortingId = $data[0]; // originalPortingId
                             $temporalNumber = $data[1]; // temporalNumber
-                            $language = $data[2]; // language
 
-                            $tempResponse = $rollbackOperationService->makeOpen($originalPortingId, $temporalNumber, $language, $userId);
+                            $tempResponse = $rollbackOperationService->makeOpen($originalPortingId, $temporalNumber, $userId);
                             $tempResponse['temporalNumber'] = $temporalNumber;
 
                             $tmpData[] = $tempResponse;
@@ -165,7 +160,7 @@ class Rollback extends CI_Controller
 
         if(isset($_POST) && count($_POST) > 0) {
 
-            $rollbackData = $this->input->post('rollbackData'); // Array of rollbackIds
+            $rollbackData = json_decode($this->input->post('rollbackData')); // Array of rollbackIds
             $userId = $this->input->post('userId');
 
             $response['success'] = true;
@@ -233,7 +228,7 @@ class Rollback extends CI_Controller
 
         if(isset($_POST) && count($_POST) > 0) {
 
-            $rollbackData = $this->input->post('rollbackData'); // Array of rejection objects i.e (rollbackId, rejectionReason, cause)
+            $rollbackData = json_decode($this->input->post('rollbackData')); // Array of rejection objects i.e (rollbackId, rejectionReason, cause)
             $userId = $this->input->post('userId');
 
             $response['success'] = true;

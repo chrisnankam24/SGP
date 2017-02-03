@@ -66,10 +66,6 @@ class BatchOperationService extends CI_Controller {
 
     public function index(){
 
-        $portingOperationService = new PortingOperationService();
-
-        var_dump($portingOperationService->getPorting('20170110-02-237694975166-633'));
-
     }
 
     /**
@@ -226,7 +222,7 @@ class BatchOperationService extends CI_Controller {
                     $error = $this->db->error();
                     $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
-                    $emailService->adminErrorReport('PORTING_SUBMISSION_ORDERED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
+                    $emailService->adminErrorReport('PORTING SUBMISSION ORDERED BUT DB FILLED INCOMPLETE', $portingParams, processType::PORTING);
 
                 }else{
 
@@ -535,7 +531,7 @@ class BatchOperationService extends CI_Controller {
                             $portingParams = $this->Porting_model->get_porting($portingId);
 
                             $emailService = new EmailService();
-                            $emailService->adminErrorReport('PORTING_APPROVED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
+                            $emailService->adminErrorReport('PORTING APPROVED BUT DB FILLED INCOMPLETE', $portingParams, processType::PORTING);
 
                         }else{
 
@@ -624,7 +620,7 @@ class BatchOperationService extends CI_Controller {
                             $portingParams = $this->Porting_model->get_porting($portingId);
 
                             $emailService = new EmailService();
-                            $emailService->adminErrorReport('PORTING_DENIED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
+                            $emailService->adminErrorReport('PORTING DENIED BUT DB FILLED INCOMPLETE', $portingParams, processType::PORTING);
 
                         }else{
 
@@ -852,7 +848,7 @@ class BatchOperationService extends CI_Controller {
                         $error = $this->db->error();
                         $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
-                        $emailService->adminErrorReport('PORTING_MSISDN_CONTRACT_DELETED_BUT_DB_FILLED_INCOMPLETE', $acceptedPort, processType::PORTING);
+                        $emailService->adminErrorReport('PORTING-MSISDN-CONTRACT DELETED BUT DB FILLED INCOMPLETE', $acceptedPort, processType::PORTING);
 
                     }else{
 
@@ -954,7 +950,7 @@ class BatchOperationService extends CI_Controller {
                     $error = $this->db->error();
                     $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
-                    $emailService->adminErrorReport('PORTING_MSISDN_EXPORTED_BUT_DB_FILLED_INCOMPLETE', $msisdnContractDeletedPort, processType::PORTING);
+                    $emailService->adminErrorReport('PORTING-MSISDN-EXPORTED BUT DB FILLED INCOMPLETE', $msisdnContractDeletedPort, processType::PORTING);
 
                 }else{
 
@@ -968,7 +964,7 @@ class BatchOperationService extends CI_Controller {
                 // Notify Admin on failed Export
                 $faultCode = $exportResponse->error;
 
-                $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'MSISDN_EXPORT_CONFIRMED failed for ' . $portingId . ' with ' . $faultCode);
+                $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'MSISDN-EXPORT-CONFIRMED failed for ' . $portingId . ' with ' . $faultCode);
 
 
                 $fault = '';
@@ -1069,11 +1065,13 @@ class BatchOperationService extends CI_Controller {
                 if($prResponse->success){
 
                     // Process terminated
+                    $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'CONFIRM Successful for ' . $portingId);
 
                 }
                 else{
 
                     // Who cares, its auto anyway :)
+                    $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'CONFIRM failed for ' . $portingId);
 
                 }
 
@@ -1084,7 +1082,7 @@ class BatchOperationService extends CI_Controller {
                     $error = $this->db->error();
                     $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
-                    $emailService->adminErrorReport('PORTING_COMPLETED_BUT_DB_FILLED_INCOMPLETE', $msisdnExportedPort, processType::PORTING);
+                    $emailService->adminErrorReport('PORTING COMPLETED BUT DB FILLED INCOMPLETE', $msisdnExportedPort, processType::PORTING);
 
                 }else{
 
@@ -1207,7 +1205,7 @@ class BatchOperationService extends CI_Controller {
                         $error = $this->db->error();
                         $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
-                        $emailService->adminErrorReport('PORTING_MSISDN_IMPORTED_BUT_DB_FILLED_INCOMPLETE', $acceptedPort, processType::PORTING);
+                        $emailService->adminErrorReport('PORTING-MSISDN-IMPORTED BUT DB FILLED INCOMPLETE', $acceptedPort, processType::PORTING);
 
                     }else{
 
@@ -1266,7 +1264,7 @@ class BatchOperationService extends CI_Controller {
 
                 // More than 1hrs late, alert Admin
 
-                $emailService->adminErrorReport('MORE_THAN_ONE_HOUR_FROM_EXPECTED_PORTING_DATE_TIME', $acceptedPort, processType::PORTING);
+                $emailService->adminErrorReport('MORE THAN ONE HOUR FROM EXPECTED PORTING DATE TIME', $acceptedPort, processType::PORTING);
 
             }
 
@@ -1436,7 +1434,7 @@ class BatchOperationService extends CI_Controller {
                         $error = $this->db->error();
                         $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
-                        $emailService->adminErrorReport('PORTING_COMPLETED_BUT_DB_FILLED_INCOMPLETE', $msisdnChangePort, processType::PORTING);
+                        $emailService->adminErrorReport('PORTING COMPLETED BUT DB FILLED INCOMPLETE', $msisdnChangePort, processType::PORTING);
 
                     }else{
 
@@ -1533,7 +1531,6 @@ class BatchOperationService extends CI_Controller {
                     'rollbackId' => $openResponse->rollbackTransaction->rollbackId,
                     'originalPortingId' => $openResponse->rollbackTransaction->originalPortingId,
                     'donorSubmissionDateTime' => $openResponse->rollbackTransaction->donorSubmissionDateTime,
-                    'preferredRollbackDateTime' => $openResponse->rollbackTransaction->preferredRollbackDateTime,
                     'rollbackDateTime' => $openResponse->rollbackTransaction->rollbackDateTime,
                     'cadbOpenDateTime' => $openResponse->rollbackTransaction->cadbOpenDateTime,
                     'lastChangeDateTime' => $openResponse->rollbackTransaction->lastChangeDateTime,
@@ -1565,11 +1562,9 @@ class BatchOperationService extends CI_Controller {
 
                     $rollbackParams = array_merge($rollbackParams, $portingParams);
 
-                    $emailService->adminErrorReport('ROLLBACK_SUBMISSION_OPENED_BUT_DB_FILLED_INCOMPLETE', $rollbackParams, processType::ROLLBACK);
+                    $emailService->adminErrorReport('ROLLBACK SUBMISSION OPENED BUT DB FILLED INCOMPLETE', $rollbackParams, processType::ROLLBACK);
 
-                }else{
-
-                    }
+                }
 
                 $this->db->trans_complete();
 
@@ -1775,7 +1770,7 @@ class BatchOperationService extends CI_Controller {
 
                         $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
 
-                        $emailService->adminErrorReport('ROLLBACK_CONTRACT_DELETED_BUT_DB_FILLED_INCOMPLETE', $rollbackParams, processType::ROLLBACK);
+                        $emailService->adminErrorReport('ROLLBACK CONTRACT DELETED BUT DB FILLED INCOMPLETE', $rollbackParams, processType::ROLLBACK);
 
                     }else{
 
@@ -1883,7 +1878,7 @@ class BatchOperationService extends CI_Controller {
 
                     $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
 
-                    $emailService->adminErrorReport('ROLLBACK_MSISDN_EXPORTED_BUT_DB_FILLED_INCOMPLETE', $rollbackParams, processType::ROLLBACK);
+                    $emailService->adminErrorReport('ROLLBACK MSISDN EXPORTED BUT DB FILLED INCOMPLETE', $rollbackParams, processType::ROLLBACK);
 
                 }else{
 
@@ -1999,11 +1994,13 @@ class BatchOperationService extends CI_Controller {
                 if($prResponse->success){
 
                     // Process terminated
+                    $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'CONFIRM successful for ' . $rollbackId);
 
                 }
                 else{
 
                     // Who cares, its auto anyway :)
+                    $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'CONFIRM failed for ' . $rollbackId);
 
                 }
 
@@ -2016,9 +2013,7 @@ class BatchOperationService extends CI_Controller {
 
                     $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
 
-                    $emailService->adminErrorReport('ROLLBACK_COMPLETED_BUT_DB_FILLED_INCOMPLETE', $rollbackParams, processType::ROLLBACK);
-
-                }else{
+                    $emailService->adminErrorReport('ROLLBACK COMPLETED BUT DB FILLED INCOMPLETE', $rollbackParams, processType::ROLLBACK);
 
                 }
 
@@ -2078,7 +2073,7 @@ class BatchOperationService extends CI_Controller {
 
         foreach ($acceptedRollbacks as $acceptedRollback) {
 
-            $rollbackDateTime = $acceptedRollback['preferredRollbackDateTime'];
+            $rollbackDateTime = $acceptedRollback['rollbackDateTime'];
 
             $rollbackId = $acceptedRollback['rollbackId'];
 
@@ -2141,7 +2136,7 @@ class BatchOperationService extends CI_Controller {
 
                         $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
 
-                        $emailService->adminErrorReport('ROLLBACK_MSISDN_IMPORTED_BUT_DB_FILLED_INCOMPLETE', $rollbackParams, processType::ROLLBACK);
+                        $emailService->adminErrorReport('ROLLBACK-MSISDN-IMPORTED BUT DB FILLED INCOMPLETE', $rollbackParams, processType::ROLLBACK);
 
                     }else{
 
@@ -2204,7 +2199,7 @@ class BatchOperationService extends CI_Controller {
 
                 $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
 
-                $emailService->adminErrorReport('MORE_THAN_ONE_HOUR_FROM_EXPECTED_PORTING_DATE_TIME', $rollbackParams, processType::ROLLBACK);
+                $emailService->adminErrorReport('MORE THAN ONE HOUR FROM EXPECTED PORTING DATE TIME', $rollbackParams, processType::ROLLBACK);
 
             }
 
@@ -2259,9 +2254,7 @@ class BatchOperationService extends CI_Controller {
 
                     $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
 
-                    $emailService->adminErrorReport('ROLLBACK_MSISDN_CHANGE_IMPORTED_BUT_DB_FILLED_INCOMPLETE', $rollbackParams, processType::ROLLBACK);
-
-                }else{
+                    $emailService->adminErrorReport('ROLLBACK_MSISDN-CHANGE-IMPORTED BUT DB FILLED INCOMPLETE', $rollbackParams, processType::ROLLBACK);
 
                 }
 
@@ -2384,7 +2377,7 @@ class BatchOperationService extends CI_Controller {
 
                         $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
 
-                        $emailService->adminErrorReport('ROLLBACK_COMPLETED_BUT_DB_FILLED_INCOMPLETE', $rollbackParams, processType::ROLLBACK);
+                        $emailService->adminErrorReport('ROLLBACK COMPLETED BUT DB FILLED INCOMPLETE', $rollbackParams, processType::ROLLBACK);
 
                     }else{
 
@@ -2517,7 +2510,7 @@ class BatchOperationService extends CI_Controller {
                     $error = $this->db->error();
                     $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
-                    $emailService->adminErrorReport('NR_SUBMISSION_OPENED_BUT_DB_FILLED_INCOMPLETE', $nrParams, processType::_RETURN);
+                    $emailService->adminErrorReport('NR SUBMISSION OPENED BUT DB FILLED INCOMPLETE', $nrParams, processType::_RETURN);
 
                 }else {
 
@@ -2708,7 +2701,7 @@ class BatchOperationService extends CI_Controller {
 
                     $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
 
-                    $emailService->adminErrorReport('RETURN_MSISDN_EXPORTED_BUT_DB_FILLED_INCOMPLETE', $nrParams, processType::_RETURN);
+                    $emailService->adminErrorReport('RETURN-MSISDN-EXPORTED BUT DB FILLED INCOMPLETE', $nrParams, processType::_RETURN);
 
                 }else{
 
@@ -2875,7 +2868,6 @@ class BatchOperationService extends CI_Controller {
 
             }
 
-
         }
 
     }
@@ -2895,13 +2887,13 @@ class BatchOperationService extends CI_Controller {
 
         $acceptedReturns = $this->Numberreturn_model->get_nr_by_state_and_po(\ReturnService\_Return\returnStateType::ACCEPTED, Operator::ORANGE_NETWORK_ID);
 
-        $this->fileLogAction('7014', 'BatchOperationService::numberReturnPO', 'Preparing MSISDN_RETURN of' . count($acceptedReturns) . ' accepted returns');
+        $this->fileLogAction('7014', 'BatchOperationService::numberReturnPO', 'Preparing MSISDN_RETURN of ' . count($acceptedReturns) . ' accepted returns');
 
         // Load NRs in Return table in MSISDN_RETURN_CONFIRMED state in which we are PO
 
         $msisdnConfirmedReturns = $this->Numberreturn_model->get_nr_by_state_and_po(\ReturnService\_Return\returnStateType::MSISDN_RETURN_CONFIRMED, Operator::ORANGE_NETWORK_ID);
 
-        $this->fileLogAction('7014', 'BatchOperationService::numberReturnPO', 'Preparing CONFIRM of' . count($msisdnConfirmedReturns) . ' msisdn returned returns');
+        $this->fileLogAction('7014', 'BatchOperationService::numberReturnPO', 'Preparing CONFIRM of ' . count($msisdnConfirmedReturns) . ' msisdn returned returns');
 
         $bscsOperationService = new BscsOperationService();
 
@@ -2955,9 +2947,7 @@ class BatchOperationService extends CI_Controller {
 
                     $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
 
-                    $emailService->adminErrorReport('RETURN_MSISDN_RETURNED_BUT_DB_FILLED_INCOMPLETE', $nrParams, processType::_RETURN);
-
-                }else{
+                    $emailService->adminErrorReport('RETURN MSISDN RETURNED BUT DB FILLED INCOMPLETE', $nrParams, processType::_RETURN);
 
                 }
 
@@ -3072,11 +3062,13 @@ class BatchOperationService extends CI_Controller {
                     if($prResponse->success){
 
                         // Process terminated
+                        $this->fileLogAction('7014', 'BatchOperationService::numberReturnPO', 'CONFIRM successful for ' . $returnId);
 
                     }
                     else{
 
                         // Who cares, its auto anyway :)
+                        $this->fileLogAction('7014', 'BatchOperationService::numberReturnPO', 'CONFIRM failed for ' . $returnId);
 
                     }
 
@@ -3089,7 +3081,7 @@ class BatchOperationService extends CI_Controller {
 
                         $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
 
-                        $emailService->adminErrorReport('RETURN_COMPLETED_BUT_DB_FILLED_INCOMPLETE', $nrParams, processType::_RETURN);
+                        $emailService->adminErrorReport('RETURN COMPLETED BUT DB FILLED INCOMPLETE', $nrParams, processType::_RETURN);
 
                     }
 
@@ -3199,7 +3191,7 @@ class BatchOperationService extends CI_Controller {
                         'processType' => $processType
                     );
 
-                    $emailService->adminErrorReport('PROVISION_COMPLETED_BUT_DB_FILLED_INCOMPLETE', $eParams, processType::ERROR);
+                    $emailService->adminErrorReport('PROVISION COMPLETED BUT DB FILLED INCOMPLETE', $eParams, processType::ERROR);
 
                 }
 
@@ -3236,15 +3228,15 @@ class BatchOperationService extends CI_Controller {
 
         foreach ($errorReports as $errorReport){
 
-            $this->fileLogAction('7016', 'BatchOperationService::provisionOther', 'Performing Error Report Mail delivery for ' . $errorReport['errorId']);
+            $this->fileLogAction('7016', 'BatchOperationService::provisionOther', 'Performing Error Report Mail delivery for ' . $errorReport['errorReportId']);
 
             // Send mail to Back Office with Admin in CC for Acceptance / Rejection
 
-            $response = $emailService->backOfficePortingAcceptReject($errorReport);
+            $response = $emailService->backOfficeErrorReport($errorReport);
 
             if($response){
 
-                $this->fileLogAction('7016', 'BatchOperationService::provisionOther', 'Error Report Mail delivery successful for ' . $errorReport['errorId']);
+                $this->fileLogAction('7016', 'BatchOperationService::provisionOther', 'Error Report Mail delivery successful for ' . $errorReport['errorReportId']);
 
                 // Update State in DB
 
@@ -3253,11 +3245,11 @@ class BatchOperationService extends CI_Controller {
                     'errorNotificationMailSendDateTime' =>  date('c')
                 );
 
-                $this->Error_model->update_error($errorReport['errorId'], $errorParams);
+                $this->Error_model->update_error($errorReport['errorReportId'], $errorParams);
 
             }else{
 
-                $this->fileLogAction('7016', 'BatchOperationService::provisionOther', 'Error Report Mail delivery failed for ' . $errorReport['errorId']);
+                $this->fileLogAction('7016', 'BatchOperationService::provisionOther', 'Error Report Mail delivery failed for ' . $errorReport['errorReportId']);
 
             }
         }
@@ -3728,7 +3720,6 @@ class BatchOperationService extends CI_Controller {
             'rollbackId' => $rollback->rollbackTransaction->rollbackId,
             'originalPortingId' => $rollback->rollbackTransaction->originalPortingId,
             'donorSubmissionDateTime' => $rollback->rollbackTransaction->donorSubmissionDateTime,
-            'preferredRollbackDateTime' => $rollback->rollbackTransaction->preferredRollbackDateTime,
             'rollbackDateTime' => $rollback->rollbackTransaction->rollbackDateTime,
             'cadbOpenDateTime' => $rollback->rollbackTransaction->cadbOpenDateTime,
             'lastChangeDateTime' => $rollback->rollbackTransaction->lastChangeDateTime,

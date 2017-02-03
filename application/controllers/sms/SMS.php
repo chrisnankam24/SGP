@@ -19,28 +19,13 @@ class SMS extends CI_Controller {
     // Denomination of various operators to be used in SMS messages
     public static $DENOMINATION_COMMERCIALE_MTN = 'MTN CM';
     public static $DENOMINATION_COMMERCIALE_ORANGE = 'Orange CM';
-    public static $DENOMINATION_COMMERCIALE_NEXTTEL = 'Nexttel';
+    public static $DENOMINATION_COMMERCIALE_NEXTTEL = 'NEXTTEL';
 
     public static $CUSTOMER_SERVICE = '901';
 
     public function __construct()
     {
         parent::__construct();
-
-    }
-
-    public function index(){
-
-        self::send_response('694975166', 'Hello, test SMS');
-        //SMS::OPD_Inform_Subcriber('237694975166',SMS::$DENOMINATION_COMMERCIALE_NEXTTEL, '2343454564567567');
-
-        //SMS::OPR_Subscriber_OK('237694975166', '21/11/2016', '12:00:00', '15:00:00');
-
-        //SMS::OPR_Subscriber_KO('237694975166');
-
-        //SMS::OPD_Subscriber_Reminder('237694975166', '21/11/2016', '12:00:00', '15:00:00');
-
-        //SMS::OPR_Subscriber_Cancellation('237694975166');
 
     }
 
@@ -309,7 +294,7 @@ class SMS extends CI_Controller {
      * @param $msisdn
      */
     public static function Subscriber_CADB_Abandoned_Rollback($language, $msisdn){
-        self::send_response($msisdn, 'CADB abandoned your rollback');
+        return self::send_response($msisdn, 'CADB abandoned your rollback');
     }
 
     ///////////////////////////////////// RIO SMS

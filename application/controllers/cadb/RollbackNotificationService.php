@@ -40,10 +40,32 @@ class RollbackNotificationService extends CI_Controller {
     public function index(){
 
         // Create a new soap server in WSDL mode
-        $server = new SoapServer( __DIR__ . '/wsdl/RollbackNotificationService.wsdl');
+        $server = new SoapServer(__DIR__ . '/wsdl/RollbackNotificationService.wsdl');
 
         // Set the object for the soap server
         $server->setObject($this);
+
+        $headers = getallheaders();
+
+        $cadbAuth = null;
+
+        if(isset($headers['Authorization'])){
+
+            $bearerAuth = $headers['Authorization'];
+
+            $bearerAuth = explode(' ', trim($bearerAuth));
+
+            $auth = $bearerAuth[count($bearerAuth)-1];
+
+            if($auth == Auth::LDB_AUTH_BEARER){
+                // Authorized
+            }else{
+                // Not Authorized
+            }
+
+        }else{
+            // Not Authorized
+        }
 
         // Handle soap operations
         $server->handle();
@@ -60,7 +82,6 @@ class RollbackNotificationService extends CI_Controller {
     }
 
     /**
-     * TODO: OK
      * @param $notifyOpenedRequest
      * @return RollbackNotification\notifyOpenedResponse
      * @throws ldbAdministrationServiceFault
@@ -68,6 +89,8 @@ class RollbackNotificationService extends CI_Controller {
     public function notifyOpened($notifyOpenedRequest){
 
         $rollbackId = $notifyOpenedRequest->rollbackTransaction->rollbackId;
+
+        $this->fileLogAction('8030', 'RollbackNotificationService', 'Rollback OPEN received for ID ' . $rollbackId);
 
         $subscriberMSISDN = $notifyOpenedRequest->rollbackTransaction->numberRanges->numberRange->startNumber;
 
@@ -87,7 +110,6 @@ class RollbackNotificationService extends CI_Controller {
             'rollbackId' => $rollbackId,
             'originalPortingId' => $originalPortingId,
             'donorSubmissionDateTime' => $notifyOpenedRequest->rollbackTransaction->donorSubmissionDateTime,
-            'preferredRollbackDateTime' => $notifyOpenedRequest->rollbackTransaction->preferredRollbackDateTime,
             'rollbackDateTime' => $notifyOpenedRequest->rollbackTransaction->rollbackDateTime,
             'cadbOpenDateTime' => $notifyOpenedRequest->rollbackTransaction->cadbOpenDateTime,
             'lastChangeDateTime' => $notifyOpenedRequest->rollbackTransaction->lastChangeDateTime,
@@ -111,10 +133,18 @@ class RollbackNotificationService extends CI_Controller {
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
+
+            $this->fileLogAction($error['code'], 'RollbackNotificationService', "Rollback OPEN saving failed for $rollbackId");
+
             $this->fileLogAction($error['code'], 'RollbackNotificationService', $error['message']);
 
             $emailService = new EmailService();
+
             $emailService->adminErrorReport('OPENED_ROLLBACK_RECEIVED_BUT_DB_FILLING_ERROR', $rollbackParams, processType::ROLLBACK);
+
+        }else{
+
+            $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback OPEN save successful for $rollbackId");
 
         }
 
@@ -131,6 +161,8 @@ class RollbackNotificationService extends CI_Controller {
 
         if($smsResponse['success']){
 
+            $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback OPEN SMS sent successful for $rollbackId");
+
             $smsNotificationparams = array(
                 'rollbackId' => $rollbackId,
                 'smsType' => SMSType::OPR_ROLLBACK_STARTED,
@@ -143,6 +175,8 @@ class RollbackNotificationService extends CI_Controller {
             );
 
         }else{
+
+            $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback OPEN SMS sent failed for $rollbackId");
 
             $smsNotificationparams = array(
                 'rollbackId' => $rollbackId,
@@ -165,7 +199,6 @@ class RollbackNotificationService extends CI_Controller {
     }
 
     /**
-     * TODO: OK
      * @param $notifyAcceptedRequest
      * @return RollbackNotification\notifyAcceptedResponse
      * @throws ldbAdministrationServiceFault
@@ -174,13 +207,14 @@ class RollbackNotificationService extends CI_Controller {
 
         $rollbackId = $notifyAcceptedRequest->rollbackTransaction->rollbackId;
 
+        $this->fileLogAction('8030', 'RollbackNotificationService', 'Rollback ACCEPT received for ID ' . $rollbackId);
+
         $this->db->trans_start();
 
         // Update Rollback table
 
         $rollbackParams = array(
             'rollbackId' => $rollbackId,
-            'preferredRollbackDateTime' => $notifyAcceptedRequest->rollbackTransaction->preferredRollbackDateTime,
             'rollbackDateTime' => $notifyAcceptedRequest->rollbackTransaction->rollbackDateTime,
             'lastChangeDateTime' => $notifyAcceptedRequest->rollbackTransaction->lastChangeDateTime,
             'rollbackState' => \RollbackService\Rollback\rollbackStateType::ACCEPTED
@@ -202,12 +236,19 @@ class RollbackNotificationService extends CI_Controller {
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
+
+            $this->fileLogAction($error['code'], 'RollbackNotificationService', "Rollback ACCEPT saving failed for $rollbackId");
+
             $this->fileLogAction($error['code'], 'RollbackNotificationService', $error['message']);
 
             $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
 
             $emailService = new EmailService();
             $emailService->adminErrorReport('ACCEPTED_ROLLBACK_RECEIVED_BUT_DB_FILLING_ERROR', $rollbackParams, processType::ROLLBACK);
+
+        }else{
+
+            $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback ACCEPT save successful for $rollbackId");
 
         }
 
@@ -233,6 +274,8 @@ class RollbackNotificationService extends CI_Controller {
 
         if($smsResponse['success']){
 
+            $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback ACCEPT SMS sent successful for $rollbackId");
+
             $smsParams = array(
                 'rollbackId' => $rollbackId,
                 'smsType' => SMSType::OPD_ROLLBACK_ACCEPTED,
@@ -245,6 +288,8 @@ class RollbackNotificationService extends CI_Controller {
             );
 
         }else{
+
+            $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback ACCEPT SMS sent failed for $rollbackId");
 
             $smsParams = array(
                 'rollbackId' => $rollbackId,
@@ -267,7 +312,6 @@ class RollbackNotificationService extends CI_Controller {
     }
 
     /**
-     * TODO OK
      * @param $notifyAutoAcceptRequest
      * @return RollbackNotification\notifyAutoAcceptResponse
      * @throws ldbAdministrationServiceFault
@@ -276,13 +320,15 @@ class RollbackNotificationService extends CI_Controller {
 
         $rollbackId = $notifyAutoAcceptRequest->rollbackTransaction->rollbackId;
 
+        $this->fileLogAction('8030', 'RollbackNotificationService', 'Rollback AUTO ACCEPT received for ID ' . $rollbackId);
+
+
         $this->db->trans_start();
 
         // Update Rollback table
 
         $rollbackParams = array(
             'rollbackId' => $rollbackId,
-            'preferredRollbackDateTime' => $notifyAutoAcceptRequest->rollbackTransaction->preferredRollbackDateTime,
             'rollbackDateTime' => $notifyAutoAcceptRequest->rollbackTransaction->rollbackDateTime,
             'lastChangeDateTime' => $notifyAutoAcceptRequest->rollbackTransaction->lastChangeDateTime,
             'rollbackState' => \RollbackService\Rollback\rollbackStateType::ACCEPTED
@@ -308,11 +354,18 @@ class RollbackNotificationService extends CI_Controller {
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
+
+            $this->fileLogAction($error['code'], 'RollbackNotificationService', "Rollback AUTO ACCEPT saving failed for $rollbackId");
+
             $this->fileLogAction($error['code'], 'RollbackNotificationService', $error['message']);
 
             $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
 
             $emailService->adminErrorReport('ROLLBACK_AUTO_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', $rollbackParams, processType::ROLLBACK);
+
+        }else{
+
+            $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback AUTO ACCEPT save successful for $rollbackId");
 
         }
 
@@ -338,6 +391,8 @@ class RollbackNotificationService extends CI_Controller {
 
         if($smsResponse['success']){
 
+            $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback AUTO ACCEPT SMS sent successful for $rollbackId");
+
             $smsParams = array(
                 'rollbackId' => $rollbackId,
                 'smsType' => SMSType::OPD_ROLLBACK_ACCEPTED,
@@ -350,6 +405,8 @@ class RollbackNotificationService extends CI_Controller {
             );
 
         }else{
+
+            $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback AUTO ACCEPT SMS sent failed for $rollbackId");
 
             $smsParams = array(
                 'rollbackId' => $rollbackId,
@@ -376,16 +433,15 @@ class RollbackNotificationService extends CI_Controller {
     }
 
     /**
-     * TODO: OK
      * @param $notifyAutoConfirmRequest
      * @return RollbackNotification\notifyAutoConfirmResponse
      * @throws ldbAdministrationServiceFault
      */
     public function notifyAutoConfirm($notifyAutoConfirmRequest){
 
-        $notifyAutoConfirmRequest = new RollbackNotification\notifyAutoConfirmRequest();
-
         $rollbackId = $notifyAutoConfirmRequest->rollbackTransaction->rollbackId;
+
+        $this->fileLogAction('8030', 'RollbackNotificationService', 'Rollback AUTO CONFIRM received for ID ' . $rollbackId);
 
         $recipientNetworkId = $notifyAutoConfirmRequest->rollbackTransaction->recipientNrn->networkId;
 
@@ -409,7 +465,6 @@ class RollbackNotificationService extends CI_Controller {
 
             $rollbackParams = array(
                 'rollbackId' => $rollbackId,
-                'preferredRollbackDateTime' => $notifyAutoConfirmRequest->rollbackTransaction->preferredRollbackDateTime,
                 'rollbackDateTime' => $notifyAutoConfirmRequest->rollbackTransaction->rollbackDateTime,
                 'lastChangeDateTime' => $notifyAutoConfirmRequest->rollbackTransaction->lastChangeDateTime,
                 'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_IMPORT_CONFIRMED
@@ -431,9 +486,16 @@ class RollbackNotificationService extends CI_Controller {
             if ($this->db->trans_status() === FALSE) {
 
                 $error = $this->db->error();
+
+                $this->fileLogAction($error['code'], 'RollbackNotificationService', "Rollback AUTO CONFIRM saving failed for $rollbackId");
+
                 $this->fileLogAction($error['code'], 'RollbackNotificationService', $error['message']);
 
                 $emailService->adminErrorReport('ROLLBACK_AUTO_CONFIRMED_BUT_DB_FILLED_INCOMPLETE', $nrollbackParams, processType::ROLLBACK);
+
+            }else{
+
+                $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback AUTO CONFIRM save successful for $rollbackId");
 
             }
 
@@ -487,7 +549,6 @@ class RollbackNotificationService extends CI_Controller {
     }
 
     /**
-     * TODO: OK
      * @param $notifyRejectedRequest
      * @return RollbackNotification\notifyRejectedResponse
      * @throws ldbAdministrationServiceFault
@@ -496,13 +557,14 @@ class RollbackNotificationService extends CI_Controller {
 
         $rollbackId = $notifyRejectedRequest->rollbackTransaction->rollbackId;
 
+        $this->fileLogAction('8030', 'RollbackNotificationService', 'Rollback REJECT received for ID ' . $rollbackId);
+
         $this->db->trans_start();
 
         // Update Rollback table
 
         $rollbackParams = array(
             'rollbackId' => $rollbackId,
-            'preferredRollbackDateTime' => $notifyRejectedRequest->rollbackTransaction->preferredRollbackDateTime,
             'rollbackDateTime' => $notifyRejectedRequest->rollbackTransaction->rollbackDateTime,
             'lastChangeDateTime' => $notifyRejectedRequest->rollbackTransaction->lastChangeDateTime,
             'rollbackState' => \RollbackService\Rollback\rollbackStateType::REJECTED
@@ -534,12 +596,19 @@ class RollbackNotificationService extends CI_Controller {
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
+
+            $this->fileLogAction($error['code'], 'RollbackNotificationService', "Rollback REJECTED saving failed for $rollbackId");
+
             $this->fileLogAction($error['code'], 'RollbackNotificationService', $error['message']);
 
             $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
 
             $emailService = new EmailService();
             $emailService->adminErrorReport('REJECTED_ROLLBACK_RECEIVED_BUT_DB_FILLING_ERROR', $rollbackParams, processType::ROLLBACK);
+        }else{
+
+            $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback REJECT save successful for $rollbackId");
+
         }
 
         $this->db->trans_complete();
@@ -557,6 +626,9 @@ class RollbackNotificationService extends CI_Controller {
         $smsResponse = SMS::OPD_Subscriber_KO($language, $subscriberMSISDN);
 
         if($smsResponse['success']){
+
+            $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback REJECT SMS sent successful for $rollbackId");
+
             $smsParams = array(
                 'rollbackId' => $rollbackId,
                 'smsType' => SMSType::OPD_ROLLBACK_REJECTED,
@@ -569,6 +641,8 @@ class RollbackNotificationService extends CI_Controller {
             );
 
         }else{
+
+            $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback REJECT SMS sent failed for $rollbackId");
 
             $smsParams = array(
                 'rollbackId' => $rollbackId,
@@ -591,7 +665,6 @@ class RollbackNotificationService extends CI_Controller {
     }
 
     /**
-     * TODO: Huawei API currently doesnot define this endpoint
      * @param $notifyAbandonedRequest
      * @return RollbackNotification\notifyAbandonedResponse
      */
@@ -601,11 +674,12 @@ class RollbackNotificationService extends CI_Controller {
 
         $rollbackId = $notifyAbandonedRequest->rollbackTransaction->rollbackId;
 
+        $this->fileLogAction('8030', 'RollbackNotificationService', 'Rollback ABANDON received for ID ' . $rollbackId);
+
         // update rollback table
 
         $rollbackParams = array(
             'rollbackId' => $rollbackId,
-            'preferredRollbackDateTime' => $notifyAbandonedRequest->rollbackTransaction->preferredRollbackDateTime,
             'rollbackDateTime' => $notifyAbandonedRequest->rollbackTransaction->rollbackDateTime,
             'lastChangeDateTime' => $notifyAbandonedRequest->rollbackTransaction->lastChangeDateTime,
             'rollbackState' => \RollbackService\Rollback\rollbackStateType::ABANDONED
@@ -633,6 +707,28 @@ class RollbackNotificationService extends CI_Controller {
 
         $this->Rollbackrejectionabandon_model->add_rollbackrejectionabandon($rraParams);
 
+        $emailService = new EmailService();
+
+        if ($this->db->trans_status() === FALSE) {
+
+            $error = $this->db->error();
+
+            $this->fileLogAction($error['code'], 'RollbackNotificationService', "Rollback ABANDON saving failed for $rollbackId");
+
+            $this->fileLogAction($error['code'], 'RollbackNotificationService', $error['message']);
+
+            $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
+
+            $emailService->adminErrorReport('ROLLBACK_ABANDONED_BUT_DB_FILLED_INCOMPLETE', $rollbackParams, processType::ROLLBACK);
+
+        }else{
+
+            $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback ABANDON save successful for $rollbackId");
+
+        }
+
+        $this->db->trans_complete();
+
         // Send SMS to Subscriber
 
         $originalPortingId = $notifyAbandonedRequest->rollbackTransaction->originalPortingId;
@@ -646,6 +742,8 @@ class RollbackNotificationService extends CI_Controller {
         $smsResponse = SMS::Subscriber_CADB_Abandoned_Rollback($language, $subscriberMSISDN);
 
         if($smsResponse['success']){
+
+            $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback ABANDON SMS sent successful for $rollbackId");
 
             // Insert Porting SMS Notification
             $params = array(
@@ -661,6 +759,8 @@ class RollbackNotificationService extends CI_Controller {
 
         }else{
 
+            $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback ABANDON SMS sent failed for $rollbackId");
+
             $params = array(
                 'rollbackId' => $rollbackId,
                 'smsType' => SMSType::OPR_ROLLBACK_ABANDONED,
@@ -675,26 +775,9 @@ class RollbackNotificationService extends CI_Controller {
 
         $this->Rollbacksmsnotification_model->add_rollbacksmsnotification($params);
 
-        $emailService = new EmailService();
-
-        if ($this->db->trans_status() === FALSE) {
-
-            $error = $this->db->error();
-            $this->fileLogAction($error['code'], 'RollbackNotificationService', $error['message']);
-
-            $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
-
-            $emailService->adminErrorReport('ROLLBACK_ABANDONED_BUT_DB_FILLED_INCOMPLETE', $rollbackParams, processType::ROLLBACK);
-
-        }
-
-        $this->db->trans_complete();
-
         $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
 
-        $emailService = new EmailService();
         $emailService->adminErrorReport('ROLLBACK ABANDONED BY CADB', $rollbackParams, processType::ROLLBACK);
-
 
         $response = new RollbackNotification\notifyAbandonedResponse();
 

@@ -446,7 +446,7 @@ class Porting extends CI_Controller
 
         if(isset($_POST) && count($_POST) > 0) {
 
-            $portingData = $this->input->post('portingData'); // Array of portingIds
+            $portingData = json_decode($this->input->post('portingData')); // Array of portingIds
             $userId = $this->input->post('userId');
 
             $portingOperationService = new PortingOperationService();
@@ -512,7 +512,7 @@ class Porting extends CI_Controller
 
         if(isset($_POST) && count($_POST) > 0) {
 
-            $portingData = $this->input->post('portingData'); // Array of rejection objects i.e (portingId, rejectionReason, cause)
+            $portingData = json_decode($this->input->post('portingData')); // Array of rejection objects i.e (portingId, rejectionReason, cause)
             $userId = $this->input->post('userId');
 
             $response['success'] = true;

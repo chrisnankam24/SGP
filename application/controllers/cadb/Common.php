@@ -9,6 +9,14 @@
 /////////////// Constants Definition
 
 /**
+ * CADB Authorization Token
+ */
+Class Auth {
+    const CADB_AUTH_BEARER = 'f6afe198-954c-4774-a0a9-27124dea306b';
+    const LDB_AUTH_BEARER = 'f6afe198-954c-4774-a0a9-27124dea306b';
+}
+
+/**
  * Operator related Constants
  */
 class Operator {
@@ -168,10 +176,10 @@ function isValidRoutingNumberType($routingNumber){
     // Convert to String
     $routingNumber = $routingNumber . '';
 
-    // Validates for [A-F0-9]{8} regex
-    $regex = '/[A-F0-9]{8}/';
+    // Validates for [A-F0-9]{4,6} regex
+    $regex = '/[A-F0-9]{4,6}/';
 
-    if(preg_match($regex, $routingNumber) && (strlen($routingNumber) == 8)){
+    if(preg_match($regex, $routingNumber) && (strlen($routingNumber) >= 4) && (strlen($routingNumber) <= 6)){
 
         return $routingNumber;
 
@@ -192,10 +200,10 @@ function isValidNumberType($number){
     // Convert to String
     $number = $number . '';
 
-    // Validates for [1-9][0-9]{14} regex
-    $regex = '/[1-9][0-9]{14}/';
+    // Validates for [1-9][0-9]{10,14} regex
+    $regex = '/[1-9][0-9]{10,14}/';
 
-    if(preg_match($regex, $number) && (strlen($number) == 14)){
+    if(preg_match($regex, $number) && (strlen($number) >= 10)  && (strlen($number) <= 14)){
 
         return $number;
 

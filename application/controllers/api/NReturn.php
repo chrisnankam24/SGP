@@ -176,7 +176,7 @@ class NReturn extends CI_Controller
 
         if(isset($_POST) && count($_POST) > 0) {
 
-            $returnData = $this->input->post('returnData'); // Array of returnIds
+            $returnData = json_decode($this->input->post('returnData')); // Array of returnIds
             $userId = $this->input->post('userId');
 
             $response['success'] = true;
@@ -243,7 +243,7 @@ class NReturn extends CI_Controller
 
         if(isset($_POST) && count($_POST) > 0) {
 
-            $rejectData = $this->input->post('rejectData'); // Array of rejection objects i.e (portingId, rejectionReason, cause)
+            $rejectData = json_decode($this->input->post('rejectData')); // Array of rejection objects i.e (portingId, rejectionReason, cause)
             $userId = $this->input->post('userId');
 
             $response['success'] = true;

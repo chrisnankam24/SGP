@@ -32,7 +32,7 @@ class POSServerFunctionalities extends CI_Controller  {
     public function index(){
 
         // Create a new soap server in WSDL mode
-        $server = new SoapServer( __DIR__ . '/wsdl/PortingOperationService.wsdl');
+        $server = new SoapServer(__DIR__ . '/wsdl/PortingOperationService.wsdl');
 
         // Set the object for the soap server
         $server->setObject($this);
@@ -52,10 +52,10 @@ class POSServerFunctionalities extends CI_Controller  {
      * @throws invalidPortingDateAndTimeFault
      * @throws invalidRequestFormatFault
      * @throws numberRangesOverlapFault
+     * @throws numberRangeQuantityLimitExceededFault
      * @throws numberReservedByProcessFault
      * @throws numberNotOwnedByOperatorFault
      * @throws unknownNumberFault
-     * @throws numberRangeQuantityLimitExceededFault
      * @throws tooNearPortedPeriodFault
      * @throws portingNotAllowedRequestsFault
      * @throws subscriberDataMissingFault
@@ -66,8 +66,6 @@ class POSServerFunctionalities extends CI_Controller  {
         $response = new Porting\orderResponse();
 
         $response->portingTransaction = new Porting\portingTransactionType();
-
-        //$orderRequest = new Porting\orderRequest();
 
         $response->portingTransaction->lastChangeDateTime = date('c');
         $response->portingTransaction->cadbOrderDateTime = date('c');
@@ -101,8 +99,6 @@ class POSServerFunctionalities extends CI_Controller  {
         $response = new Porting\approveResponse();
 
         $response->portingTransaction = new Porting\portingTransactionType();
-
-        //$orderRequest = new Porting\orderRequest();
 
         $response->portingTransaction->lastChangeDateTime = date('c');
         $response->portingTransaction->cadbOrderDateTime = date('c');
@@ -234,8 +230,6 @@ class POSServerFunctionalities extends CI_Controller  {
         $response = new Porting\getPortingResponse();
 
         $response->portingTransaction = new Porting\portingTransactionType();
-
-        //$getPortingRequest = new Porting\getPortingRequest();
 
         $portingInfo = $this->Porting_model->get_porting($getPortingRequest->portingId);
 

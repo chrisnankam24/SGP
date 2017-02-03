@@ -67,4 +67,17 @@
 		<complexType/>
 	</element>
 
+	<element name="notifyAbandonedRequest">
+		<complexType>
+			<sequence>
+				<element name="rollbackTransaction" type="operations:rollbackTransactionType" minOccurs="1" maxOccurs="1" nillable="false"/>
+				<element name="cause" type="string" minOccurs="0" maxOccurs="1" nillable="false"/>
+			</sequence>
+		</complexType>
+	</element>
+
+	<element name="notifyAbandonedResponse">
+		<complexType/>
+	</element>
+
 </schema>

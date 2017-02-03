@@ -29,10 +29,32 @@ class ProblemReportNotificationService extends CI_Controller {
     public function index(){
 
         // Create a new soap server in WSDL mode
-        $server = new SoapServer( __DIR__ . '/wsdl/ProblemReportNotificationService.wsdl');
+        $server = new SoapServer(__DIR__ . '/wsdl/ProblemReportNotificationService.wsdl');
 
         // Set the object for the soap server
         $server->setObject($this);
+
+        $headers = getallheaders();
+
+        $cadbAuth = null;
+
+        if(isset($headers['Authorization'])){
+
+            $bearerAuth = $headers['Authorization'];
+
+            $bearerAuth = explode(' ', trim($bearerAuth));
+
+            $auth = $bearerAuth[count($bearerAuth)-1];
+
+            if($auth == Auth::LDB_AUTH_BEARER){
+                // Authorized
+            }else{
+                // Not Authorized
+            }
+
+        }else{
+            // Not Authorized
+        }
 
         // Handle soap operations
         $server->handle();
@@ -49,7 +71,6 @@ class ProblemReportNotificationService extends CI_Controller {
     }
     
     /**
-     * TODO: OK
      * @param $notifyProblemReportedRequest
      * @return ProblemNotification\notifyProblemReportedResponse
      * @throws ldbAdministrationServiceFault
@@ -59,6 +80,8 @@ class ProblemReportNotificationService extends CI_Controller {
         $reporterNetworkId = $notifyProblemReportedRequest->problemReport->reporterNetworkId;
 
         $errorReportId = $notifyProblemReportedRequest->problemReport->errorReportId;
+
+        $this->fileLogAction('8001', 'ProblemReportNotificationService', 'Error Report received with ID ' . $errorReportId);
 
         $emailService = new EmailService();
 

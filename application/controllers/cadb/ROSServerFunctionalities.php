@@ -31,7 +31,7 @@ class ROSServerFunctionalities extends CI_Controller  {
     public function index(){
 
         // Create a new soap server in WSDL mode
-        $server = new SoapServer( __DIR__ . '/wsdl/RollbackOperationService.wsdl');
+        $server = new SoapServer(__DIR__ . '/wsdl/RollbackOperationService.wsdl');
 
         // Set the object for the soap server
         $server->setObject($this);
@@ -56,14 +56,13 @@ class ROSServerFunctionalities extends CI_Controller  {
 
         $response = new rollback\openResponse();
 
-        $openRequest = new rollback\openRequest();
+        //$openRequest = new rollback\openRequest();
 
         $portingInfo = $this->Porting_model->get_porting($openRequest->originalPortingId);
 
         $response->rollbackTransaction = new rollback\rollbackTransactionType();
         $response->rollbackTransaction->lastChangeDateTime = date('c');
         $response->rollbackTransaction->donorSubmissionDateTime = date('c');
-        $response->rollbackTransaction->preferredRollbackDateTime = date('c');
         $response->rollbackTransaction->rollbackDateTime = date('c');
         $response->rollbackTransaction->rollbackId = date('Ymd') . '-'. $portingInfo['donorNetworkId'] .'-' . $portingInfo['startMSISDN'] . '-' . mt_rand(100,999);
 
@@ -89,7 +88,6 @@ class ROSServerFunctionalities extends CI_Controller  {
         $response->rollbackTransaction = new rollback\rollbackTransactionType();
         $response->rollbackTransaction->lastChangeDateTime = date('c');
         $response->rollbackTransaction->donorSubmissionDateTime = date('c');
-        $response->rollbackTransaction->preferredRollbackDateTime = date('c');
         $response->rollbackTransaction->rollbackDateTime = date('c');
         $response->rollbackTransaction->rollbackId = $acceptRequest->rollbackId;
 
@@ -115,7 +113,6 @@ class ROSServerFunctionalities extends CI_Controller  {
         $response->rollbackTransaction = new rollback\rollbackTransactionType();
         $response->rollbackTransaction->lastChangeDateTime = date('c');
         $response->rollbackTransaction->donorSubmissionDateTime = date('c');
-        $response->rollbackTransaction->preferredRollbackDateTime = date('c');
         $response->rollbackTransaction->rollbackDateTime = date('c');
         $response->rollbackTransaction->rollbackId = $rejectRequest->rollbackId;
 
@@ -157,7 +154,6 @@ class ROSServerFunctionalities extends CI_Controller  {
         $response->rollbackTransaction = new rollback\rollbackTransactionType();
         $response->rollbackTransaction->lastChangeDateTime = date('c');
         $response->rollbackTransaction->donorSubmissionDateTime = $rollbackInfo['donorSubmissionDateTime'];
-        $response->rollbackTransaction->preferredRollbackDateTime = $rollbackInfo['preferredRollbackDateTime'];
         $response->rollbackTransaction->rollbackDateTime = $rollbackInfo['rollbackDateTime'];
         $response->rollbackTransaction->originalPortingId = $rollbackInfo['originalPortingId'];
         $response->rollbackTransaction->rollbackId = $getRollbackRequest->rollbackId;
