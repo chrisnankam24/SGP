@@ -3,6 +3,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once "Common.php";
 require_once "Problem.php";
+require_once "ProblemNotification.php";
 require_once "Fault.php";
 
 use ProblemService\Problem as Problem;
@@ -22,6 +23,16 @@ class PrOSServerFunctionalities extends CI_Controller  {
     public function __construct()
     {
         parent::__construct();
+
+        // Define soap client object
+        $this->client = new SoapClient(__DIR__ . '/wsdl/ProblemReportNotificationService.wsdl', array(
+            "trace" => false,
+            'stream_context' => stream_context_create(array(
+                'http' => array(
+                    'header' => 'Authorization: Bearer ' . Auth::CADB_AUTH_BEARER
+                ),
+            )),
+        ));
 
     }
 
@@ -55,11 +66,30 @@ class PrOSServerFunctionalities extends CI_Controller  {
 
         $response->returnTransaction = new Problem\problemReportType();
 
+        $rand =  mt_rand(100,998);
+
         $response->returnTransaction->reporterNetworkId = $reportProblemRequest->reporterNetworkId;
         $response->returnTransaction->submissionDateTime = date('c');
-        $response->returnTransaction->errorReportId =  date('Ymd') . '-'. $reportProblemRequest->reporterNetworkId .'-' . $reportProblemRequest->cadbNumber . '-' . mt_rand(100,999);
+        $response->returnTransaction->errorReportId =  date('Ymd') . '-'. $reportProblemRequest->reporterNetworkId .'-' .
+            $reportProblemRequest->cadbNumber . '-' . $rand;
         $response->returnTransaction->cadbNumber = $reportProblemRequest->cadbNumber;
         $response->returnTransaction->problem = $reportProblemRequest->problem;
+
+        $notifyRequest = new \ProblemService\ProblemNotification\notifyProblemReportedRequest();
+
+        $notifyRequest->problemReport = new Problem\problemReportType();
+        $notifyRequest->problemReport->cadbNumber = $reportProblemRequest->cadbNumber;
+        $notifyRequest->problemReport->problem = $reportProblemRequest->problem;
+        $notifyRequest->problemReport->errorReportId = date('Ymd') . '-'. $reportProblemRequest->reporterNetworkId .'-' .
+            $reportProblemRequest->cadbNumber . '-' . ($rand+1);
+        $notifyRequest->problemReport->submissionDateTime = date('c');
+        $notifyRequest->routingChangeDateTime = date('c');
+        $notifyRequest->processType = 'PORTING';
+        $notifyRequest->nrn = new nrnType();
+        $notifyRequest->nrn->networkId = '02';
+        $notifyRequest->nrn->routingNumber = '1602';
+
+        $this->client->notifyProblemReported($notifyRequest);
 
         return $response;
         //throw new actionNotAuthorizedFault();

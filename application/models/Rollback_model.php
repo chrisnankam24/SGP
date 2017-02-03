@@ -26,7 +26,7 @@ class Rollback_model extends CI_Model
     */
     function search_rollback($msisdn)
     {
-        return $this->db->order_by('donorSubmissionDateTime', 'desc')->join('porting', 'Porting.portingId = originalPortingId')->get_where('rollback',array('startMSISDN'=>$msisdn))->result_array();
+        return $this->db->order_by('donorSubmissionDateTime', 'desc')->join('porting', 'porting.portingId = originalPortingId')->get_where('rollback',array('startMSISDN'=>$msisdn))->result_array();
     }
 
     /*
@@ -38,7 +38,6 @@ class Rollback_model extends CI_Model
         $response = $this->db->query($sql, array($rollbackId))->row_array();
         return $response;
     }
-
 
     /*
      * Get rollback in particular state and for particular donor

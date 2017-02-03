@@ -14,7 +14,6 @@ class Rollback extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * API for performing open request
      */
     public function openRollback(){
@@ -43,7 +42,6 @@ class Rollback extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * API for performing bulk open request
      */
     public function openBulkRollback(){
@@ -81,6 +79,9 @@ class Rollback extends CI_Controller
                                 $response['message'] = 'Invalid file content format. Columns do not match defined template. If you have difficulties creating file, please contact administrator';
 
                                 $this->send_response($response);
+
+                                unlink(FCPATH . 'uploads/' .$file_name);
+
                                 return;
                             }
                             $row++;
@@ -122,7 +123,6 @@ class Rollback extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * API for performing accept request
      */
     public function acceptRollback(){
@@ -150,7 +150,6 @@ class Rollback extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * API for performing bulk accept
      */
     public function acceptBulkRollback(){
@@ -188,7 +187,6 @@ class Rollback extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * API for performing reject request
      */
     public function rejectRollback(){
@@ -218,7 +216,6 @@ class Rollback extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * API for performing bulk reject
      */
     public function rejectBulkRollback(){
@@ -256,7 +253,6 @@ class Rollback extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * API for performing search
      */
     public function searchRollback(){

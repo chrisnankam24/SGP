@@ -21,7 +21,6 @@ class Porting extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * API for retrieving BSCS info linked to temporal number
      */
     public function numberDetails(){
@@ -45,7 +44,6 @@ class Porting extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * API for performing order request. This is the individual Endpoint
      */
     public function orderPorting() {
@@ -111,7 +109,6 @@ class Porting extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * API for performing bulk order request for individuals
      */
     public function orderIndividualBulkPorting(){
@@ -173,6 +170,9 @@ class Porting extends CI_Controller
                                 $response['message'] = 'Invalid file content format. Columns do not match defined template. If you have difficulties creating file, please contact administrator';
 
                                 $this->send_response($response);
+
+                                unlink(FCPATH . 'uploads/' .$file_name);
+
                                 return;
                             }
                             $row++;
@@ -198,15 +198,15 @@ class Porting extends CI_Controller
 
                             if($contractId == -1){
 
-                                $response['success'] = false;
-                                $response['message'] = 'Connection to BSCS Unsuccessful. Please try again later';
-                                $response['portingMSISDN'] = $portingMSISDN;
+                                $tempResponse['success'] = false;
+                                $tempResponse['message'] = 'Connection to BSCS Unsuccessful. Please try again later';
+                                $tempResponse['portingMSISDN'] = $portingMSISDN;
 
                             }elseif($contractId == null){
 
-                                $response['success'] = false;
-                                $response['message'] = 'Temporal number not found in BSCS. Please verify number has been identified properly and try again';
-                                $response['portingMSISDN'] = $portingMSISDN;
+                                $tempResponse['success'] = false;
+                                $tempResponse['message'] = 'Temporal number not found in BSCS. Please verify number has been identified properly and try again';
+                                $tempResponse['portingMSISDN'] = $portingMSISDN;
 
                             }else{
 
@@ -215,8 +215,9 @@ class Porting extends CI_Controller
                                 }elseif (strtolower($donorOperator) == 'nexttel'){
                                     $donorOperator = 1;
                                 }else{
-                                    $response['success'] = false;
-                                    $response['message'] = "Invalid donor operator. Must be <MTN> or <NEXTTEL>";
+                                    $tempResponse['success'] = false;
+                                    $tempResponse['message'] = "Invalid donor operator. Must be <MTN> or <NEXTTEL>";
+                                    $tempResponse['portingMSISDN'] = $portingMSISDN;
                                 }
 
                                 if($donorOperator == 0 || $donorOperator == 1){
@@ -259,7 +260,6 @@ class Porting extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * API for performing bulk order request for enterprises
      */
     public function orderEnterpriseBulkPorting(){
@@ -319,6 +319,9 @@ class Porting extends CI_Controller
                                 $response['message'] = 'Invalid file content format. Columns do not match defined template. If you have difficulties creating file, please contact administrator';
 
                                 $this->send_response($response);
+
+                                unlink(FCPATH . 'uploads/' .$file_name);
+
                                 return;
                             }
                             $row++;
@@ -344,15 +347,15 @@ class Porting extends CI_Controller
 
                             if($contractId == -1){
 
-                                $response['success'] = false;
-                                $response['message'] = 'Connection to BSCS Unsuccessful. Please try again later';
-                                $response['portingMSISDN'] = $portingMSISDN;
+                                $tempResponse['success'] = false;
+                                $tempResponse['message'] = 'Connection to BSCS Unsuccessful. Please try again later';
+                                $tempResponse['portingMSISDN'] = $portingMSISDN;
 
                             }elseif($contractId == null){
 
-                                $response['success'] = false;
-                                $response['message'] = 'Temporal number not found in BSCS. Please verify number has been identified properly and try again';
-                                $response['portingMSISDN'] = $portingMSISDN;
+                                $tempResponse['success'] = false;
+                                $tempResponse['message'] = 'Temporal number not found in BSCS. Please verify number has been identified properly and try again';
+                                $tempResponse['portingMSISDN'] = $portingMSISDN;
 
                             }else{
 
@@ -361,9 +364,9 @@ class Porting extends CI_Controller
                                 }elseif (strtolower($donorOperator) == 'nexttel'){
                                     $donorOperator = 1;
                                 }else{
-                                    $response['success'] = false;
-                                    $response['message'] = "Invalid donor operator. Must be <MTN> or <NEXTTEL>";
-                                    $response['portingMSISDN'] = $portingMSISDN;
+                                    $tempResponse['success'] = false;
+                                    $tempResponse['message'] = "Invalid donor operator. Must be <MTN> or <NEXTTEL>";
+                                    $tempResponse['portingMSISDN'] = $portingMSISDN;
                                 }
 
                                 if($donorOperator == 0 || $donorOperator == 1){
@@ -408,7 +411,6 @@ class Porting extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * API for performing accept request
      */
     public function acceptPorting(){
@@ -436,7 +438,6 @@ class Porting extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * API for performing accept request for bulk
      */
     public function acceptBulkPorting(){
@@ -474,7 +475,6 @@ class Porting extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * API for performing reject request
      */
     public function rejectPorting(){
@@ -502,7 +502,6 @@ class Porting extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * API for performing bulk reject request
      */
     public function rejectBulkPorting(){
@@ -540,7 +539,6 @@ class Porting extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * API for performing search
      */
     public function searchPorting(){

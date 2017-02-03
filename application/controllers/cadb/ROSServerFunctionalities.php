@@ -2,6 +2,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once "Rollback.php";
+require_once "RollbackNotification.php";
 require_once "Common.php";
 require_once "Fault.php";
 
@@ -25,6 +26,16 @@ class ROSServerFunctionalities extends CI_Controller  {
 
         $this->load->model('Porting_model');
         $this->load->model('Rollback_model');
+
+        // Define soap client object
+        $this->client = new SoapClient(__DIR__ . '/wsdl/RollbackNotificationService.wsdl', array(
+            "trace" => false,
+            'stream_context' => stream_context_create(array(
+                'http' => array(
+                    'header' => 'Authorization: Bearer ' . Auth::CADB_AUTH_BEARER
+                ),
+            )),
+        ));
 
     }
 
@@ -64,13 +75,45 @@ class ROSServerFunctionalities extends CI_Controller  {
             throw new unknownPortingIdFault();
         }
 
+        $rand = mt_rand(100,998);
+
         $response->rollbackTransaction = new rollback\rollbackTransactionType();
         $response->rollbackTransaction->lastChangeDateTime = date('c');
         $response->rollbackTransaction->donorSubmissionDateTime = date('c');
-        $response->rollbackTransaction->rollbackDateTime = date('c');
-        $response->rollbackTransaction->rollbackId = date('Ymd') . '-'. $portingInfo['donorNetworkId'] .'-' . $portingInfo['startMSISDN'] . '-' . mt_rand(100,999);
+        $response->rollbackTransaction->rollbackDateTime = $openRequest->rollbackDateTime;
+        $response->rollbackTransaction->rollbackId = date('Ymd') . '-'. $portingInfo['donorNetworkId'] .'-' . $portingInfo['startMSISDN'] . '-' . $rand;
 
         $response->rollbackTransaction->originalPortingId = $openRequest->originalPortingId;
+
+        $notifyOpenRequest = new \RollbackService\RollbackNotification\notifyOpenedRequest();
+
+        $notifyOpenRequest->rollbackTransaction = new rollback\rollbackTransactionType();
+        $notifyOpenRequest->rollbackTransaction->cadbOpenDateTime = date('c');
+        $notifyOpenRequest->rollbackTransaction->donorSubmissionDateTime = date('c');
+        $notifyOpenRequest->rollbackTransaction->lastChangeDateTime = date('c');
+        $notifyOpenRequest->rollbackTransaction->rollbackDateTime = $openRequest->rollbackDateTime;
+
+        $notifyOpenRequest->rollbackTransaction->donorNrn = new nrnType();
+        $notifyOpenRequest->rollbackTransaction->donorNrn->networkId = $portingInfo['donorNetworkId'];
+        $notifyOpenRequest->rollbackTransaction->donorNrn->routingNumber = $portingInfo['donorRoutingNumber'];
+
+        $notifyOpenRequest->rollbackTransaction->recipientNrn = new nrnType();
+        $notifyOpenRequest->rollbackTransaction->recipientNrn->networkId = $portingInfo['recipientNetworkId'];
+        $notifyOpenRequest->rollbackTransaction->recipientNrn->routingNumber = $portingInfo['recipientRoutingNumber'];
+
+        $notifyOpenRequest->rollbackTransaction->rollbackId = date('Ymd') . '-'. $portingInfo['donorNetworkId'] .'-' .
+            $portingInfo['startMSISDN'] . '-' . ($rand + 1);
+
+        $notifyOpenRequest->rollbackTransaction->rollbackState = 'OPENED';
+        $notifyOpenRequest->rollbackTransaction->originalPortingId = $openRequest->originalPortingId;
+
+        // numberRange
+        $numRange = new numberRangeType();
+        $numRange->endNumber = $portingInfo['startMSISDN'];
+        $numRange->startNumber = $portingInfo['endMSISDN'];
+        $notifyOpenRequest->rollbackTransaction->numberRanges = array($numRange);
+
+        $this->client->notifyOpened($notifyOpenRequest);
 
         return $response;
 
@@ -95,6 +138,39 @@ class ROSServerFunctionalities extends CI_Controller  {
         $response->rollbackTransaction->rollbackDateTime = date('c');
         $response->rollbackTransaction->rollbackId = $acceptRequest->rollbackId;
 
+        $portingInfo = $this->Rollback_model->get_full_rollback($acceptRequest->rollbackId);
+        
+        $notifyAcceptedRequest = new \RollbackService\RollbackNotification\notifyAcceptedRequest();
+        $notifyAcceptedRequest->rollbackTransaction = new rollback\rollbackTransactionType();
+
+        $notifyAcceptedRequest->rollbackTransaction = new rollback\rollbackTransactionType();
+        $notifyAcceptedRequest->rollbackTransaction->cadbOpenDateTime = date('c');
+        $notifyAcceptedRequest->rollbackTransaction->donorSubmissionDateTime = date('c');
+        $notifyAcceptedRequest->rollbackTransaction->lastChangeDateTime = date('c');
+        $notifyAcceptedRequest->rollbackTransaction->rollbackDateTime = $portingInfo['rollbackDateTime'];
+
+        $notifyAcceptedRequest->rollbackTransaction->donorNrn = new nrnType();
+        $notifyAcceptedRequest->rollbackTransaction->donorNrn->networkId = $portingInfo['donorNetworkId'];
+        $notifyAcceptedRequest->rollbackTransaction->donorNrn->routingNumber = $portingInfo['donorRoutingNumber'];
+
+        $notifyAcceptedRequest->rollbackTransaction->recipientNrn = new nrnType();
+        $notifyAcceptedRequest->rollbackTransaction->recipientNrn->networkId = $portingInfo['recipientNetworkId'];
+        $notifyAcceptedRequest->rollbackTransaction->recipientNrn->routingNumber = $portingInfo['recipientRoutingNumber'];
+
+        $parts = explode('-', $portingInfo['rollbackId']);
+        $parts[3] += 1;
+        $notifyAcceptedRequest->rollbackTransaction->rollbackId = implode('-', $parts);
+
+        $notifyAcceptedRequest->rollbackTransaction->rollbackState = 'ACCEPTED';
+
+        // numberRange
+        $numRange = new numberRangeType();
+        $numRange->endNumber = $portingInfo['startMSISDN'];
+        $numRange->startNumber = $portingInfo['endMSISDN'];
+        $notifyAcceptedRequest->rollbackTransaction->numberRanges = array($numRange);
+
+        $this->client->notifyAccepted($notifyAcceptedRequest);
+        
         return $response;
 
         //throw new invalidOperatorFault();
@@ -119,6 +195,42 @@ class ROSServerFunctionalities extends CI_Controller  {
         $response->rollbackTransaction->donorSubmissionDateTime = date('c');
         $response->rollbackTransaction->rollbackDateTime = date('c');
         $response->rollbackTransaction->rollbackId = $rejectRequest->rollbackId;
+
+        $portingInfo = $this->Rollback_model->get_full_rollback($rejectRequest->rollbackId);
+
+        $notifyRejectedRequest = new \RollbackService\RollbackNotification\notifyRejectedRequest();
+        $notifyRejectedRequest->rollbackTransaction = new rollback\rollbackTransactionType();
+
+        $notifyRejectedRequest->cause = $rejectRequest->cause;
+        $notifyRejectedRequest->rejectionReason = $rejectRequest->rejectionReason;
+
+        $notifyRejectedRequest->rollbackTransaction = new rollback\rollbackTransactionType();
+        $notifyRejectedRequest->rollbackTransaction->cadbOpenDateTime = date('c');
+        $notifyRejectedRequest->rollbackTransaction->donorSubmissionDateTime = date('c');
+        $notifyRejectedRequest->rollbackTransaction->lastChangeDateTime = date('c');
+        $notifyRejectedRequest->rollbackTransaction->rollbackDateTime = $portingInfo['rollbackDateTime'];
+
+        $notifyRejectedRequest->rollbackTransaction->donorNrn = new nrnType();
+        $notifyRejectedRequest->rollbackTransaction->donorNrn->networkId = $portingInfo['donorNetworkId'];
+        $notifyRejectedRequest->rollbackTransaction->donorNrn->routingNumber = $portingInfo['donorRoutingNumber'];
+
+        $notifyRejectedRequest->rollbackTransaction->recipientNrn = new nrnType();
+        $notifyRejectedRequest->rollbackTransaction->recipientNrn->networkId = $portingInfo['recipientNetworkId'];
+        $notifyRejectedRequest->rollbackTransaction->recipientNrn->routingNumber = $portingInfo['recipientRoutingNumber'];
+
+        $parts = explode('-', $portingInfo['rollbackId']);
+        $parts[3] += 1;
+        $notifyRejectedRequest->rollbackTransaction->rollbackId = implode('-', $parts);
+
+        $notifyRejectedRequest->rollbackTransaction->rollbackState = 'REJECTED';
+
+        // numberRange
+        $numRange = new numberRangeType();
+        $numRange->endNumber = $portingInfo['startMSISDN'];
+        $numRange->startNumber = $portingInfo['endMSISDN'];
+        $notifyRejectedRequest->rollbackTransaction->numberRanges = array($numRange);
+
+        $this->client->notifyRejected($notifyRejectedRequest);
 
         return $response;
         //throw new invalidOperatorFault();

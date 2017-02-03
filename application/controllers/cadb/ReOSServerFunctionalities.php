@@ -3,6 +3,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once "Common.php";
 require_once "Return.php";
+require_once "ReturnNotificationService.php";
 require_once "Fault.php";
 
 use ReturnService\_Return as _Return;
@@ -24,6 +25,16 @@ class ReOSServerFunctionalities extends CI_Controller  {
         parent::__construct();
 
         $this->load->model('Numberreturn_model');
+
+        // Define soap client object
+        $this->client = new SoapClient(__DIR__ . '/wsdl/ReturnNotificationService.wsdl', array(
+            "trace" => false,
+            'stream_context' => stream_context_create(array(
+                'http' => array(
+                    'header' => 'Authorization: Bearer ' . Auth::CADB_AUTH_BEARER
+                ),
+            )),
+        ));
 
     }
 
@@ -64,10 +75,29 @@ class ReOSServerFunctionalities extends CI_Controller  {
 
         $response->returnTransaction = new _Return\returnTransactionType();
 
+        $rand = mt_rand(100,998);
+
+        $numRange = new numberRangeType();
+        $numRange->endNumber = $openRequest->numberRanges->numberRange->startNumber;
+        $numRange->startNumber = $openRequest->numberRanges->numberRange->endNumber;
+
         $response->returnTransaction->ownerNrn = $openRequest->ownerNrn;
         $response->returnTransaction->primaryOwnerNrn = $openRequest->primaryOwnerNrn;
         $response->returnTransaction->openDateTime = date('c');
-        $response->returnTransaction->returnId = date('Ymd') . '-'. $openRequest->primaryOwnerNrn->networkId .'-' . $openRequest->numberRanges->numberRange->startNumber . '-' . mt_rand(100,999);
+        $response->returnTransaction->numberRanges = array($numRange);
+        $response->returnTransaction->returnId = date('Ymd') . '-'. $openRequest->primaryOwnerNrn->networkId .'-' . $openRequest->numberRanges->numberRange->startNumber . '-' . $rand;
+
+        // Notify Return to CO
+        $notifyRequest = new \ReturnService\_ReturnNotification\notifyOpenedRequest();
+        $notifyRequest->returnTransaction = new _Return\returnTransactionType();
+        $notifyRequest->returnTransaction->primaryOwnerNrn = $openRequest->ownerNrn;
+        $notifyRequest->returnTransaction->openDateTime = date('c');
+
+        $notifyRequest->returnTransaction->numberRanges = array($numRange);
+        $notifyRequest->returnTransaction->ownerNrn = $openRequest->primaryOwnerNrn;
+        $notifyRequest->returnTransaction->returnId = date('Ymd') . '-'. $openRequest->primaryOwnerNrn->networkId .'-' . $openRequest->numberRanges->numberRange->startNumber . '-' . ($rand+1);
+
+        $this->client->notifyOpened($notifyRequest);
 
         return $response;
 
@@ -90,6 +120,34 @@ class ReOSServerFunctionalities extends CI_Controller  {
 
         $response->returnTransaction->returnId = $acceptRequest->returnId;
 
+        $return = $this->Numberreturn_model->get_numberreturn($acceptRequest->returnId);
+
+        $notifyAcceptRequest = new \ReturnService\_ReturnNotification\notifyAcceptedRequest();
+        $notifyAcceptRequest->returnTransaction = new _Return\returnTransactionType();
+
+        $parts = explode('-', $acceptRequest->returnId);
+        $parts[3] += 1;
+        $notifyAcceptRequest->returnTransaction->returnId = implode('-', $parts);
+
+        $notifyAcceptRequest->returnTransaction->openDateTime = $return['openDateTime'];
+        $notifyAcceptRequest->returnTransaction->returnNumberState = $return['returnNumberState'];
+
+        $numRange = new numberRangeType();
+        $numRange->endNumber = $return['returnMSISDN'];
+        $numRange->startNumber = $return['returnMSISDN'];
+
+        $notifyAcceptRequest->returnTransaction->ownerNrn = new nrnType();
+        $notifyAcceptRequest->returnTransaction->ownerNrn->networkId = $return['ownerNetworkId'];
+        $notifyAcceptRequest->returnTransaction->ownerNrn->routingNumber = $return['ownerRoutingNumber'];
+
+        $notifyAcceptRequest->returnTransaction->primaryOwnerNrn = new nrnType();
+        $notifyAcceptRequest->returnTransaction->primaryOwnerNrn->networkId = $return['primaryOwnerNetworkId'];
+        $notifyAcceptRequest->returnTransaction->primaryOwnerNrn->routingNumber = $return['primaryOwnerRoutingNumber'];
+
+        $notifyAcceptRequest->returnTransaction->numberRanges = array($numRange);
+
+        $this->client->notifyAccepted($notifyAcceptRequest);
+
         return $response;
 
         //throw new returnActionNotAvailableFault();
@@ -110,7 +168,37 @@ class ReOSServerFunctionalities extends CI_Controller  {
 
         $response->returnTransaction = new _Return\returnTransactionType();
 
+        $return = $this->Numberreturn_model->get_numberreturn($rejectRequest->returnId);
+
         $response->returnTransaction->returnId = $rejectRequest->returnId;
+
+        $notifyRejectedRequest = new \ReturnService\_ReturnNotification\notifyRejectedRequest();
+        $notifyRejectedRequest->returnTransaction = new _Return\returnTransactionType();
+
+        $notifyRejectedRequest->cause = $rejectRequest->cause;
+
+        $parts = explode('-', $rejectRequest->returnId);
+        $parts[3] += 1;
+        $notifyRejectedRequest->returnTransaction->returnId = implode('-', $parts);
+
+        $notifyRejectedRequest->returnTransaction->openDateTime = $return['openDateTime'];
+        $notifyRejectedRequest->returnTransaction->returnNumberState = $return['returnNumberState'];
+
+        $numRange = new numberRangeType();
+        $numRange->endNumber = $return['returnMSISDN'];
+        $numRange->startNumber = $return['returnMSISDN'];
+
+        $notifyRejectedRequest->returnTransaction->ownerNrn = new nrnType();
+        $notifyRejectedRequest->returnTransaction->ownerNrn->networkId = $return['ownerNetworkId'];
+        $notifyRejectedRequest->returnTransaction->ownerNrn->routingNumber = $return['ownerRoutingNumber'];
+
+        $notifyRejectedRequest->returnTransaction->primaryOwnerNrn = new nrnType();
+        $notifyRejectedRequest->returnTransaction->primaryOwnerNrn->networkId = $return['primaryOwnerNetworkId'];
+        $notifyRejectedRequest->returnTransaction->primaryOwnerNrn->routingNumber = $return['primaryOwnerRoutingNumber'];
+
+        $notifyRejectedRequest->returnTransaction->numberRanges = array($numRange);
+
+        $this->client->notifyRejected($notifyRejectedRequest);
 
         return $response;
 

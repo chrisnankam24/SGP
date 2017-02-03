@@ -4,6 +4,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once "Common.php";
 require_once "Porting.php";
+require_once "PortingNotification.php";
 require_once "Fault.php";
 
 use PortingService\Porting as Porting;
@@ -21,11 +22,24 @@ use PortingService\Porting as Porting;
  */
 class POSServerFunctionalities extends CI_Controller  {
 
+    // Declare client
+    private $client = null;
+
     public function __construct()
     {
         parent::__construct();
 
         $this->load->model('Porting_model');
+
+        // Define soap client object
+        $this->client = new SoapClient(__DIR__ . '/wsdl/PortingNotificationService.wsdl', array(
+            "trace" => false,
+            'stream_context' => stream_context_create(array(
+                'http' => array(
+                    'header' => 'Authorization: Bearer ' . Auth::CADB_AUTH_BEARER
+                ),
+            )),
+        ));
 
     }
 
@@ -67,18 +81,39 @@ class POSServerFunctionalities extends CI_Controller  {
 
         $response->portingTransaction = new Porting\portingTransactionType();
 
+        $rand = mt_rand(100,998);
+
         $response->portingTransaction->lastChangeDateTime = date('c');
         $response->portingTransaction->cadbOrderDateTime = date('c');
         $response->portingTransaction->donorNrn = $orderRequest->donorNrn;
         $response->portingTransaction->numberRanges = $orderRequest->numberRanges;
         $response->portingTransaction->portingDateTime = $orderRequest->portingDateTime;
-        $response->portingTransaction->portingId = date('Ymd') . '-'. $orderRequest->recipientNrn->networkId .'-' . $orderRequest->numberRanges->numberRange->startNumber . '-' . mt_rand(100,999);
+        $response->portingTransaction->portingId = date('Ymd') . '-'. $orderRequest->recipientNrn->networkId .'-' .
+            $orderRequest->numberRanges->numberRange->startNumber . '-' . $rand;
 
         $response->portingTransaction->portingState = Porting\portingStateType::ORDERED;
         $response->portingTransaction->recipientNrn = $orderRequest->recipientNrn;
         $response->portingTransaction->recipientSubmissionDateTime = date('c');
         $response->portingTransaction->rio = $orderRequest->rio;
         $response->portingTransaction->subscriberInfo = $orderRequest->subscriberInfo;
+
+        $notifyRequest = new \PortingService\PortingNotification\notifyOrderedRequest();
+
+        $notifyRequest->portingTransaction = new Porting\portingTransactionType();
+        $notifyRequest->portingTransaction->numberRanges = $orderRequest->numberRanges;
+        $notifyRequest->portingTransaction->donorNrn = $orderRequest->recipientNrn;
+        $notifyRequest->portingTransaction->recipientNrn = $orderRequest->donorNrn;
+        $notifyRequest->portingTransaction->portingDateTime = $orderRequest->portingDateTime;
+        $notifyRequest->portingTransaction->recipientSubmissionDateTime = date('c');
+        $notifyRequest->portingTransaction->portingId = date('Ymd') . '-'. $orderRequest->recipientNrn->networkId .'-' .
+            $orderRequest->numberRanges->numberRange->startNumber . '-' . ($rand + 1);
+        $notifyRequest->portingTransaction->rio = $orderRequest->rio;
+        $notifyRequest->portingTransaction->subscriberInfo = $orderRequest->subscriberInfo;
+
+        $notifyRequest->portingTransaction->lastChangeDateTime = date('c');
+        $notifyRequest->portingTransaction->cadbOrderDateTime = date('c');
+
+        $this->client->notifyOrdered($notifyRequest);
 
         return $response;
 
@@ -145,6 +180,31 @@ class POSServerFunctionalities extends CI_Controller  {
         $numRange->startNumber = $portingInfo['endMSISDN'];
         $response->portingTransaction->numberRanges = array($numRange);
 
+        $notifyAcceptedRequest = new \PortingService\PortingNotification\notifyAcceptedRequest();
+        $notifyAcceptedRequest->portingTransaction =  new Porting\portingTransactionType();
+
+        $notifyAcceptedRequest->portingTransaction->donorNrn = $response->portingTransaction->recipientNrn;
+        $notifyAcceptedRequest->portingTransaction->recipientNrn = $response->portingTransaction->donorNrn;
+
+        $notifyAcceptedRequest->portingTransaction->cadbOrderDateTime = $portingInfo['cadbOrderDateTime'];
+        $notifyAcceptedRequest->portingTransaction->lastChangeDateTime = date('c');
+        $notifyAcceptedRequest->portingTransaction->portingDateTime = $portingInfo['portingDateTime'];
+        $notifyAcceptedRequest->portingTransaction->recipientSubmissionDateTime = $portingInfo['recipientSubmissionDateTime'];
+
+        $parts = explode('-', $portingInfo['portingId']);
+        $parts[3] += 1;
+        $notifyAcceptedRequest->portingTransaction->portingId = implode('-', $parts);
+
+        $notifyAcceptedRequest->portingTransaction->portingState = 'ACCEPTED';
+
+        // numberRange
+        $numRange = new numberRangeType();
+        $numRange->endNumber = $portingInfo['startMSISDN'];
+        $numRange->startNumber = $portingInfo['endMSISDN'];
+        $notifyAcceptedRequest->portingTransaction->numberRanges = array($numRange);
+
+        $this->client->notifyAccepted($notifyAcceptedRequest);
+
         return $response;
         //throw new invalidPortingIdFault();
 
@@ -187,6 +247,37 @@ class POSServerFunctionalities extends CI_Controller  {
         $response->portingTransaction->portingDateTime = date('c');
         $response->portingTransaction->portingId = $rejectRequest->portingId;
         $response->portingTransaction->portingState = Porting\portingStateType::REJECTED;
+
+        $portingInfo = $this->Porting_model->get_porting($rejectRequest->portingId);
+
+        $notifyRejectedRequest = new \PortingService\PortingNotification\notifyRejectedRequest();
+        $notifyRejectedRequest->portingTransaction =  new Porting\portingTransactionType();
+
+        $notifyRejectedRequest->cause = $rejectRequest->cause;
+        $notifyRejectedRequest->rejectionReason = $rejectRequest->rejectionReason;
+
+        $notifyRejectedRequest->portingTransaction->donorNrn = $response->portingTransaction->recipientNrn;
+        $notifyRejectedRequest->portingTransaction->recipientNrn = $response->portingTransaction->donorNrn;
+
+        $notifyRejectedRequest->portingTransaction->cadbOrderDateTime = $portingInfo['cadbOrderDateTime'];
+        $notifyRejectedRequest->portingTransaction->lastChangeDateTime = date('c');
+        $notifyRejectedRequest->portingTransaction->portingDateTime = $portingInfo['portingDateTime'];
+        $notifyRejectedRequest->portingTransaction->recipientSubmissionDateTime = $portingInfo['recipientSubmissionDateTime'];
+
+        $parts = explode('-', $portingInfo['portingId']);
+        $parts[3] += 1;
+        $notifyRejectedRequest->portingTransaction->portingId = implode('-', $parts);
+
+        $notifyRejectedRequest->portingTransaction->portingState = 'ACCEPTED';
+
+        // numberRange
+        $numRange = new numberRangeType();
+        $numRange->endNumber = $portingInfo['startMSISDN'];
+        $numRange->startNumber = $portingInfo['endMSISDN'];
+        $notifyRejectedRequest->portingTransaction->numberRanges = array($numRange);
+
+        $this->client->notifyRejected($notifyRejectedRequest);
+
 
         return $response;
 

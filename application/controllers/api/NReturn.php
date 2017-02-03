@@ -14,7 +14,6 @@ class NReturn extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * API for performing open request
      */
     public function openNumberReturn(){
@@ -43,7 +42,6 @@ class NReturn extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * API for performing bulk open
      */
     public function openBulkNumberReturn(){
@@ -83,6 +81,9 @@ class NReturn extends CI_Controller
                                 $response['message'] = 'Invalid file content format. Columns do not match defined template. If you have difficulties creating file, please contact administrator';
 
                                 $this->send_response($response);
+
+                                unlink(FCPATH . 'uploads/' .$file_name);
+
                                 return;
                             }
                             $row++;
@@ -138,7 +139,6 @@ class NReturn extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * API for performing accept request
      */
     public function acceptNumberReturn(){
@@ -166,7 +166,6 @@ class NReturn extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * API for performing bulk accept
      */
     public function acceptBulkNumberReturn(){
@@ -204,7 +203,6 @@ class NReturn extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * API for preforming reject request
      */
     public function rejectNumberReturn(){
@@ -233,7 +231,6 @@ class NReturn extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * API for performing bulk reject
      */
     public function rejectBulkNumberReturn(){
@@ -272,7 +269,6 @@ class NReturn extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * API for performing search
      */
     public function searchNumberReturn(){

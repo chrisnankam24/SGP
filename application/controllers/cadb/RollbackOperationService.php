@@ -804,7 +804,7 @@ class RollbackOperationService {
 
                     // Make Reject Rollback Operation
 
-                    $rejectResponse = $this->reject($rollbackId, $rejectionReason, $cause);
+                    $rejectResponse = $this->reject($rollbackId, $cause, $rejectionReason);
 
                     // Verify response
 

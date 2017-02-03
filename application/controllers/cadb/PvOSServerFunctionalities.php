@@ -2,6 +2,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once "Provision.php";
+require_once "ProvisionNotification.php";
 require_once "Fault.php";
 require_once "Common.php";
 
@@ -22,6 +23,16 @@ class PvOSServerFunctionalities extends CI_Controller  {
     public function __construct()
     {
         parent::__construct();
+
+        // Define soap client object
+        $this->client = new SoapClient(__DIR__ . '/wsdl/ProvisionNotificationService.wsdl', array(
+            "trace" => false,
+            'stream_context' => stream_context_create(array(
+                'http' => array(
+                    'header' => 'Authorization: Bearer ' . Auth::CADB_AUTH_BEARER
+                ),
+            )),
+        ));
 
     }
 

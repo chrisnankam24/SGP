@@ -229,7 +229,7 @@ class ReturnNotificationService extends CI_Controller {
         // Insert into return rejection
 
         $rrParams = array(
-            'casuse' => $notifyRejectedRequest->cause,
+            'cause' => $notifyRejectedRequest->cause,
             'returnId' => $returnId,
         );
 
