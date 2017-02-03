@@ -132,12 +132,17 @@ class BscsParams {
     const HMCODE = '179';
     const MTN_PLCODE = '354';
     const NEXTTEL_PLCODE = '355';
-
 }
 
 class languageParams{
     const FRENCH = 'FR';
     const ENGLISH = 'EN';
+}
+
+class EmailParams{
+    const TO = ['christian.nankam@orange.com', 'frank.basseeg@orange.com', 'sidoin.fometio@orange.com'];
+    const FROM = '';
+    const CC = [];
 }
 
 /////////////// Primitive Types Verification
