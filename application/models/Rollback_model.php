@@ -65,7 +65,7 @@ class Rollback_model extends CI_Model
      */
     function get_all_rollback()
     {
-        return $this->db->order_by('donorSubmissionDateTime', 'desc')->join('porting', 'Porting.portingId = originalPortingId')->get('rollback')->result_array();
+        return $this->db->order_by('donorSubmissionDateTime', 'desc')->join('porting', 'porting.portingId = originalPortingId')->get('rollback')->result_array();
     }
 
     /*
@@ -73,7 +73,7 @@ class Rollback_model extends CI_Model
      */
     function get_all_waiting_rollback()
     {
-        return $this->db->where('rollbackState', \RollbackService\Rollback\rollbackStateType::OPENED)->where('recipientNetworkId', Operator::ORANGE_NETWORK_ID)->join('porting', 'Porting.portingId = originalPortingId')->order_by('donorSubmissionDateTime', 'desc')->get_where('rollback')->result_array();
+        return $this->db->where('rollbackState', \RollbackService\Rollback\rollbackStateType::OPENED)->where('recipientNetworkId', Operator::ORANGE_NETWORK_ID)->join('porting', 'porting.portingId = originalPortingId')->order_by('donorSubmissionDateTime', 'desc')->get_where('rollback')->result_array();
     }
 
     /*
