@@ -4,7 +4,7 @@
  * www.crudigniter.com
  */
  
-class Log_model extends CI_Model
+class log_model extends CI_Model
 {
     function __construct()
     {
@@ -16,7 +16,7 @@ class Log_model extends CI_Model
      */
     function get_log($logId)
     {
-        return $this->db->get_where('Log',array('logId'=>$logId))->row_array();
+        return $this->db->get_where('log',array('logId'=>$logId))->row_array();
     }
     
     /*
@@ -24,7 +24,7 @@ class Log_model extends CI_Model
      */
     function get_all_log()
     {
-        return $this->db->get('Log')->result_array();
+        return $this->db->get('log')->result_array();
     }
     
     /*
@@ -32,7 +32,7 @@ class Log_model extends CI_Model
      */
     function add_log($params)
     {
-        $this->db->insert('Log',$params);
+        $this->db->insert('log',$params);
         return $this->db->insert_id();
     }
     
@@ -42,7 +42,7 @@ class Log_model extends CI_Model
     function update_log($logId,$params)
     {
         $this->db->where('logId',$logId);
-        $response = $this->db->update('Log',$params);
+        $response = $this->db->update('log',$params);
         if($response)
         {
             return "log updated successfully";
@@ -58,7 +58,7 @@ class Log_model extends CI_Model
      */
     function delete_log($logId)
     {
-        $response = $this->db->delete('Log',array('logId'=>$logId));
+        $response = $this->db->delete('log',array('logId'=>$logId));
         if($response)
         {
             return "log deleted successfully";

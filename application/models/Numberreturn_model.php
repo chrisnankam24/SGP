@@ -18,7 +18,7 @@ class Numberreturn_model extends CI_Model
      */
     function get_numberreturn($returnId)
     {
-        return $this->db->get_where('NumberReturn',array('returnId'=>$returnId))->row_array();
+        return $this->db->get_where('numberreturn',array('returnId'=>$returnId))->row_array();
     }
 
     /*
@@ -26,7 +26,7 @@ class Numberreturn_model extends CI_Model
     */
     function search_numberreturn($msisdn)
     {
-        return $this->db->order_by('openDateTime', 'desc')->get_where('NumberReturn',array('returnMSISDN'=>$msisdn))->result_array();
+        return $this->db->order_by('openDateTime', 'desc')->get_where('numberreturn',array('returnMSISDN'=>$msisdn))->result_array();
     }
 
     /*
@@ -34,7 +34,7 @@ class Numberreturn_model extends CI_Model
      */
     function get_all_numberreturn()
     {
-        return $this->db->order_by('openDateTime', 'desc')->get('NumberReturn')->result_array();
+        return $this->db->order_by('openDateTime', 'desc')->get('numberreturn')->result_array();
     }
 
     /*
@@ -42,7 +42,7 @@ class Numberreturn_model extends CI_Model
      */
     function get_all_waiting_return()
     {
-        return $this->db->where('returnNumberState', \ReturnService\_Return\returnStateType::OPENED)->where('primaryOwnerNetworkId', Operator::ORANGE_NETWORK_ID)->get_where('NumberReturn')->result_array();
+        return $this->db->where('returnNumberState', \ReturnService\_Return\returnStateType::OPENED)->where('primaryOwnerNetworkId', Operator::ORANGE_NETWORK_ID)->get_where('numberreturn')->result_array();
     }
 
     /*
@@ -50,7 +50,7 @@ class Numberreturn_model extends CI_Model
      */
     function get_nr_by_state_and_co($nrState, $ownerNetworkId)
     {
-        return $this->db->get_where('NumberReturn',array('returnNumberState'=>$nrState, 'ownerNetworkId' => $ownerNetworkId))->result_array();
+        return $this->db->get_where('numberreturn',array('returnNumberState'=>$nrState, 'ownerNetworkId' => $ownerNetworkId))->result_array();
     }
 
     /*
@@ -58,7 +58,7 @@ class Numberreturn_model extends CI_Model
      */
     function get_nr_by_state_and_po($nrState, $primaryOwnerNetworkId)
     {
-        return $this->db->get_where('NumberReturn',array('returnNumberState'=>$nrState, 'primaryOwnerNetworkId' => $primaryOwnerNetworkId))->result_array();
+        return $this->db->get_where('numberreturn',array('returnNumberState'=>$nrState, 'primaryOwnerNetworkId' => $primaryOwnerNetworkId))->result_array();
     }
 
 
@@ -67,7 +67,7 @@ class Numberreturn_model extends CI_Model
      */
     function add_numberreturn($params)
     {
-        $this->db->insert('NumberReturn',$params);
+        $this->db->insert('numberreturn',$params);
         return $this->db->insert_id();
     }
     
@@ -77,7 +77,7 @@ class Numberreturn_model extends CI_Model
     function update_numberreturn($returnId,$params)
     {
         $this->db->where('returnId',$returnId);
-        $response = $this->db->update('NumberReturn',$params);
+        $response = $this->db->update('numberreturn',$params);
         if($response)
         {
             return "numberreturn updated successfully";
@@ -93,7 +93,7 @@ class Numberreturn_model extends CI_Model
      */
     function delete_numberreturn($returnId)
     {
-        $response = $this->db->delete('NumberReturn',array('returnId'=>$returnId));
+        $response = $this->db->delete('numberreturn',array('returnId'=>$returnId));
         if($response)
         {
             return "numberreturn deleted successfully";

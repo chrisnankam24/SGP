@@ -16,7 +16,7 @@ class Rollbacksmsnotification_model extends CI_Model
      */
     function get_rollbacksmsnotification($rollbackSmsNotification)
     {
-        return $this->db->get_where('RollbackSmsNotification',array('rollbackSmsNotification'=>$rollbackSmsNotification))->row_array();
+        return $this->db->get_where('rollbacksmsnotification',array('rollbackSmsNotification'=>$rollbackSmsNotification))->row_array();
     }
 
     /*
@@ -24,7 +24,7 @@ class Rollbacksmsnotification_model extends CI_Model
     */
     function get_rollbacksmsnotificationByStatus($status)
     {
-        return $this->db->get_where('RollbackSmsNotification',array('status'=>$status))->result_array();
+        return $this->db->get_where('rollbacksmsnotification',array('status'=>$status))->result_array();
     }
 
     /*
@@ -32,7 +32,7 @@ class Rollbacksmsnotification_model extends CI_Model
      */
     function get_all_rollbacksmsnotification()
     {
-        return $this->db->get('RollbackSmsNotification')->result_array();
+        return $this->db->get('rollbacksmsnotification')->result_array();
     }
     
     /*
@@ -40,7 +40,7 @@ class Rollbacksmsnotification_model extends CI_Model
      */
     function add_rollbacksmsnotification($params)
     {
-        $this->db->insert('RollbackSmsNotification',$params);
+        $this->db->insert('rollbacksmsnotification',$params);
         return $this->db->insert_id();
     }
     
@@ -50,7 +50,7 @@ class Rollbacksmsnotification_model extends CI_Model
     function update_rollbacksmsnotification($rollbackSmsNotification,$params)
     {
         $this->db->where('rollbackSmsNotification',$rollbackSmsNotification);
-        $response = $this->db->update('RollbackSmsNotification',$params);
+        $response = $this->db->update('rollbacksmsnotification',$params);
         if($response)
         {
             return "rollbacksmsnotification updated successfully";
@@ -66,7 +66,7 @@ class Rollbacksmsnotification_model extends CI_Model
      */
     function delete_rollbacksmsnotification($rollbackSmsNotification)
     {
-        $response = $this->db->delete('RollbackSmsNotification',array('rollbackSmsNotification'=>$rollbackSmsNotification));
+        $response = $this->db->delete('rollbacksmsnotification',array('rollbackSmsNotification'=>$rollbackSmsNotification));
         if($response)
         {
             return "rollbacksmsnotification deleted successfully";

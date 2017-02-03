@@ -16,7 +16,7 @@ class Portingstateevolution_model extends CI_Model
      */
     function get_portingstateevolution($portingId)
     {
-        return $this->db->get_where('PortingStateEvolution',array('portingId'=>$portingId))->result_array();
+        return $this->db->get_where('portingstateevolution',array('portingId'=>$portingId))->result_array();
     }
     
     /*
@@ -24,7 +24,7 @@ class Portingstateevolution_model extends CI_Model
      */
     function get_all_portingstateevolution()
     {
-        return $this->db->get('PortingStateEvolution')->result_array();
+        return $this->db->get('portingstateevolution')->result_array();
     }
     
     /*
@@ -32,7 +32,7 @@ class Portingstateevolution_model extends CI_Model
      */
     function add_portingstateevolution($params)
     {
-        $this->db->insert('PortingStateEvolution',$params);
+        $this->db->insert('portingstateevolution',$params);
         return $this->db->insert_id();
     }
     
@@ -42,7 +42,7 @@ class Portingstateevolution_model extends CI_Model
     function update_portingstateevolution($portingId,$params)
     {
         $this->db->where('portingId',$portingId);
-        $response = $this->db->update('PortingStateEvolution',$params);
+        $response = $this->db->update('portingstateevolution',$params);
         if($response)
         {
             return "portingstateevolution updated successfully";
@@ -58,7 +58,7 @@ class Portingstateevolution_model extends CI_Model
      */
     function delete_portingstateevolution($portingStateEvolutionId)
     {
-        $response = $this->db->delete('PortingStateEvolution',array('portingStateEvolutionId'=>$portingStateEvolutionId));
+        $response = $this->db->delete('portingstateevolution',array('portingStateEvolutionId'=>$portingStateEvolutionId));
         if($response)
         {
             return "portingstateevolution deleted successfully";

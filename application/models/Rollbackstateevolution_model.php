@@ -16,7 +16,7 @@ class Rollbackstateevolution_model extends CI_Model
      */
     function get_rollbackstateevolution($rollbackId)
     {
-        return $this->db->get_where('RollbackStateEvolution',array('rollbackId'=>$rollbackId))->result_array();
+        return $this->db->get_where('rollbackstateevolution',array('rollbackId'=>$rollbackId))->result_array();
     }
 
     /*
@@ -24,7 +24,7 @@ class Rollbackstateevolution_model extends CI_Model
      */
     function get_all_rollbackstateevolution()
     {
-        return $this->db->get('RollbackStateEvolution')->result_array();
+        return $this->db->get('rollbackstateevolution')->result_array();
     }
 
     /*
@@ -32,7 +32,7 @@ class Rollbackstateevolution_model extends CI_Model
      */
     function add_rollbackstateevolution($params)
     {
-        $this->db->insert('RollbackStateEvolution',$params);
+        $this->db->insert('rollbackstateevolution',$params);
         return $this->db->insert_id();
     }
 
@@ -42,7 +42,7 @@ class Rollbackstateevolution_model extends CI_Model
     function update_rollbackstateevolution($rollbackStatevolutionId,$params)
     {
         $this->db->where('rollbackStatevolutionId',$rollbackStatevolutionId);
-        $response = $this->db->update('RollbackStateEvolution',$params);
+        $response = $this->db->update('rollbackstateevolution',$params);
         if($response)
         {
             return "rollbackstateevolution updated successfully";
@@ -58,7 +58,7 @@ class Rollbackstateevolution_model extends CI_Model
      */
     function delete_rollbackstateevolution($rollbackStatevolutionId)
     {
-        $response = $this->db->delete('RollbackStateEvolution',array('rollbackStatevolutionId'=>$rollbackStatevolutionId));
+        $response = $this->db->delete('rollbackstateevolution',array('rollbackStatevolutionId'=>$rollbackStatevolutionId));
         if($response)
         {
             return "rollbackstateevolution deleted successfully";

@@ -16,7 +16,7 @@ class Portingdenyrejectionabandon_model extends CI_Model
      */
     function get_portingdenyrejectionabandon($portingDenyRejectionAbandonedId)
     {
-        return $this->db->get_where('PortingDenyRejectionAbandon',array('portingDenyRejectionAbandonedId'=>$portingDenyRejectionAbandonedId))->row_array();
+        return $this->db->get_where('portingdenyrejectionabandon',array('portingDenyRejectionAbandonedId'=>$portingDenyRejectionAbandonedId))->row_array();
     }
     
     /*
@@ -24,7 +24,7 @@ class Portingdenyrejectionabandon_model extends CI_Model
      */
     function get_all_portingdenyrejectionabandon()
     {
-        return $this->db->get('PortingDenyRejectionAbandon')->result_array();
+        return $this->db->get('portingdenyrejectionabandon')->result_array();
     }
     
     /*
@@ -32,7 +32,7 @@ class Portingdenyrejectionabandon_model extends CI_Model
      */
     function add_portingdenyrejectionabandon($params)
     {
-        $this->db->insert('PortingDenyRejectionAbandon',$params);
+        $this->db->insert('portingdenyrejectionabandon',$params);
         return $this->db->insert_id();
     }
     
@@ -42,7 +42,7 @@ class Portingdenyrejectionabandon_model extends CI_Model
     function update_portingdenyrejectionabandon($portingDenyRejectionAbandonedId,$params)
     {
         $this->db->where('portingDenyRejectionAbandonedId',$portingDenyRejectionAbandonedId);
-        $response = $this->db->update('PortingDenyRejectionAbandon',$params);
+        $response = $this->db->update('portingdenyrejectionabandon',$params);
         if($response)
         {
             return "portingdenyrejectionabandon updated successfully";
@@ -58,7 +58,7 @@ class Portingdenyrejectionabandon_model extends CI_Model
      */
     function delete_portingdenyrejectionabandon($portingDenyRejectionAbandonedId)
     {
-        $response = $this->db->delete('PortingDenyRejectionAbandon',array('portingDenyRejectionAbandonedId'=>$portingDenyRejectionAbandonedId));
+        $response = $this->db->delete('portingdenyrejectionabandon',array('portingDenyRejectionAbandonedId'=>$portingDenyRejectionAbandonedId));
         if($response)
         {
             return "portingdenyrejectionabandon deleted successfully";

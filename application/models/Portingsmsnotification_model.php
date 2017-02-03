@@ -16,7 +16,7 @@ class Portingsmsnotification_model extends CI_Model
      */
     function get_portingsmsnotification($portingSmsNotificationId)
     {
-        return $this->db->get_where('PortingSmsNotification',array('portingSmsNotificationId'=>$portingSmsNotificationId))->row_array();
+        return $this->db->get_where('portingsmsnotification',array('portingSmsNotificationId'=>$portingSmsNotificationId))->row_array();
     }
 
     /*
@@ -24,7 +24,7 @@ class Portingsmsnotification_model extends CI_Model
      */
     function get_portingsmsnotificationByStatus($status)
     {
-        return $this->db->get_where('PortingSmsNotification',array('status'=>$status))->result_array();
+        return $this->db->get_where('portingsmsnotification',array('status'=>$status))->result_array();
     }
 
 
@@ -33,7 +33,7 @@ class Portingsmsnotification_model extends CI_Model
      */
     function get_all_portingsmsnotification()
     {
-        return $this->db->get('PortingSmsNotification')->result_array();
+        return $this->db->get('portingsmsnotification')->result_array();
     }
     
     /*
@@ -41,7 +41,7 @@ class Portingsmsnotification_model extends CI_Model
      */
     function add_portingsmsnotification($params)
     {
-        $this->db->insert('PortingSmsNotification',$params);
+        $this->db->insert('portingsmsnotification',$params);
         return $this->db->insert_id();
     }
     
@@ -51,7 +51,7 @@ class Portingsmsnotification_model extends CI_Model
     function update_portingsmsnotification($portingSmsNotificationId,$params)
     {
         $this->db->where('portingSmsNotificationId',$portingSmsNotificationId);
-        $response = $this->db->update('PortingSmsNotification',$params);
+        $response = $this->db->update('portingsmsnotification',$params);
         if($response)
         {
             return "portingsmsnotification updated successfully";
@@ -67,7 +67,7 @@ class Portingsmsnotification_model extends CI_Model
      */
     function delete_portingsmsnotification($portingSmsNotificationId)
     {
-        $response = $this->db->delete('PortingSmsNotification',array('portingSmsNotificationId'=>$portingSmsNotificationId));
+        $response = $this->db->delete('portingsmsnotification',array('portingSmsNotificationId'=>$portingSmsNotificationId));
         if($response)
         {
             return "portingsmsnotification deleted successfully";

@@ -16,7 +16,7 @@ class Numberreturnsubmission_model extends CI_Model
      */
     function get_numberreturnsubmission($numberReturnSubmissionId)
     {
-        return $this->db->get_where('NumberReturnSubmission',array('numberReturnSubmissionId'=>$numberReturnSubmissionId))->row_array();
+        return $this->db->get_where('numberreturnsubmission',array('numberReturnSubmissionId'=>$numberReturnSubmissionId))->row_array();
     }
 
     /*
@@ -24,7 +24,7 @@ class Numberreturnsubmission_model extends CI_Model
      */
     function get_submissionByState($submissionState)
     {
-        return $this->db->get_where('NumberReturnSubmission',array('submissionState'=>$submissionState))->result_array();
+        return $this->db->get_where('numberreturnsubmission',array('submissionState'=>$submissionState))->result_array();
     }
     
     /*
@@ -32,7 +32,7 @@ class Numberreturnsubmission_model extends CI_Model
      */
     function get_all_numberreturnsubmission()
     {
-        return $this->db->get('NumberReturnSubmission')->result_array();
+        return $this->db->get('numberreturnsubmission')->result_array();
     }
     
     /*
@@ -40,7 +40,7 @@ class Numberreturnsubmission_model extends CI_Model
      */
     function add_numberreturnsubmission($params)
     {
-        $this->db->insert('NumberReturnSubmission',$params);
+        $this->db->insert('numberreturnsubmission',$params);
         return $this->db->insert_id();
     }
     
@@ -50,7 +50,7 @@ class Numberreturnsubmission_model extends CI_Model
     function update_numberreturnsubmission($numberReturnSubmissionId,$params)
     {
         $this->db->where('numberReturnSubmissionId',$numberReturnSubmissionId);
-        $response = $this->db->update('NumberReturnSubmission',$params);
+        $response = $this->db->update('numberreturnsubmission',$params);
         if($response)
         {
             return "numberreturnsubmission updated successfully";
@@ -66,7 +66,7 @@ class Numberreturnsubmission_model extends CI_Model
      */
     function delete_numberreturnsubmission($numberReturnSubmissionId)
     {
-        $response = $this->db->delete('NumberReturnSubmission',array('numberReturnSubmissionId'=>$numberReturnSubmissionId));
+        $response = $this->db->delete('numberreturnsubmission',array('numberReturnSubmissionId'=>$numberReturnSubmissionId));
         if($response)
         {
             return "numberreturnsubmission deleted successfully";

@@ -4,7 +4,7 @@
  * www.crudigniter.com
  */
  
-class Error_model extends CI_Model
+class error_model extends CI_Model
 {
     function __construct()
     {
@@ -16,7 +16,7 @@ class Error_model extends CI_Model
      */
     function get_error($errorReportId)
     {
-        return $this->db->get_where('Error',array('errorReportId'=>$errorReportId))->row_array();
+        return $this->db->get_where('error',array('errorReportId'=>$errorReportId))->row_array();
     }
 
     /*
@@ -24,7 +24,7 @@ class Error_model extends CI_Model
      */
     function get_errorbyStatus($status)
     {
-            return $this->db->get_where('Error',array('errorNotificationMailSendStatus'=>$status))->result_array();
+            return $this->db->get_where('error',array('errorNotificationMailSendStatus'=>$status))->result_array();
     }
 
 
@@ -33,7 +33,7 @@ class Error_model extends CI_Model
      */
     function get_all_error()
     {
-        return $this->db->get('Error')->result_array();
+        return $this->db->get('error')->result_array();
     }
     
     /*
@@ -41,7 +41,7 @@ class Error_model extends CI_Model
      */
     function add_error($params)
     {
-        $this->db->insert('Error',$params);
+        $this->db->insert('error',$params);
         return $this->db->insert_id();
     }
     
@@ -51,14 +51,14 @@ class Error_model extends CI_Model
     function update_error($errorReportId,$params)
     {
         $this->db->where('errorReportId',$errorReportId);
-        $response = $this->db->update('Error',$params);
+        $response = $this->db->update('error',$params);
         if($response)
         {
             return "error updated successfully";
         }
         else
         {
-            return "Error occuring while updating error";
+            return "error occuring while updating error";
         }
     }
     
@@ -67,14 +67,14 @@ class Error_model extends CI_Model
      */
     function delete_error($errorReportId)
     {
-        $response = $this->db->delete('Error',array('errorReportId'=>$errorReportId));
+        $response = $this->db->delete('error',array('errorReportId'=>$errorReportId));
         if($response)
         {
             return "error deleted successfully";
         }
         else
         {
-            return "Error occuring while deleting error";
+            return "error occuring while deleting error";
         }
     }
 }

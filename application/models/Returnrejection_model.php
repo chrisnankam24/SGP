@@ -16,7 +16,7 @@ class Returnrejection_model extends CI_Model
      */
     function get_returnrejection($returnRejectionId)
     {
-        return $this->db->get_where('ReturnRejection',array('returnRejectionId'=>$returnRejectionId))->row_array();
+        return $this->db->get_where('returnrejection',array('returnRejectionId'=>$returnRejectionId))->row_array();
     }
     
     /*
@@ -24,7 +24,7 @@ class Returnrejection_model extends CI_Model
      */
     function get_all_returnrejection()
     {
-        return $this->db->get('ReturnRejection')->result_array();
+        return $this->db->get('returnrejection')->result_array();
     }
     
     /*
@@ -32,7 +32,7 @@ class Returnrejection_model extends CI_Model
      */
     function add_returnrejection($params)
     {
-        $this->db->insert('ReturnRejection',$params);
+        $this->db->insert('returnrejection',$params);
         return $this->db->insert_id();
     }
     
@@ -42,7 +42,7 @@ class Returnrejection_model extends CI_Model
     function update_returnrejection($returnRejectionId,$params)
     {
         $this->db->where('returnRejectionId',$returnRejectionId);
-        $response = $this->db->update('ReturnRejection',$params);
+        $response = $this->db->update('returnrejection',$params);
         if($response)
         {
             return "returnrejection updated successfully";
@@ -58,7 +58,7 @@ class Returnrejection_model extends CI_Model
      */
     function delete_returnrejection($returnRejectionId)
     {
-        $response = $this->db->delete('ReturnRejection',array('returnRejectionId'=>$returnRejectionId));
+        $response = $this->db->delete('returnrejection',array('returnRejectionId'=>$returnRejectionId));
         if($response)
         {
             return "returnrejection deleted successfully";

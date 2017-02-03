@@ -16,7 +16,7 @@ class Numberreturnstateevolution_model extends CI_Model
      */
     function get_numberreturnstateevolution($returnId)
     {
-        return $this->db->get_where('NumberReturnStateEvolution',array('returnId'=>$returnId))->result_array();
+        return $this->db->get_where('numberreturnstateevolution',array('returnId'=>$returnId))->result_array();
     }
     
     /*
@@ -24,7 +24,7 @@ class Numberreturnstateevolution_model extends CI_Model
      */
     function get_all_numberreturnstateevolution()
     {
-        return $this->db->get('NumberReturnStateEvolution')->result_array();
+        return $this->db->get('numberreturnstateevolution')->result_array();
     }
     
     /*
@@ -32,7 +32,7 @@ class Numberreturnstateevolution_model extends CI_Model
      */
     function add_numberreturnstateevolution($params)
     {
-        $this->db->insert('NumberReturnStateEvolution',$params);
+        $this->db->insert('numberreturnstateevolution',$params);
         return $this->db->insert_id();
     }
     
@@ -42,7 +42,7 @@ class Numberreturnstateevolution_model extends CI_Model
     function update_numberreturnstateevolution($numberReturnStateEvolutionId,$params)
     {
         $this->db->where('numberReturnStateEvolutionId',$numberReturnStateEvolutionId);
-        $response = $this->db->update('NumberReturnStateEvolution',$params);
+        $response = $this->db->update('numberreturnstateevolution',$params);
         if($response)
         {
             return "numberreturnstateevolution updated successfully";
@@ -58,7 +58,7 @@ class Numberreturnstateevolution_model extends CI_Model
      */
     function delete_numberreturnstateevolution($numberReturnStateEvolutionId)
     {
-        $response = $this->db->delete('NumberReturnStateEvolution',array('numberReturnStateEvolutionId'=>$numberReturnStateEvolutionId));
+        $response = $this->db->delete('numberreturnstateevolution',array('numberReturnStateEvolutionId'=>$numberReturnStateEvolutionId));
         if($response)
         {
             return "numberreturnstateevolution deleted successfully";

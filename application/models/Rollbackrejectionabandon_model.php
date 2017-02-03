@@ -16,7 +16,7 @@ class Rollbackrejectionabandon_model extends CI_Model
      */
     function get_rollbackrejectionabandon($rollbackRejectionAbandoned)
     {
-        return $this->db->get_where('RollbackRejectionAbandon',array('rollbackRejectionAbandoned'=>$rollbackRejectionAbandoned))->row_array();
+        return $this->db->get_where('rollbackrejectionabandon',array('rollbackRejectionAbandoned'=>$rollbackRejectionAbandoned))->row_array();
     }
     
     /*
@@ -24,7 +24,7 @@ class Rollbackrejectionabandon_model extends CI_Model
      */
     function get_all_rollbackrejectionabandon()
     {
-        return $this->db->get('RollbackRejectionAbandon')->result_array();
+        return $this->db->get('rollbackrejectionabandon')->result_array();
     }
     
     /*
@@ -32,17 +32,17 @@ class Rollbackrejectionabandon_model extends CI_Model
      */
     function add_rollbackrejectionabandon($params)
     {
-        $this->db->insert('RollbackRejectionAbandon',$params);
+        $this->db->insert('rollbackrejectionabandon',$params);
         return $this->db->insert_id();
     }
     
     /*
      * function to update rollbackrejectionabandon
      */
-    function update_rollbackrejectionabandon($rollbackRejectionAbandoned,$params)
+    function update_rollbackrejectionabandon($rollbackRejectionAbandonedId,$params)
     {
-        $this->db->where('rollbackRejectionAbandoned',$rollbackRejectionAbandoned);
-        $response = $this->db->update('RollbackRejectionAbandon',$params);
+        $this->db->where('rollbackRejectionAbandonedId',$rollbackRejectionAbandonedId);
+        $response = $this->db->update('rollbackrejectionabandon',$params);
         if($response)
         {
             return "rollbackrejectionabandon updated successfully";
@@ -58,7 +58,7 @@ class Rollbackrejectionabandon_model extends CI_Model
      */
     function delete_rollbackrejectionabandon($rollbackRejectionAbandoned)
     {
-        $response = $this->db->delete('RollbackRejectionAbandon',array('rollbackRejectionAbandoned'=>$rollbackRejectionAbandoned));
+        $response = $this->db->delete('rollbackrejectionabandon',array('rollbackRejectionAbandoned'=>$rollbackRejectionAbandoned));
         if($response)
         {
             return "rollbackrejectionabandon deleted successfully";

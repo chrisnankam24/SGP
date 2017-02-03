@@ -4,7 +4,7 @@
  * www.crudigniter.com
  */
  
-class Provisioning_model extends CI_Model
+class provisioning_model extends CI_Model
 {
     function __construct()
     {
@@ -16,7 +16,7 @@ class Provisioning_model extends CI_Model
      */
     function get_provisioning($proccessId)
     {
-        return $this->db->get_where('Provisioning',array('processId'=>$proccessId))->row_array();
+        return $this->db->get_where('provisioning',array('processId'=>$proccessId))->row_array();
     }
 
     /*
@@ -24,7 +24,7 @@ class Provisioning_model extends CI_Model
      */
     function get_provisioning_by_process_state_only($provisionState)
     {
-        return $this->db->get_where('Provisioning',array('provisionState' => $provisionState))->result_array();
+        return $this->db->get_where('provisioning',array('provisionState' => $provisionState))->result_array();
     }
 
     /*
@@ -32,7 +32,7 @@ class Provisioning_model extends CI_Model
      */
     function get_provisioning_other_porting()
     {
-        $sql = "SELECT * FROM Provisioning p WHERE p.processType = ? AND p.processId NOT IN (SELECT portingId FROM Porting)";
+        $sql = "SELECT * FROM provisioning p WHERE p.processType = ? AND p.processId NOT IN (SELECT portingId FROM porting)";
         $response = $this->db->query($sql, array(processType::PORTING))->result_array();
         return $response;
     }
@@ -42,7 +42,7 @@ class Provisioning_model extends CI_Model
      */
     function get_provisioning_other_rollback()
     {
-        $sql = "SELECT * FROM Provisioning p WHERE p.processType = ? AND p.processId NOT IN (SELECT rollbackId FROM Rollback)";
+        $sql = "SELECT * FROM provisioning p WHERE p.processType = ? AND p.processId NOT IN (SELECT rollbackId FROM rollback)";
         $response = $this->db->query($sql, array(processType::ROLLBACK))->result_array();
         return $response;
     }
@@ -52,7 +52,7 @@ class Provisioning_model extends CI_Model
      */
     function get_provisioning_other_return()
     {
-        $sql = "SELECT * FROM Provisioning p WHERE p.processType = ? AND p.processId NOT IN (SELECT returnId FROM NumberReturn)";
+        $sql = "SELECT * FROM provisioning p WHERE p.processType = ? AND p.processId NOT IN (SELECT returnId FROM numberreturn)";
         $response = $this->db->query($sql, array(processType::_RETURN))->result_array();
         return $response;
     }
@@ -63,7 +63,7 @@ class Provisioning_model extends CI_Model
      */
     function get_provisioning_by_process_state($processId, $proccessType, $provisionState)
     {
-        return $this->db->get_where('Provisioning',array('processId' => $processId, 'processType'=>$proccessType, 'provisionState' => $provisionState))->row_array();
+        return $this->db->get_where('provisioning',array('processId' => $processId, 'processType'=>$proccessType, 'provisionState' => $provisionState))->row_array();
     }
     
     /*
@@ -71,7 +71,7 @@ class Provisioning_model extends CI_Model
      */
     function get_all_provisioning()
     {
-        return $this->db->get('Provisioning')->result_array();
+        return $this->db->get('provisioning')->result_array();
     }
     
     /*
@@ -79,7 +79,7 @@ class Provisioning_model extends CI_Model
      */
     function add_provisioning($params)
     {
-        $this->db->insert('Provisioning',$params);
+        $this->db->insert('provisioning',$params);
         return $this->db->insert_id();
     }
     
@@ -89,7 +89,7 @@ class Provisioning_model extends CI_Model
     function update_provisioning($proccessId,$params)
     {
         $this->db->where('processId',$proccessId);
-        $response = $this->db->update('Provisioning',$params);
+        $response = $this->db->update('provisioning',$params);
         if($response)
         {
             return "provisioning updated successfully";
@@ -105,7 +105,7 @@ class Provisioning_model extends CI_Model
      */
     function delete_provisioning($proccessId)
     {
-        $response = $this->db->delete('Provisioning',array('processId'=>$proccessId));
+        $response = $this->db->delete('provisioning',array('processId'=>$proccessId));
         if($response)
         {
             return "provisioning deleted successfully";

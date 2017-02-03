@@ -18,7 +18,7 @@ class Rollback_model extends CI_Model
      */
     function get_rollback($rollbackId)
     {
-        return $this->db->get_where('Rollback',array('rollbackId'=>$rollbackId))->row_array();
+        return $this->db->get_where('rollback',array('rollbackId'=>$rollbackId))->row_array();
     }
 
     /*
@@ -26,7 +26,7 @@ class Rollback_model extends CI_Model
     */
     function search_rollback($msisdn)
     {
-        return $this->db->order_by('donorSubmissionDateTime', 'desc')->join('Porting', 'Porting.portingId = originalPortingId')->get_where('Rollback',array('startMSISDN'=>$msisdn))->result_array();
+        return $this->db->order_by('donorSubmissionDateTime', 'desc')->join('porting', 'Porting.portingId = originalPortingId')->get_where('rollback',array('startMSISDN'=>$msisdn))->result_array();
     }
 
     /*
@@ -34,7 +34,7 @@ class Rollback_model extends CI_Model
      */
     function get_full_rollback($rollbackId)
     {
-        $sql = "SELECT * FROM Rollback r INNER JOIN Porting p ON (r.originalPortingId = p.portingId) WHERE r.rollbackId = ?";
+        $sql = "SELECT * FROM rollback r INNER JOIN porting p ON (r.originalPortingId = p.portingId) WHERE r.rollbackId = ?";
         $response = $this->db->query($sql, array($rollbackId))->row_array();
         return $response;
     }
@@ -45,7 +45,7 @@ class Rollback_model extends CI_Model
      */
     function get_rollback_by_state_and_donor($rollbackState, $donorNetworkId)
     {
-        $sql = "SELECT * FROM Rollback r INNER JOIN Porting p ON (r.originalPortingId = p.portingId) WHERE r.rollbackState = ? AND p.donorNetworkId = ?";
+        $sql = "SELECT * FROM rollback r INNER JOIN porting p ON (r.originalPortingId = p.portingId) WHERE r.rollbackState = ? AND p.donorNetworkId = ?";
         $response = $this->db->query($sql, array($rollbackState, $donorNetworkId))->result_array();
         return $response;
     }
@@ -55,7 +55,7 @@ class Rollback_model extends CI_Model
      */
     function get_rollback_by_state_and_recipient($rollbackState, $recipientNetworkId)
     {
-        $sql = "SELECT * FROM Rollback r INNER JOIN Porting p ON (r.originalPortingId = p.portingId) WHERE r.rollbackState = ? AND p.recipientNetworkId = ?";
+        $sql = "SELECT * FROM rollback r INNER JOIN porting p ON (r.originalPortingId = p.portingId) WHERE r.rollbackState = ? AND p.recipientNetworkId = ?";
         $response = $this->db->query($sql, array($rollbackState, $recipientNetworkId))->result_array();
         return $response;
     }
@@ -65,7 +65,7 @@ class Rollback_model extends CI_Model
      */
     function get_all_rollback()
     {
-        return $this->db->order_by('donorSubmissionDateTime', 'desc')->join('Porting', 'Porting.portingId = originalPortingId')->get('Rollback')->result_array();
+        return $this->db->order_by('donorSubmissionDateTime', 'desc')->join('porting', 'Porting.portingId = originalPortingId')->get('rollback')->result_array();
     }
 
     /*
@@ -73,7 +73,7 @@ class Rollback_model extends CI_Model
      */
     function get_all_waiting_rollback()
     {
-        return $this->db->where('rollbackState', \RollbackService\Rollback\rollbackStateType::OPENED)->where('recipientNetworkId', Operator::ORANGE_NETWORK_ID)->join('Porting', 'Porting.portingId = originalPortingId')->order_by('donorSubmissionDateTime', 'desc')->get_where('Rollback')->result_array();
+        return $this->db->where('rollbackState', \RollbackService\Rollback\rollbackStateType::OPENED)->where('recipientNetworkId', Operator::ORANGE_NETWORK_ID)->join('porting', 'Porting.portingId = originalPortingId')->order_by('donorSubmissionDateTime', 'desc')->get_where('rollback')->result_array();
     }
 
     /*
@@ -81,7 +81,7 @@ class Rollback_model extends CI_Model
      */
     function add_rollback($params)
     {
-        $this->db->insert('Rollback',$params);
+        $this->db->insert('rollback',$params);
         return $this->db->insert_id();
     }
     
@@ -91,7 +91,7 @@ class Rollback_model extends CI_Model
     function update_rollback($rollbackId,$params)
     {
         $this->db->where('rollbackId',$rollbackId);
-        $response = $this->db->update('Rollback',$params);
+        $response = $this->db->update('rollback',$params);
         if($response)
         {
             return "rollback updated successfully";
@@ -107,7 +107,7 @@ class Rollback_model extends CI_Model
      */
     function delete_rollback($rollbackId)
     {
-        $response = $this->db->delete('Rollback',array('rollbackId'=>$rollbackId));
+        $response = $this->db->delete('rollback',array('rollbackId'=>$rollbackId));
         if($response)
         {
             return "rollback deleted successfully";

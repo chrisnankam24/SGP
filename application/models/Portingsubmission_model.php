@@ -16,7 +16,7 @@ class Portingsubmission_model extends CI_Model
      */
     function get_portingsubmission($portingSubmissionId)
     {
-        return $this->db->get_where('PortingSubmission',array('portingSubmissionId'=>$portingSubmissionId))->row_array();
+        return $this->db->get_where('portingsubmission',array('portingSubmissionId'=>$portingSubmissionId))->row_array();
     }
 
     /*
@@ -24,7 +24,7 @@ class Portingsubmission_model extends CI_Model
      */
     function get_submissionByPortingId($portingId)
     {
-        $query = "SELECT p1.`contractId`, p1.`temporalMSISDN` FROM Porting p INNER JOIN PortingSubmission p1 ON 
+        $query = "SELECT p1.`contractId`, p1.`temporalMSISDN` FROM Porting p INNER JOIN portingsubmission p1 ON 
                   ( p.`portingSubmissionId` = p1.`portingSubmissionId`) WHERE p.portingId = '" . $portingId . "'";
 
         $response = $this->db->query($query)->row_array();
@@ -37,7 +37,7 @@ class Portingsubmission_model extends CI_Model
      */
     function get_submissionByState($submissionState)
     {
-        return $this->db->get_where('PortingSubmission',array('submissionState'=>$submissionState))->result_array();
+        return $this->db->get_where('portingsubmission',array('submissionState'=>$submissionState))->result_array();
     }
     
     /*
@@ -45,7 +45,7 @@ class Portingsubmission_model extends CI_Model
      */
     function get_all_portingsubmission()
     {
-        return $this->db->get('PortingSubmission')->result_array();
+        return $this->db->get('portingsubmission')->result_array();
     }
     
     /*
@@ -53,7 +53,7 @@ class Portingsubmission_model extends CI_Model
      */
     function add_portingsubmission($params)
     {
-        $this->db->insert('PortingSubmission',$params);
+        $this->db->insert('portingsubmission',$params);
         return $this->db->insert_id();
     }
     
@@ -63,7 +63,7 @@ class Portingsubmission_model extends CI_Model
     function update_portingsubmission($portingSubmissionId,$params)
     {
         $this->db->where('portingSubmissionId',$portingSubmissionId);
-        $response = $this->db->update('PortingSubmission',$params);
+        $response = $this->db->update('portingsubmission',$params);
         if($response)
         {
             return "portingsubmission updated successfully";
@@ -79,7 +79,7 @@ class Portingsubmission_model extends CI_Model
      */
     function delete_portingsubmission($portingSubmissionId)
     {
-        $response = $this->db->delete('PortingSubmission',array('portingSubmissionId'=>$portingSubmissionId));
+        $response = $this->db->delete('portingsubmission',array('portingSubmissionId'=>$portingSubmissionId));
         if($response)
         {
             return "portingsubmission deleted successfully";

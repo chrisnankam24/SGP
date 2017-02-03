@@ -20,7 +20,7 @@ class Porting_model extends CI_Model
      */
     function get_porting($portingId)
     {
-        return $this->db->get_where('Porting',array('portingId'=>$portingId))->row_array();
+        return $this->db->get_where('porting',array('portingId'=>$portingId))->row_array();
     }
 
     /*
@@ -28,7 +28,7 @@ class Porting_model extends CI_Model
     */
     function search_porting($msisdn)
     {
-        return $this->db->order_by('recipientSubmissionDateTime', 'desc')->get_where('Porting',array('startMSISDN'=>$msisdn))->result_array();
+        return $this->db->order_by('recipientSubmissionDateTime', 'desc')->get_where('porting',array('startMSISDN'=>$msisdn))->result_array();
     }
 
     /*
@@ -37,7 +37,7 @@ class Porting_model extends CI_Model
      */
     function get_porting_by_state_and_donor($portingState, $donorNetworkId, $personType = null)
     {
-        $query = "SELECT * FROM Porting WHERE donorNetworkId = ? AND portingState = ?";
+        $query = "SELECT * FROM porting WHERE donorNetworkId = ? AND portingState = ?";
 
         if($personType == null){
 
@@ -60,7 +60,7 @@ class Porting_model extends CI_Model
      */
     function get_porting_by_state_and_recipient($portingState, $recipientNetworkId)
     {
-        return $this->db->get_where('Porting',array('portingState'=>$portingState, 'recipientNetworkId' => $recipientNetworkId))->result_array();
+        return $this->db->get_where('porting',array('portingState'=>$portingState, 'recipientNetworkId' => $recipientNetworkId))->result_array();
     }
     
     /*
@@ -68,7 +68,7 @@ class Porting_model extends CI_Model
      */
     function get_all_porting()
     {
-        return $this->db->order_by('recipientSubmissionDateTime', 'desc')->get('Porting')->result_array();
+        return $this->db->order_by('recipientSubmissionDateTime', 'desc')->get('porting')->result_array();
     }
 
     /*
@@ -76,7 +76,7 @@ class Porting_model extends CI_Model
      */
     function get_all_waiting_porting()
     {
-        return $this->db->where('portingState', \PortingService\Porting\portingStateType::APPROVED)->where('donorNetworkId', Operator::ORANGE_NETWORK_ID)->order_by('recipientSubmissionDateTime', 'desc')->get_where('Porting')->result_array();
+        return $this->db->where('portingState', \PortingService\Porting\portingStateType::APPROVED)->where('donorNetworkId', Operator::ORANGE_NETWORK_ID)->order_by('recipientSubmissionDateTime', 'desc')->get_where('porting')->result_array();
     }
 
     /*
@@ -84,7 +84,7 @@ class Porting_model extends CI_Model
      */
     function get_all_waiting_last_hour_porting()
     {
-        return $this->db->where(array('portingState' => \PortingService\Porting\portingStateType::APPROVED, 'NOW() - recipientSubmissionDateTime <' => 360000, 'donorNetworkId' => Operator::ORANGE_NETWORK_ID))->order_by('recipientSubmissionDateTime', 'desc')->get_where('Porting')->result_array();
+        return $this->db->where(array('portingState' => \PortingService\Porting\portingStateType::APPROVED, 'NOW() - recipientSubmissionDateTime <' => 360000, 'donorNetworkId' => Operator::ORANGE_NETWORK_ID))->order_by('recipientSubmissionDateTime', 'desc')->get_where('porting')->result_array();
     }
 
     /*
@@ -92,7 +92,7 @@ class Porting_model extends CI_Model
      */
     function get_all_waiting_last_2_hours_porting()
     {
-        return $this->db->where('portingState', \PortingService\Porting\portingStateType::APPROVED)->where('donorNetworkId', Operator::ORANGE_NETWORK_ID)->order_by('recipientSubmissionDateTime', 'desc')->get_where('Porting')->result_array();
+        return $this->db->where('portingState', \PortingService\Porting\portingStateType::APPROVED)->where('donorNetworkId', Operator::ORANGE_NETWORK_ID)->order_by('recipientSubmissionDateTime', 'desc')->get_where('porting')->result_array();
     }
 
     /*
@@ -100,7 +100,7 @@ class Porting_model extends CI_Model
      */
     function get_all_waiting_morethan_2hours_porting()
     {
-        return $this->db->where('portingState', \PortingService\Porting\portingStateType::APPROVED)->where('donorNetworkId', Operator::ORANGE_NETWORK_ID)->order_by('recipientSubmissionDateTime', 'desc')->get_where('Porting')->result_array();
+        return $this->db->where('portingState', \PortingService\Porting\portingStateType::APPROVED)->where('donorNetworkId', Operator::ORANGE_NETWORK_ID)->order_by('recipientSubmissionDateTime', 'desc')->get_where('porting')->result_array();
     }
 
     /*
@@ -108,7 +108,7 @@ class Porting_model extends CI_Model
      */
     function add_porting($params)
     {
-        $this->db->insert('Porting',$params);
+        $this->db->insert('porting',$params);
         return $this->db->insert_id();
     }
     
@@ -118,7 +118,7 @@ class Porting_model extends CI_Model
     function update_porting($portingId,$params)
     {
         $this->db->where('portingId',$portingId);
-        $response = $this->db->update('Porting',$params);
+        $response = $this->db->update('porting',$params);
         if($response)
         {
             return "porting updated successfully";
@@ -134,7 +134,7 @@ class Porting_model extends CI_Model
      */
     function delete_porting($portingId)
     {
-        $response = $this->db->delete('Porting',array('portingId'=>$portingId));
+        $response = $this->db->delete('porting',array('portingId'=>$portingId));
         if($response)
         {
             return "porting deleted successfully";

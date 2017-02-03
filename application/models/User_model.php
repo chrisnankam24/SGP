@@ -16,7 +16,7 @@ class User_model extends CI_Model
      */
     function get_user($userId)
     {
-        return $this->db->get_where('Users',array('userId'=>$userId))->row_array();
+        return $this->db->get_where('users',array('userId'=>$userId))->row_array();
     }
     
     /*
@@ -24,7 +24,7 @@ class User_model extends CI_Model
      */
     function get_all_users()
     {
-        return $this->db->get('Users')->result_array();
+        return $this->db->get('users')->result_array();
     }
     
     /*
@@ -32,7 +32,7 @@ class User_model extends CI_Model
      */
     function add_user($params)
     {
-        $this->db->insert('Users',$params);
+        $this->db->insert('users',$params);
         return $this->db->insert_id();
     }
     
@@ -42,7 +42,7 @@ class User_model extends CI_Model
     function update_user($userId,$params)
     {
         $this->db->where('userId',$userId);
-        $response = $this->db->update('Users',$params);
+        $response = $this->db->update('users',$params);
         return $response;
     }
     
@@ -51,7 +51,7 @@ class User_model extends CI_Model
      */
     function delete_user($userId)
     {
-        $response = $this->db->delete('Users',array('userId'=>$userId));
+        $response = $this->db->delete('users',array('userId'=>$userId));
         if($response)
         {
             return "user deleted successfully";

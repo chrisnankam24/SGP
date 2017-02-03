@@ -16,7 +16,7 @@ class Returnsmsnotification_model extends CI_Model
      */
     function get_returnsmsnotification($returnSmsNotificationId)
     {
-        return $this->db->get_where('ReturnSmsNotification',array('returnSmsNotificationId'=>$returnSmsNotificationId))->row_array();
+        return $this->db->get_where('returnsmsnotification',array('returnSmsNotificationId'=>$returnSmsNotificationId))->row_array();
     }
     
     /*
@@ -24,7 +24,7 @@ class Returnsmsnotification_model extends CI_Model
      */
     function get_all_returnsmsnotification()
     {
-        return $this->db->get('ReturnSmsNotification')->result_array();
+        return $this->db->get('returnsmsnotification')->result_array();
     }
     
     /*
@@ -32,7 +32,7 @@ class Returnsmsnotification_model extends CI_Model
      */
     function add_returnsmsnotification($params)
     {
-        $this->db->insert('ReturnSmsNotification',$params);
+        $this->db->insert('returnsmsnotification',$params);
         return $this->db->insert_id();
     }
     
@@ -42,7 +42,7 @@ class Returnsmsnotification_model extends CI_Model
     function update_returnsmsnotification($returnSmsNotificationId,$params)
     {
         $this->db->where('returnSmsNotificationId',$returnSmsNotificationId);
-        $response = $this->db->update('ReturnSmsNotification',$params);
+        $response = $this->db->update('returnsmsnotification',$params);
         if($response)
         {
             return "returnsmsnotification updated successfully";
@@ -58,7 +58,7 @@ class Returnsmsnotification_model extends CI_Model
      */
     function delete_returnsmsnotification($returnSmsNotificationId)
     {
-        $response = $this->db->delete('ReturnSmsNotification',array('returnSmsNotificationId'=>$returnSmsNotificationId));
+        $response = $this->db->delete('returnsmsnotification',array('returnSmsNotificationId'=>$returnSmsNotificationId));
         if($response)
         {
             return "returnsmsnotification deleted successfully";

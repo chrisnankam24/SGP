@@ -16,7 +16,7 @@ class Rollbacksubmission_model extends CI_Model
      */
     function get_rollbacksubmission($rollbackSubmissionId)
     {
-        return $this->db->get_where('RollbackSubmission',array('rollbackSubmissionId'=>$rollbackSubmissionId))->row_array();
+        return $this->db->get_where('rollbacksubmission',array('rollbackSubmissionId'=>$rollbackSubmissionId))->row_array();
     }
 
     /*
@@ -24,7 +24,7 @@ class Rollbacksubmission_model extends CI_Model
      */
     function get_submissionByState($submissionState)
     {
-        return $this->db->get_where('RollbackSubmission',array('submissionState'=>$submissionState))->result_array();
+        return $this->db->get_where('rollbacksubmission',array('submissionState'=>$submissionState))->result_array();
     }
 
     /*
@@ -32,7 +32,7 @@ class Rollbacksubmission_model extends CI_Model
      */
     function get_submissionByRollbackId($rollbackId)
     {
-        $query = "SELECT p1.`contractId`, p1.`temporalMSISDN` FROM Rollback p INNER JOIN RollbackSubmission p1 ON 
+        $query = "SELECT p1.`contractId`, p1.`temporalMSISDN` FROM rollback p INNER JOIN rollbacksubmission p1 ON 
                   ( p.`rollbackSubmissionId` = p1.`rollbackSubmissionId`) WHERE p.rollbackId = '" . $rollbackId . "'";
 
         $response = $this->db->query($query)->row_array();
@@ -46,7 +46,7 @@ class Rollbacksubmission_model extends CI_Model
      */
     function get_all_rollbacksubmission()
     {
-        return $this->db->get('RollbackSubmission')->result_array();
+        return $this->db->get('rollbacksubmission')->result_array();
     }
     
     /*
@@ -54,7 +54,7 @@ class Rollbacksubmission_model extends CI_Model
      */
     function add_rollbacksubmission($params)
     {
-        $this->db->insert('RollbackSubmission',$params);
+        $this->db->insert('rollbacksubmission',$params);
         return $this->db->insert_id();
     }
     
@@ -64,7 +64,7 @@ class Rollbacksubmission_model extends CI_Model
     function update_rollbacksubmission($rollbackSubmissionId,$params)
     {
         $this->db->where('rollbackSubmissionId',$rollbackSubmissionId);
-        $response = $this->db->update('RollbackSubmission',$params);
+        $response = $this->db->update('rollbacksubmission',$params);
         if($response)
         {
             return "rollbacksubmission updated successfully";
@@ -80,7 +80,7 @@ class Rollbacksubmission_model extends CI_Model
      */
     function delete_rollbacksubmission($rollbackSubmissionId)
     {
-        $response = $this->db->delete('RollbackSubmission',array('rollbackSubmissionId'=>$rollbackSubmissionId));
+        $response = $this->db->delete('rollbacksubmission',array('rollbackSubmissionId'=>$rollbackSubmissionId));
         if($response)
         {
             return "rollbacksubmission deleted successfully";
