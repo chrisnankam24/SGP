@@ -140,9 +140,9 @@ class languageParams{
 }
 
 class EmailParams{
-    const TO = ['christian.nankam@orange.com', 'frank.basseeg@orange.com', 'sidoin.fometio@orange.com'];
+    const TO = 'christian.nankam@orange.com,frank.basseeg@orange.com,sidoin.fometio@orange.com';
     const FROM = '';
-    const CC = [];
+    const CC = '';
 }
 
 /////////////// Primitive Types Verification

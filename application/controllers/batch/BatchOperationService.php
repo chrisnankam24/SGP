@@ -2,6 +2,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once APPPATH . "third_party/vendor/autoload.php";
+require_once APPPATH . "third_party/PHPExcel-1.8/Classes/PHPExcel/IOFactory.php";
 
 require_once APPPATH . "controllers/cadb/Common.php";
 require_once APPPATH . "controllers/cadb/Porting.php";
@@ -65,6 +66,76 @@ class BatchOperationService extends CI_Controller {
     }
 
     public function index(){
+
+        $fileObject = PHPExcel_IOFactory::load(FCPATH . 'uploads/orderIndivTest.xlsx');
+
+        if($fileObject){
+
+            $sheetData = $fileObject->getActiveSheet()->toArray();
+
+            $row = 1;
+            $msisdns = array();
+
+            foreach ($sheetData as $sheetDatum){
+                if($row == 1){
+                    // Check if header Ok
+                    $errorFound = false;
+                    if(isset($sheetDatum[0]) && strtolower($sheetDatum[0]) != 'donoroperator'){
+                        $errorFound = true;
+                    }
+                    if(isset($sheetDatum[1]) && strtolower($sheetDatum[1]) != 'portingmsisdn'){
+                        $errorFound = true;
+                    }
+                    if(isset($sheetDatum[2]) && strtolower($sheetDatum[2]) != 'rio'){
+                        $errorFound = true;
+                    }
+                    if(isset($sheetDatum[3]) && strtolower($sheetDatum[3]) != 'documenttype'){
+                        $errorFound = true;
+                    }
+                    if(isset($sheetDatum[4]) && strtolower($sheetDatum[4]) != 'firstname'){
+                        $errorFound = true;
+                    }
+                    if(isset($sheetDatum[5]) && strtolower($sheetDatum[5]) != 'lastname'){
+                        $errorFound = true;
+                    }
+                    if(isset($sheetDatum[6]) && strtolower($sheetDatum[6]) != 'idnumber'){
+                        $errorFound = true;
+                    }
+                    if(isset($sheetDatum[7]) && strtolower($sheetDatum[7]) != 'temporalnumber'){
+                        $errorFound = true;
+                    }
+                    if(isset($sheetDatum[8]) && strtolower($sheetDatum[8]) != 'language'){
+                        $errorFound = true;
+                    }
+                    if($errorFound){
+                        $response['success'] = false;
+                        $response['message'] = 'Invalid file content format. Columns do not match defined template. If you have difficulties creating file, please contact administrator';
+
+                        var_dump($response);
+
+                        return;
+                    }
+
+                    $row++;
+                    $row++;
+
+                }else{
+                    $msisdns[] = $sheetDatum[0].''; // MSISDN
+                }
+
+            }
+
+            $response['success'] = true;
+            $response['data'] = $msisdns;
+
+            var_dump($response);
+
+        }else{
+            $response['success'] = false;
+            $response['message'] = 'File not found';
+        }
+
+
 
     }
 
