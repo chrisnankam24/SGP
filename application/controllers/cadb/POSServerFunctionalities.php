@@ -113,7 +113,7 @@ class POSServerFunctionalities extends CI_Controller  {
         $notifyRequest->portingTransaction->lastChangeDateTime = date('c');
         $notifyRequest->portingTransaction->cadbOrderDateTime = date('c');
 
-        $this->client->notifyOrdered($notifyRequest);
+        //$this->client->notifyOrdered($notifyRequest);
 
         return $response;
 
@@ -203,7 +203,7 @@ class POSServerFunctionalities extends CI_Controller  {
         $numRange->startNumber = $portingInfo['endMSISDN'];
         $notifyAcceptedRequest->portingTransaction->numberRanges = array($numRange);
 
-        $this->client->notifyAccepted($notifyAcceptedRequest);
+        //$this->client->notifyAccepted($notifyAcceptedRequest);
 
         return $response;
         //throw new invalidPortingIdFault();
@@ -276,8 +276,7 @@ class POSServerFunctionalities extends CI_Controller  {
         $numRange->startNumber = $portingInfo['endMSISDN'];
         $notifyRejectedRequest->portingTransaction->numberRanges = array($numRange);
 
-        $this->client->notifyRejected($notifyRejectedRequest);
-
+        //$this->client->notifyRejected($notifyRejectedRequest);
 
         return $response;
 

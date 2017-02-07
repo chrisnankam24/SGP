@@ -5,7 +5,9 @@ require_once APPPATH . "controllers/cadb/Common.php";
 require_once APPPATH . "controllers/cadb/Return.php";
 require_once APPPATH . "controllers/cadb/ReturnOperationService.php";
 require_once APPPATH . "controllers/sms/SMS.php";
- 
+
+require_once APPPATH . "third_party/PHPExcel/Classes/PHPExcel/IOFactory.php";
+
 class NReturn extends CI_Controller
 {
     function __construct()
@@ -53,7 +55,7 @@ class NReturn extends CI_Controller
             $file_name = $this->input->post('fileName');
             $userId = $this->input->post('userId');
 
-            if($file_name != ''){
+            /*if($file_name != ''){
                 $row = 1;
 
                 if (($handle = fopen(FCPATH . 'uploads/' .$file_name, "r")) !== FALSE) {
@@ -82,7 +84,7 @@ class NReturn extends CI_Controller
 
                                 $this->send_response($response);
 
-                                unlink(FCPATH . 'uploads/' .$file_name);
+                                //unlink(FCPATH . 'uploads/' .$file_name);
 
                                 return;
                             }
@@ -119,12 +121,93 @@ class NReturn extends CI_Controller
 
                     fclose($handle);
 
-                    unlink(FCPATH . 'uploads/' .$file_name);
+                    //unlink(FCPATH . 'uploads/' .$file_name);
                 }
 
-            }else{
+            }
+            else{
                 $response['success'] = false;
                 $response['message'] = 'No file name found';
+            }*/
+
+           $fileObject = PHPExcel_IOFactory::load(FCPATH . 'uploads/' .$file_name);
+
+            if($fileObject){
+
+                $sheetData = $fileObject->getActiveSheet()->toArray();
+
+                $row = 1;
+                $response['success'] = true;
+
+                $tmpData = [];
+
+                $nrOperationService = new ReturnOperationService();
+
+                foreach ($sheetData as $sheetDatum){
+
+                    if($row == 1){
+                        // Check if header Ok
+                        $errorFound = false;
+                        if(isset($sheetDatum[0]) && strtolower($sheetDatum[0]) != 'returnmsisdn'){
+                            $errorFound = true;
+                        }
+                        if(isset($sheetDatum[1]) && strtolower($sheetDatum[1]) != 'returnoperator'){
+                            $errorFound = true;
+                        }
+
+                        if($errorFound){
+                            $response['success'] = false;
+                            $response['message'] = 'Invalid file content format. Columns do not match defined template. If you have difficulties creating file, please contact administrator';
+
+                            $this->send_response($response);
+
+                            unlink(FCPATH . 'uploads/' .$file_name);
+
+                            return;
+                        }
+                        $row++;
+
+                    }
+                    else{
+
+                        $tempResponse = [];
+
+                        $returnMSISDN = $sheetDatum[0]; // returnMSISDN
+                        $returnOperator = $sheetDatum[1]; // returnOperator
+
+                        if(strtolower($returnOperator) == 'mtn'){
+                            $returnOperator = 0;
+                        }elseif (strtolower($returnOperator) == 'nexttel'){
+                            $returnOperator = 1;
+                        }else{
+                            $tempResponse['success'] = false;
+                            $tempResponse['message'] = "Invalid return operator. Must be <MTN> or <NEXTTEL>";
+                            $tempResponse['returnMSISDN'] = $returnMSISDN;
+                        }
+
+                        if($returnOperator == 0 || $returnOperator == 1){
+
+                            $tempResponse = $nrOperationService->openReturn($returnMSISDN, $returnOperator, $userId);
+                            $tempResponse['returnMSISDN'] = $returnMSISDN;
+
+                            $tmpData[] = $tempResponse;
+                            $tempResponse['msisdn'] = $returnMSISDN;
+
+                        }
+
+                    }
+
+                }
+
+                $response['data'] = $tmpData;
+
+                unlink(FCPATH . 'uploads/' .$file_name);
+
+            }else{
+
+                $response['success'] = false;
+                $response['message'] = 'File not supported or found';
+
             }
 
         }else{

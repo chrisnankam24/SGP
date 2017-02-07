@@ -5,6 +5,8 @@ require_once APPPATH . "controllers/cadb/Common.php";
 require_once APPPATH . "controllers/cadb/Rollback.php";
 require_once APPPATH . "controllers/cadb/RollbackOperationService.php";
 
+require_once APPPATH . "third_party/PHPExcel/Classes/PHPExcel/IOFactory.php";
+
 class Rollback extends CI_Controller
 {
     function __construct()
@@ -53,7 +55,7 @@ class Rollback extends CI_Controller
             $file_name = $this->input->post('fileName');
             $userId = $this->input->post('userId');
 
-            if($file_name != ''){
+            /*if($file_name != ''){
                 $row = 1;
 
                 if (($handle = fopen(FCPATH . 'uploads/' .$file_name, "r")) !== FALSE) {
@@ -106,9 +108,72 @@ class Rollback extends CI_Controller
 
                 }
 
-            }else{
+            }
+            else{
                 $response['success'] = false;
                 $response['message'] = 'No file name found';
+            }*/
+
+            $fileObject = PHPExcel_IOFactory::load(FCPATH . 'uploads/' .$file_name);
+
+            if($fileObject){
+
+                $sheetData = $fileObject->getActiveSheet()->toArray();
+
+                $row = 1;
+                $response['success'] = true;
+
+                $tmpData = [];
+
+                $rollbackOperationService = new RollbackOperationService();
+
+                foreach ($sheetData as $sheetDatum){
+
+                    if($row == 1){
+                        // Check if header Ok
+                        $errorFound = false;
+                        if(isset($sheetDatum[0]) && strtolower($sheetDatum[0]) != 'originalportingid'){
+                            $errorFound = true;
+                        }
+                        if(isset($sheetDatum[1]) && strtolower($sheetDatum[1]) != 'temporalnumber'){
+                            $errorFound = true;
+                        }
+                        if($errorFound){
+                            $response['success'] = false;
+                            $response['message'] = 'Invalid file content format. Columns do not match defined template. If you have difficulties creating file, please contact administrator';
+
+                            $this->send_response($response);
+
+                            unlink(FCPATH . 'uploads/' .$file_name);
+
+                            return;
+                        }
+                        $row++;
+
+                    }
+                    else{
+
+                        $originalPortingId = $sheetDatum[0]; // originalPortingId
+                        $temporalNumber = $sheetDatum[1]; // temporalNumber
+
+                        $tempResponse = $rollbackOperationService->makeOpen($originalPortingId, $temporalNumber, $userId);
+                        $tempResponse['temporalNumber'] = $temporalNumber;
+
+                        $tmpData[] = $tempResponse;
+
+                    }
+
+                }
+
+                $response['data'] = $tmpData;
+
+                unlink(FCPATH . 'uploads/' .$file_name);
+
+            }else{
+
+                $response['success'] = false;
+                $response['message'] = 'File not supported or found';
+
             }
 
         }else{

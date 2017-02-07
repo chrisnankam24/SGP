@@ -113,7 +113,7 @@ class ROSServerFunctionalities extends CI_Controller  {
         $numRange->startNumber = $portingInfo['endMSISDN'];
         $notifyOpenRequest->rollbackTransaction->numberRanges = array($numRange);
 
-        $this->client->notifyOpened($notifyOpenRequest);
+        //$this->client->notifyOpened($notifyOpenRequest);
 
         return $response;
 
@@ -169,7 +169,7 @@ class ROSServerFunctionalities extends CI_Controller  {
         $numRange->startNumber = $portingInfo['endMSISDN'];
         $notifyAcceptedRequest->rollbackTransaction->numberRanges = array($numRange);
 
-        $this->client->notifyAccepted($notifyAcceptedRequest);
+        //$this->client->notifyAccepted($notifyAcceptedRequest);
         
         return $response;
 
@@ -230,7 +230,7 @@ class ROSServerFunctionalities extends CI_Controller  {
         $numRange->startNumber = $portingInfo['endMSISDN'];
         $notifyRejectedRequest->rollbackTransaction->numberRanges = array($numRange);
 
-        $this->client->notifyRejected($notifyRejectedRequest);
+        //$this->client->notifyRejected($notifyRejectedRequest);
 
         return $response;
         //throw new invalidOperatorFault();

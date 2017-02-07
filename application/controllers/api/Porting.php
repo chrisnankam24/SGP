@@ -8,7 +8,7 @@ require_once APPPATH . "controllers/bscs/BscsOperationService.php";
 require_once APPPATH . "controllers/cadb/PortingOperationService.php";
 require_once APPPATH . "controllers/sms/SMS.php";
 
-use \PortingService\Porting\rejectionReasonType as rejectionReasonType;
+require_once APPPATH . "third_party/PHPExcel/Classes/PHPExcel/IOFactory.php";
 
 class Porting extends CI_Controller
 {
@@ -121,7 +121,7 @@ class Porting extends CI_Controller
             $portingDateTime = $this->input->post('portingDateTime');
             $userId = $this->input->post('userId');
 
-           /* if($file_name != ''){
+           /*if($file_name != ''){
                 $row = 1;
 
                 if (($handle = fopen(FCPATH . 'uploads/' .$file_name, "r")) !== FALSE) {
@@ -259,7 +259,9 @@ class Porting extends CI_Controller
                 $response['success'] = true;
 
                 $tmpData = [];
+
                 $portingOperationService = new PortingOperationService();
+
                 $bscsOperationService = new BscsOperationService();
 
                 foreach ($sheetData as $sheetDatum){
@@ -304,7 +306,6 @@ class Porting extends CI_Controller
 
                             return;
                         }
-
                         $row++;
 
                     }
@@ -402,7 +403,7 @@ class Porting extends CI_Controller
             $portingDateTime = $this->input->post('portingDateTime');
             $userId = $this->input->post('userId');
 
-           /* if($file_name != ''){
+            /*if($file_name != ''){
                 $row = 1;
 
                 if (($handle = fopen(FCPATH . 'uploads/' .$file_name, "r")) !== FALSE) {
@@ -539,7 +540,9 @@ class Porting extends CI_Controller
                 $response['success'] = true;
 
                 $tmpData = [];
+
                 $portingOperationService = new PortingOperationService();
+
                 $bscsOperationService = new BscsOperationService();
 
                 foreach ($sheetData as $sheetDatum){
@@ -547,31 +550,31 @@ class Porting extends CI_Controller
                     if($row == 1){
                         // Check if header Ok
                         $errorFound = false;
-                        if(isset($data[0]) && strtolower($data[0]) != 'donoroperator'){
+                        if(isset($sheetDatum[0]) && strtolower($sheetDatum[0]) != 'donoroperator'){
                             $errorFound = true;
                         }
-                        if(isset($data[1]) && strtolower($data[1]) != 'portingmsisdn'){
+                        if(isset($sheetDatum[1]) && strtolower($sheetDatum[1]) != 'portingmsisdn'){
                             $errorFound = true;
                         }
-                        if(isset($data[2]) && strtolower($data[2]) != 'rio'){
+                        if(isset($sheetDatum[2]) && strtolower($sheetDatum[2]) != 'rio'){
                             $errorFound = true;
                         }
-                        if(isset($data[3]) && strtolower($data[3]) != 'documenttype'){
+                        if(isset($sheetDatum[3]) && strtolower($sheetDatum[3]) != 'documenttype'){
                             $errorFound = true;
                         }
-                        if(isset($data[4]) && strtolower($data[4]) != 'legalname'){
+                        if(isset($sheetDatum[4]) && strtolower($sheetDatum[4]) != 'legalname'){
                             $errorFound = true;
                         }
-                        if(isset($data[5]) && strtolower($data[5]) != 'legaltin'){
+                        if(isset($sheetDatum[5]) && strtolower($sheetDatum[5]) != 'legaltin'){
                             $errorFound = true;
                         }
-                        if(isset($data[6]) && strtolower($data[6]) != 'contactnumber'){
+                        if(isset($sheetDatum[6]) && strtolower($sheetDatum[6]) != 'contactnumber'){
                             $errorFound = true;
                         }
-                        if(isset($data[7]) && strtolower($data[7]) != 'temporalnumber'){
+                        if(isset($sheetDatum[7]) && strtolower($sheetDatum[7]) != 'temporalnumber'){
                             $errorFound = true;
                         }
-                        if(isset($data[8]) && strtolower($data[8]) != 'language'){
+                        if(isset($sheetDatum[8]) && strtolower($sheetDatum[8]) != 'language'){
                             $errorFound = true;
                         }
                         if($errorFound){
@@ -584,7 +587,6 @@ class Porting extends CI_Controller
 
                             return;
                         }
-
                         $row++;
 
                     }

@@ -204,7 +204,7 @@
 			<fault name="tooNearPortedPeriodFault" message="tns:TooNearPortedPeriodFaultMessage"/>
 			<fault name="portingNotAllowedRequestsFault" message="tns:PortingNotAllowedRequestsFaultMessage"/>
 			<fault name="subscriberDataMissingFault" message="tns:SubscriberDataMissingFaultMessage"/>
-			<fault name="rioNotValidFault" message="tns:RioNotValidFaultMessage"/>			
+			<fault name="rioNotValidFault" message="tns:RioNotValidFaultMessage"/>
 		</operation>
 		<operation name="approve">
 			<input message="tns:ApproveRequestMessage"/>

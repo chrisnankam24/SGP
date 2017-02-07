@@ -54,6 +54,8 @@ class RollbackOperationService {
         // Disable wsdl_1_4 cache
         ini_set("soap.wsdl_cache_enabled", "0");
 
+        libxml_disable_entity_loader(false);
+
         // Define soap client object
         $this->client = new SoapClient(__DIR__ . '/wsdl/RollbackOperationService.wsdl', array(
             "trace" => false,

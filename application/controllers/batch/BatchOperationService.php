@@ -2,7 +2,6 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once APPPATH . "third_party/vendor/autoload.php";
-require_once APPPATH . "third_party/PHPExcel-1.8/Classes/PHPExcel/IOFactory.php";
 
 require_once APPPATH . "controllers/cadb/Common.php";
 require_once APPPATH . "controllers/cadb/Porting.php";
@@ -17,6 +16,8 @@ require_once APPPATH . "controllers/cadb/RollbackOperationService.php";
 require_once APPPATH . "controllers/cadb/ReturnOperationService.php";
 require_once APPPATH . "controllers/cadb/ProvisionOperationService.php";
 require_once APPPATH . "controllers/sms/SMS.php";
+
+require_once APPPATH . "third_party/PHPExcel/Classes/PHPExcel/IOFactory.php";
 
 use PortingService\Porting\portingSubmissionStateType as portingSubmissionStateType;
 use \RollbackService\Rollback\rollbackSubmissionStateType as rollbackSubmissionStateType;
@@ -67,75 +68,26 @@ class BatchOperationService extends CI_Controller {
 
     public function index(){
 
-        $fileObject = PHPExcel_IOFactory::load(FCPATH . 'uploads/orderIndivTest.xlsx');
+        $fileObject = PHPExcel_IOFactory::load(FCPATH . 'uploads/returnBulkTest.xls');
 
-        if($fileObject){
+        $sheetData = $fileObject->getActiveSheet()->toArray();
 
-            $sheetData = $fileObject->getActiveSheet()->toArray();
+        libxml_disable_entity_loader(false);
 
-            $row = 1;
-            $msisdns = array();
+        $client = new SoapClient(APPPATH . 'controllers/cadb/wsdl/ReturnOperationService.wsdl', array(
+            "trace" => false,
+            'stream_context' => stream_context_create(array(
+                'http' => array(
+                    'header' => 'Authorization: Bearer ' . Auth::CADB_AUTH_BEARER
+                ),
+            )),
+        ));
 
-            foreach ($sheetData as $sheetDatum){
-                if($row == 1){
-                    // Check if header Ok
-                    $errorFound = false;
-                    if(isset($sheetDatum[0]) && strtolower($sheetDatum[0]) != 'donoroperator'){
-                        $errorFound = true;
-                    }
-                    if(isset($sheetDatum[1]) && strtolower($sheetDatum[1]) != 'portingmsisdn'){
-                        $errorFound = true;
-                    }
-                    if(isset($sheetDatum[2]) && strtolower($sheetDatum[2]) != 'rio'){
-                        $errorFound = true;
-                    }
-                    if(isset($sheetDatum[3]) && strtolower($sheetDatum[3]) != 'documenttype'){
-                        $errorFound = true;
-                    }
-                    if(isset($sheetDatum[4]) && strtolower($sheetDatum[4]) != 'firstname'){
-                        $errorFound = true;
-                    }
-                    if(isset($sheetDatum[5]) && strtolower($sheetDatum[5]) != 'lastname'){
-                        $errorFound = true;
-                    }
-                    if(isset($sheetDatum[6]) && strtolower($sheetDatum[6]) != 'idnumber'){
-                        $errorFound = true;
-                    }
-                    if(isset($sheetDatum[7]) && strtolower($sheetDatum[7]) != 'temporalnumber'){
-                        $errorFound = true;
-                    }
-                    if(isset($sheetDatum[8]) && strtolower($sheetDatum[8]) != 'language'){
-                        $errorFound = true;
-                    }
-                    if($errorFound){
-                        $response['success'] = false;
-                        $response['message'] = 'Invalid file content format. Columns do not match defined template. If you have difficulties creating file, please contact administrator';
+        var_dump($client->__getFunctions());
 
-                        var_dump($response);
+        var_dump($sheetData);
 
-                        return;
-                    }
-
-                    $row++;
-                    $row++;
-
-                }else{
-                    $msisdns[] = $sheetDatum[0].''; // MSISDN
-                }
-
-            }
-
-            $response['success'] = true;
-            $response['data'] = $msisdns;
-
-            var_dump($response);
-
-        }else{
-            $response['success'] = false;
-            $response['message'] = 'File not found';
-        }
-
-
+        unlink(FCPATH . 'uploads/returnBulkTest.xls');
 
     }
 
@@ -3229,6 +3181,26 @@ class BatchOperationService extends CI_Controller {
                 );
 
                 $this->Provisioning_model->update_provisioning($processId, $prParams);
+
+                // Confirm Routing Data
+                $provisionOperationService = new ProvisionOperationService();
+
+                $prResponse = $provisionOperationService->confirmRoutingData($processId);
+
+                if($prResponse->success){
+
+                    $this->fileLogAction('7015', 'BatchOperationService::provisionOther', 'CONFIRM successful for ' . $processId);
+
+                    // Process terminated
+
+                }
+                else{
+
+                    $this->fileLogAction('7015', 'BatchOperationService::provisionOther', 'CONFIRM failed for ' . $processId);
+
+                    // Who cares, its auto anyway :)
+
+                }
 
                 // Notify Agents/Admin
 

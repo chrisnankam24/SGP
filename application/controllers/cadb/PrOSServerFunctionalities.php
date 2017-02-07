@@ -89,7 +89,7 @@ class PrOSServerFunctionalities extends CI_Controller  {
         $notifyRequest->nrn->networkId = '02';
         $notifyRequest->nrn->routingNumber = '1602';
 
-        $this->client->notifyProblemReported($notifyRequest);
+        //$this->client->notifyProblemReported($notifyRequest);
 
         return $response;
         //throw new actionNotAuthorizedFault();

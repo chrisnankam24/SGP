@@ -97,7 +97,7 @@ class ReOSServerFunctionalities extends CI_Controller  {
         $notifyRequest->returnTransaction->ownerNrn = $openRequest->primaryOwnerNrn;
         $notifyRequest->returnTransaction->returnId = date('Ymd') . '-'. $openRequest->primaryOwnerNrn->networkId .'-' . $openRequest->numberRanges->numberRange->startNumber . '-' . ($rand+1);
 
-        $this->client->notifyOpened($notifyRequest);
+        //$this->client->notifyOpened($notifyRequest);
 
         return $response;
 
@@ -146,7 +146,7 @@ class ReOSServerFunctionalities extends CI_Controller  {
 
         $notifyAcceptRequest->returnTransaction->numberRanges = array($numRange);
 
-        $this->client->notifyAccepted($notifyAcceptRequest);
+        //$this->client->notifyAccepted($notifyAcceptRequest);
 
         return $response;
 
@@ -198,7 +198,7 @@ class ReOSServerFunctionalities extends CI_Controller  {
 
         $notifyRejectedRequest->returnTransaction->numberRanges = array($numRange);
 
-        $this->client->notifyRejected($notifyRejectedRequest);
+        //$this->client->notifyRejected($notifyRejectedRequest);
 
         return $response;
 
