@@ -3,6 +3,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once APPPATH . '/controllers/rio/RIO.php';
 
+require_once APPPATH . "third_party/PHPExcel/Classes/PHPExcel/IOFactory.php";
+
 /**
  * Created by PhpStorm.
  * User: user
@@ -58,7 +60,7 @@ class RioAPI extends CI_Controller {
             $file_name = $this->input->post('fileName');
             $userId = $this->input->post('userId');
 
-            if($file_name != ''){
+            /*if($file_name != ''){
                 $row = 1;
 
                 if (($handle = fopen(FCPATH . 'uploads/' .$file_name, "r")) !== FALSE) {
@@ -96,6 +98,53 @@ class RioAPI extends CI_Controller {
             }else{
                 $response['success'] = false;
                 $response['message'] = 'Failed opening file';
+            }*/
+
+            $fileObject = PHPExcel_IOFactory::load(FCPATH . 'uploads/' .$file_name);
+
+            if($fileObject){
+
+                $sheetData = $fileObject->getActiveSheet()->toArray();
+
+                $row = 1;
+                $response['success'] = true;
+
+                $msisdns = array();
+
+                foreach ($sheetData as $sheetDatum){
+
+                    if($row == 1){
+                        // Check if header Ok
+                        if(strtolower($sheetDatum[0]) != 'msisdn'){
+                            $response['success'] = false;
+                            $response['message'] = 'Invalid file content format. First Column must be name <MSISDN>. If you have difficulties creating file, please contact administrator';
+
+                            $this->send_response($response);
+
+                            unlink(FCPATH . 'uploads/' .$file_name);
+
+                            return;
+                        }
+                        $row++;
+
+                    }
+                    else{
+
+                        $msisdns[] = $sheetDatum[0]; // MSISDN
+
+                    }
+
+                }
+
+                $response['data'] = RIO::getBulkRio($msisdns);
+
+                unlink(FCPATH . 'uploads/' .$file_name);
+
+            }else{
+
+                $response['success'] = false;
+                $response['message'] = 'File not supported or found';
+
             }
 
         }else{
