@@ -414,5 +414,10 @@ class errorResponse {
      */
     public $error;
 
+    /**
+     * @var string
+     */
+    public $message = '';
+
 }
 ?>

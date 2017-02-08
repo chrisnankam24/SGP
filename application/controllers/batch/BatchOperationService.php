@@ -883,8 +883,9 @@ class BatchOperationService extends CI_Controller {
 
                     // Notify Admin on failed Export
                     $faultCode = $deleteResponse->error;
+                    $faultReason = $deleteResponse->message;
 
-                    $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'CONTRACT_DELETED_CONFIRMED failed for ' . $portingId . ' with ' . $faultCode);
+                    $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'CONTRACT_DELETED_CONFIRMED failed for ' . $portingId . ' with ' . $faultCode . ' :: ' . $faultReason);
 
                     switch ($faultCode) {
                         // Terminal Processes
@@ -985,9 +986,9 @@ class BatchOperationService extends CI_Controller {
 
                 // Notify Admin on failed Export
                 $faultCode = $exportResponse->error;
+                $faultReason = $exportResponse->message;
 
-                $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'MSISDN-EXPORT-CONFIRMED failed for ' . $portingId . ' with ' . $faultCode);
-
+                $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'MSISDN-EXPORT-CONFIRMED failed for ' . $portingId . ' with ' . $faultCode . ' :: ' . $faultReason);
 
                 $fault = '';
 
@@ -1182,7 +1183,7 @@ class BatchOperationService extends CI_Controller {
             $diff = date_diff($start_time, $end_time);
 
             // End time >= start time, less than 30 minutes difference
-            if($diff->i < 30 && $diff->h == 0){
+            if(($diff->invert == 0 && $diff->i < 15) || ($diff->invert == 1)){
 
                 $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'Time OK. Performing MSISDN_IMPORT for ' . $portingId);
 
@@ -1239,8 +1240,9 @@ class BatchOperationService extends CI_Controller {
 
                     // Notify Admin on failed Import
                     $faultCode = $importResponse->error;
+                    $faultReason = $importResponse->message;
 
-                    $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'MSISDN_IMPORT failed for ' . $portingId . ' with ' . $faultCode);
+                    $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'MSISDN_IMPORT failed for ' . $portingId . ' with ' . $faultCode . ' :: ' . $faultReason);
 
                     $fault = '';
 
@@ -1279,7 +1281,8 @@ class BatchOperationService extends CI_Controller {
                 }
 
             }
-            else if($diff->invert == 1 && $diff->h > 0){
+
+            if($diff->invert == 1 && $diff->h > 0){
 
                 $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'Process porting time late by more than 1hr for ' . $portingId);
 
@@ -1348,8 +1351,9 @@ class BatchOperationService extends CI_Controller {
             else{
                 // Notify Admin on failed Import
                 $faultCode = $changeResponse->error;
+                $faultReason = $changeResponse->message;
 
-                $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'MSISDN_CHANGE_IMPORT failed for ' . $portingId . ' with ' . $faultCode);
+                $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'MSISDN_CHANGE_IMPORT failed for ' . $portingId . ' with ' . $faultCode . ' :: ' . $faultReason);
 
                 $fault = '';
 
@@ -1801,8 +1805,9 @@ class BatchOperationService extends CI_Controller {
 
                     // Notify Admin on failed Export
                     $faultCode = $deleteResponse->error;
+                    $faultReason = $deleteResponse->message;
 
-                    $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'CONTRACT_DELETE failed for ' . $rollbackId . ' with ' . $faultCode);
+                    $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'CONTRACT_DELETE failed for ' . $rollbackId . ' with ' . $faultCode . ' :: ' . $faultReason);
 
                     $fault = '';
 
@@ -1909,8 +1914,9 @@ class BatchOperationService extends CI_Controller {
 
                 // Notify Admin on failed Export
                 $faultCode = $exportResponse->error;
+                $faultReason = $exportResponse->message;
 
-                $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'MSISDN_EXPORT failed for ' . $rollbackId . ' with ' . $faultCode);
+                $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'MSISDN_EXPORT failed for ' . $rollbackId . ' with ' . $faultCode . ' :: ' . $faultReason);
 
                 $fault = '';
 
@@ -2107,7 +2113,7 @@ class BatchOperationService extends CI_Controller {
             $diff = date_diff($start_time, $end_time);
 
             // End time >= start time, less than 15minutes difference
-            if(($diff->invert == 0 && $diff->i < 15) || ($diff->invert == 1 && $diff->i < 15)){
+            if(($diff->invert == 0 && $diff->i < 15) || ($diff->invert == 1)){
 
                 $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'Rollback datetime OK. Performing MSISDN_IMPORT for ' . $rollbackId);
 
@@ -2166,8 +2172,9 @@ class BatchOperationService extends CI_Controller {
 
                     // Notify Admin on failed Import
                     $faultCode = $importResponse->error;
+                    $faultReason = $importResponse->message;
 
-                    $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'MSISDN_IMPORT failed for ' . $rollbackId . ' with ' . $faultCode);
+                    $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'MSISDN_IMPORT failed for ' . $rollbackId . ' with ' . $faultCode . ' :: ' . $faultReason);
 
                     $fault = '';
 
@@ -2208,7 +2215,8 @@ class BatchOperationService extends CI_Controller {
                 }
 
             }
-            else if($diff->invert == 1 && $diff->h > 0){
+
+            if($diff->invert == 1 && $diff->h > 0){
 
                 $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'Rollback more than 1 hour late for ' . $rollbackId);
 
@@ -2281,8 +2289,9 @@ class BatchOperationService extends CI_Controller {
 
                 // Notify Admin on failed Import
                 $faultCode = $changeResponse->error;
+                $faultReason = $changeResponse->message;
 
-                $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'MSISDN_CHANGE_IMPORT failed for ' . $rollbackId . ' with ' . $faultCode);
+                $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'MSISDN_CHANGE_IMPORT failed for ' . $rollbackId . ' with ' . $faultCode . ' :: ' . $faultReason);
 
                 $fault = '';
 
@@ -2728,8 +2737,9 @@ class BatchOperationService extends CI_Controller {
 
                 // Notify Admin on failed Export
                 $faultCode = $exportResponse->error;
+                $faultReason = $exportResponse->message;
 
-                $this->fileLogAction('7013', 'BatchOperationService::numberReturnCO', 'MSISDN_EXPORT failed for ' . $returnId . ' with ' . $faultCode);
+                $this->fileLogAction('7013', 'BatchOperationService::numberReturnCO', 'MSISDN_EXPORT failed for ' . $returnId . ' with ' . $faultCode . ' :: ' . $faultReason);
 
                 $fault = '';
 
@@ -2971,8 +2981,9 @@ class BatchOperationService extends CI_Controller {
 
                 // Notify Admin on failed Export
                 $faultCode = $returnResponse->error;
+                $faultReason = $returnResponse->message;
 
-                $this->fileLogAction('7014', 'BatchOperationService::numberReturnPO', 'MSISDN_RETURN failed for ' . $returnId . ' with ' . $faultCode);
+                $this->fileLogAction('7014', 'BatchOperationService::numberReturnPO', 'MSISDN_RETURN failed for ' . $returnId . ' with ' . $faultCode . ' :: ' . $faultReason);
 
                 $fault = '';
 

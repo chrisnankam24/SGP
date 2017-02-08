@@ -195,6 +195,8 @@ class BscsOperationService {
 
                     $response->error = $fault;
 
+                    $response->message = $e->detail->$fault->reason;
+
                     $this->logoutMSISDN();
 
                     return $response;
@@ -271,6 +273,8 @@ class BscsOperationService {
 
                     $response->error = $fault;
 
+                    $response->message = $e->detail->$fault->reason;
+
                     $this->logoutMSISDN();
 
                     return $response;
@@ -345,6 +349,8 @@ class BscsOperationService {
                     $fault = key($e->detail);
 
                     $response->error = $fault;
+
+                    $response->message = $e->detail->$fault->reason;
 
                     $this->logoutMSISDN();
 
@@ -422,6 +428,8 @@ class BscsOperationService {
 
                     $response->error = $fault;
 
+                    $response->message = $e->detail->$fault->reason;
+
                     $this->logoutMSISDN();
 
                     return $response;
@@ -470,6 +478,8 @@ class BscsOperationService {
 
             $fault = key($e->detail);
 
+            $response->message = $e->detail->$fault->reason;
+
             $response->error = $fault;
 
             return $response;
@@ -495,6 +505,8 @@ class BscsOperationService {
             $response = new errorResponse();
 
             $fault = key($e->detail);
+
+            $response->message = $e->detail->$fault->reason;
 
             $response->error = $fault;
 
@@ -704,6 +716,8 @@ class BscsOperationService {
 
                     $fault = key($e->detail);
 
+                    $response->message = $e->detail->$fault->reason;
+
                     $response->error = $fault;
 
                     $this->logoutContract();
@@ -754,6 +768,8 @@ class BscsOperationService {
 
             $fault = key($e->detail);
 
+            $response->message = $e->detail->$fault->reason;
+
             $response->error = $fault;
 
             return $response;
@@ -779,6 +795,8 @@ class BscsOperationService {
             $response = new errorResponse();
 
             $fault = key($e->detail);
+
+            $response->message = $e->detail->$fault->reason;
 
             $response->error = $fault;
 
