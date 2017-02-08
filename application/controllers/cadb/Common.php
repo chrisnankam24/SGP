@@ -315,6 +315,41 @@ function logAction($userId, $actionPerformed){
 
 }
 
+/**
+ * Verifies if CADB request is Authenticated. If not, it throws SOAP fault
+ * @return bool
+ * @throws SoapFault
+ */
+function isAuthorized(){
+
+    $headers = getallheaders();
+
+    if(isset($headers['Authorization'])){
+
+        $bearerAuth = $headers['Authorization'];
+
+        $bearerAuth = explode(' ', trim($bearerAuth));
+
+        $auth = $bearerAuth[count($bearerAuth)-1];
+
+        if($auth == Auth::LDB_AUTH_BEARER){
+            // Authorized
+            return true;
+
+        }else{
+            // Not Authorized
+            http_response_code(401);
+            throw new SoapFault('Client.Authentication', "Incorrect Token");
+        }
+
+    }else{
+        // Not Authorized
+        http_response_code(401);
+        throw new SoapFault('Client.Authentication', "No Token Found");
+    }
+
+}
+
 // Turn all errors into exceptions
 set_error_handler(function($errno, $errstr, $errfile, $errline, array $errcontext) {
     // error was suppressed with the @-operator

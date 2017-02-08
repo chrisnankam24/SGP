@@ -50,28 +50,6 @@ class PortingNotificationService extends CI_Controller
         // Set the class for the soap server
         $server->setObject($this);
 
-        $headers = getallheaders();
-
-        $cadbAuth = null;
-
-        if(isset($headers['Authorization'])){
-
-            $bearerAuth = $headers['Authorization'];
-
-            $bearerAuth = explode(' ', trim($bearerAuth));
-
-            $auth = $bearerAuth[count($bearerAuth)-1];
-
-            if($auth == Auth::LDB_AUTH_BEARER){
-                // Authorized
-            }else{
-                // Not Authorized
-            }
-
-        }else{
-            // Not Authorized
-        }
-
         // Handle soap operations
         $server->handle();
 
@@ -92,6 +70,8 @@ class PortingNotificationService extends CI_Controller
      * @throws ldbAdministrationServiceFault
      */
     public function notifyOrdered($notifyOrderedRequest){
+
+        isAuthorized();
 
         $rio = $notifyOrderedRequest->portingTransaction->rio;
 
@@ -186,6 +166,8 @@ class PortingNotificationService extends CI_Controller
      */
     public function notifyApproved($notifyApprovedRequest){
 
+        isAuthorized();
+
         $this->db->trans_start();
 
         // Fill in portingStateEvolution table with state approved
@@ -250,6 +232,8 @@ class PortingNotificationService extends CI_Controller
      * @throws ldbAdministrationServiceFault
      */
     public function notifyAutoApprove($notifyAutoApproveRequest){
+
+        isAuthorized();
 
         $this->db->trans_start();
 
@@ -318,6 +302,8 @@ class PortingNotificationService extends CI_Controller
      * @throws ldbAdministrationServiceFault
      */
     public function notifyAccepted($notifyAcceptedRequest){
+
+        isAuthorized();
 
         $this->db->trans_start();
 
@@ -437,6 +423,8 @@ class PortingNotificationService extends CI_Controller
      */
     public function notifyAutoAccept($notifyAutoAcceptRequest){
 
+        isAuthorized();
+
         $this->db->trans_start();
 
         $portingId = $notifyAutoAcceptRequest->portingTransaction->portingId;
@@ -553,6 +541,8 @@ class PortingNotificationService extends CI_Controller
      * @throws ldbAdministrationServiceFault
      */
     public function notifyAutoConfirm($notifyAutoConfirmRequest){
+
+        isAuthorized();
 
         $portingId = $notifyAutoConfirmRequest->portingTransaction->portingId;
 
@@ -680,6 +670,8 @@ class PortingNotificationService extends CI_Controller
      */
     public function notifyDenied($notifyDeniedRequest){
 
+        isAuthorized();
+
         $this->db->trans_start();
 
         $portingId = $notifyDeniedRequest->portingTransaction->portingId;
@@ -797,6 +789,8 @@ class PortingNotificationService extends CI_Controller
      * @throws ldbAdministrationServiceFault
      */
     public function notifyRejected($notifyRejectedRequest){
+
+        isAuthorized();
 
         $portingId = $notifyRejectedRequest->portingTransaction->portingId;
 
@@ -917,6 +911,8 @@ class PortingNotificationService extends CI_Controller
      */
     public function notifyAbandoned($notifyAbandonedRequest){
 
+        isAuthorized();
+
         $this->db->trans_start();
 
         $portingId = $notifyAbandonedRequest->portingTransaction->portingId;
@@ -1024,7 +1020,7 @@ class PortingNotificationService extends CI_Controller
             $portingParams = $this->Porting_model->get_porting($portingId);
 
             $emailService = new EmailService();
-            $emailService->adminErrorReport('', $portingParams, processType::PORTING);
+            $emailService->adminErrorReport('Porting ABANDONED BY CADB', $portingParams, processType::PORTING);
 
             $response = new PortingNotification\notifyAbandonedResponse();
 

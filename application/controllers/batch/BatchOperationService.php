@@ -1175,15 +1175,15 @@ class BatchOperationService extends CI_Controller {
             $currentDateTime = date('c');
 
             $start_time = date('y-d-m H:i:s', strtotime($portingDateTime));
-            $end_time = date('y-d-m H:i:s', strtotime($currentDateTime));
+            $current_time = date('y-d-m H:i:s', strtotime($currentDateTime));
 
             $start_time = date_create_from_format('y-d-m H:i:s', $start_time);
-            $end_time = date_create_from_format('y-d-m H:i:s', $end_time);
+            $current_time = date_create_from_format('y-d-m H:i:s', $current_time);
 
-            $diff = date_diff($start_time, $end_time);
+            $diff = date_diff($start_time, $current_time);
 
-            // End time >= start time, less than 30 minutes difference
-            if(($diff->invert == 0 && $diff->i < 15) || ($diff->invert == 1)){
+            // Current time > start time
+            if($diff->invert == 0){
 
                 $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'Time OK. Performing MSISDN_IMPORT for ' . $portingId);
 
@@ -1282,7 +1282,7 @@ class BatchOperationService extends CI_Controller {
 
             }
 
-            if($diff->invert == 1 && $diff->h > 0){
+            if($diff->invert == 0 && $diff->h > 0){
 
                 $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'Process porting time late by more than 1hr for ' . $portingId);
 
@@ -2105,15 +2105,15 @@ class BatchOperationService extends CI_Controller {
             $currentDateTime = date('c');
 
             $start_time = date('y-d-m H:i:s', strtotime($rollbackDateTime));
-            $end_time = date('y-d-m H:i:s', strtotime($currentDateTime));
+            $current_time = date('y-d-m H:i:s', strtotime($currentDateTime));
 
             $start_time = date_create_from_format('y-d-m H:i:s', $start_time);
-            $end_time = date_create_from_format('y-d-m H:i:s', $end_time);
+            $current_time = date_create_from_format('y-d-m H:i:s', $current_time);
 
-            $diff = date_diff($start_time, $end_time);
+            $diff = date_diff($start_time, $current_time);
 
             // End time >= start time, less than 15minutes difference
-            if(($diff->invert == 0 && $diff->i < 15) || ($diff->invert == 1)){
+            if($diff->invert == 0){
 
                 $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'Rollback datetime OK. Performing MSISDN_IMPORT for ' . $rollbackId);
 
@@ -2216,7 +2216,7 @@ class BatchOperationService extends CI_Controller {
 
             }
 
-            if($diff->invert == 1 && $diff->h > 0){
+            if($diff->invert == 0 && $diff->h > 0){
 
                 $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'Rollback more than 1 hour late for ' . $rollbackId);
 
@@ -2664,13 +2664,13 @@ class BatchOperationService extends CI_Controller {
 
         $acceptedReturns = $this->Numberreturn_model->get_nr_by_state_and_co(\ReturnService\_Return\returnStateType::ACCEPTED, Operator::ORANGE_NETWORK_ID);
 
-        $this->fileLogAction('7013', 'BatchOperationService::numberReturnCO', 'Preparing MSISDN_EXPORT of' . count($acceptedReturns) . ' accepted returns');
+        $this->fileLogAction('7013', 'BatchOperationService::numberReturnCO', 'Preparing MSISDN_EXPORT of ' . count($acceptedReturns) . ' accepted returns');
 
         // Load NRs in Return table in MSISDN_EXPORT_CONFIRMED state in which we are CO
 
         $msisdnConfirmedReturns = $this->Numberreturn_model->get_nr_by_state_and_co(\ReturnService\_Return\returnStateType::MSISDN_EXPORT_CONFIRMED, Operator::ORANGE_NETWORK_ID);
 
-        $this->fileLogAction('7013', 'BatchOperationService::numberReturnCO', 'Preparing CONFIRM of' . count($msisdnConfirmedReturns) . ' msisdn exported returns');
+        $this->fileLogAction('7013', 'BatchOperationService::numberReturnCO', 'Preparing CONFIRM of ' . count($msisdnConfirmedReturns) . ' msisdn exported returns');
 
         $bscsOperationService = new BscsOperationService();
 

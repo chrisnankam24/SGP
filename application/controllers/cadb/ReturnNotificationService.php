@@ -38,28 +38,6 @@ class ReturnNotificationService extends CI_Controller {
         // Set the object for the soap server
         $server->setObject($this);
 
-        $headers = getallheaders();
-
-        $cadbAuth = null;
-
-        if(isset($headers['Authorization'])){
-
-            $bearerAuth = $headers['Authorization'];
-
-            $bearerAuth = explode(' ', trim($bearerAuth));
-
-            $auth = $bearerAuth[count($bearerAuth)-1];
-
-            if($auth == Auth::LDB_AUTH_BEARER){
-                // Authorized
-            }else{
-                // Not Authorized
-            }
-
-        }else{
-            // Not Authorized
-        }
-
         // Handle soap operations
         $server->handle();
 
@@ -80,6 +58,8 @@ class ReturnNotificationService extends CI_Controller {
      * @throws ldbAdministrationServiceFault
      */
     public function notifyOpened($notifyOpenedRequest){
+
+        isAuthorized();
 
         $returnId = $notifyOpenedRequest->returnTransaction->returnId;
 
@@ -145,6 +125,8 @@ class ReturnNotificationService extends CI_Controller {
      */
     public function notifyAccepted($notifyAcceptedRequest){
 
+        isAuthorized();
+
         $returnId = $notifyAcceptedRequest->returnTransaction->returnId;
 
         $this->fileLogAction('8010', 'ReturnNotificationService', 'Number return ACCEPT received for ID ' . $returnId);
@@ -201,6 +183,8 @@ class ReturnNotificationService extends CI_Controller {
      * @throws ldbAdministrationServiceFault
      */
     public function notifyRejected($notifyRejectedRequest){
+
+        isAuthorized();
 
         $returnId = $notifyRejectedRequest->returnTransaction->returnId;
 

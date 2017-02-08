@@ -34,28 +34,6 @@ class ProblemReportNotificationService extends CI_Controller {
         // Set the object for the soap server
         $server->setObject($this);
 
-        $headers = getallheaders();
-
-        $cadbAuth = null;
-
-        if(isset($headers['Authorization'])){
-
-            $bearerAuth = $headers['Authorization'];
-
-            $bearerAuth = explode(' ', trim($bearerAuth));
-
-            $auth = $bearerAuth[count($bearerAuth)-1];
-
-            if($auth == Auth::LDB_AUTH_BEARER){
-                // Authorized
-            }else{
-                // Not Authorized
-            }
-
-        }else{
-            // Not Authorized
-        }
-
         // Handle soap operations
         $server->handle();
 
@@ -76,6 +54,8 @@ class ProblemReportNotificationService extends CI_Controller {
      * @throws ldbAdministrationServiceFault
      */
     public function notifyProblemReported($notifyProblemReportedRequest){
+
+        isAuthorized();
 
         $reporterNetworkId = $notifyProblemReportedRequest->problemReport->reporterNetworkId;
 

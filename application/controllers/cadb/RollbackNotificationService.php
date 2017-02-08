@@ -45,28 +45,6 @@ class RollbackNotificationService extends CI_Controller {
         // Set the object for the soap server
         $server->setObject($this);
 
-        $headers = getallheaders();
-
-        $cadbAuth = null;
-
-        if(isset($headers['Authorization'])){
-
-            $bearerAuth = $headers['Authorization'];
-
-            $bearerAuth = explode(' ', trim($bearerAuth));
-
-            $auth = $bearerAuth[count($bearerAuth)-1];
-
-            if($auth == Auth::LDB_AUTH_BEARER){
-                // Authorized
-            }else{
-                // Not Authorized
-            }
-
-        }else{
-            // Not Authorized
-        }
-
         // Handle soap operations
         $server->handle();
 
@@ -87,6 +65,8 @@ class RollbackNotificationService extends CI_Controller {
      * @throws ldbAdministrationServiceFault
      */
     public function notifyOpened($notifyOpenedRequest){
+
+        isAuthorized();
 
         $rollbackId = $notifyOpenedRequest->rollbackTransaction->rollbackId;
 
@@ -205,6 +185,8 @@ class RollbackNotificationService extends CI_Controller {
      */
     public function notifyAccepted($notifyAcceptedRequest) {
 
+        isAuthorized();
+
         $rollbackId = $notifyAcceptedRequest->rollbackTransaction->rollbackId;
 
         $this->fileLogAction('8030', 'RollbackNotificationService', 'Rollback ACCEPT received for ID ' . $rollbackId);
@@ -318,10 +300,11 @@ class RollbackNotificationService extends CI_Controller {
      */
     public function notifyAutoAccept($notifyAutoAcceptRequest){
 
+        isAuthorized();
+
         $rollbackId = $notifyAutoAcceptRequest->rollbackTransaction->rollbackId;
 
         $this->fileLogAction('8030', 'RollbackNotificationService', 'Rollback AUTO ACCEPT received for ID ' . $rollbackId);
-
 
         $this->db->trans_start();
 
@@ -439,6 +422,8 @@ class RollbackNotificationService extends CI_Controller {
      */
     public function notifyAutoConfirm($notifyAutoConfirmRequest){
 
+        isAuthorized();
+
         $rollbackId = $notifyAutoConfirmRequest->rollbackTransaction->rollbackId;
 
         $this->fileLogAction('8030', 'RollbackNotificationService', 'Rollback AUTO CONFIRM received for ID ' . $rollbackId);
@@ -555,6 +540,8 @@ class RollbackNotificationService extends CI_Controller {
      */
     public function notifyRejected($notifyRejectedRequest){
 
+        isAuthorized();
+
         $rollbackId = $notifyRejectedRequest->rollbackTransaction->rollbackId;
 
         $this->fileLogAction('8030', 'RollbackNotificationService', 'Rollback REJECT received for ID ' . $rollbackId);
@@ -669,6 +656,8 @@ class RollbackNotificationService extends CI_Controller {
      * @return RollbackNotification\notifyAbandonedResponse
      */
     public function notifyAbandoned($notifyAbandonedRequest){
+
+        isAuthorized();
 
         $this->db->trans_start();
 
