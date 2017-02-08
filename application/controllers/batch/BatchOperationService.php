@@ -68,7 +68,7 @@ class BatchOperationService extends CI_Controller {
 
     public function index(){
 
-        $fileObject = PHPExcel_IOFactory::load(FCPATH . 'uploads/returnBulkTest.xls');
+        /*$fileObject = PHPExcel_IOFactory::load(FCPATH . 'uploads/returnBulkTest.xls');
 
         $sheetData = $fileObject->getActiveSheet()->toArray();
 
@@ -87,7 +87,10 @@ class BatchOperationService extends CI_Controller {
 
         var_dump($sheetData);
 
-        unlink(FCPATH . 'uploads/returnBulkTest.xls');
+        unlink(FCPATH . 'uploads/returnBulkTest.xls');*/
+
+        //var_dump(base64_encode('HUAWEI$CADB&MNP' . ':' . '#SGP*2016%ORANGE$CM'));
+        var_dump(hash('sha256', '#SGP*2016%ORANGE$CM'));
 
     }
 
@@ -3245,19 +3248,19 @@ class BatchOperationService extends CI_Controller {
      */
     public function errorReportNotification(){
 
-        $this->fileLogAction('7016', 'BatchOperationService::provisionOther', 'provisionOther STARTED');
+        $this->fileLogAction('7016', 'BatchOperationService::errorReportNotification', 'errorReportNotification STARTED');
 
         // Load errors in Error table in mail sent pending state
 
         $errorReports = $this->Error_model->get_errorbyStatus(smsState::PENDING);
 
-        $this->fileLogAction('7016', 'BatchOperationService::provisionOther', 'Preparing error report of ' . count($errorReports) . ' error reports');
+        $this->fileLogAction('7016', 'BatchOperationService::errorReportNotification', 'Preparing error report of ' . count($errorReports) . ' error reports');
 
         $emailService = new EmailService();
 
         foreach ($errorReports as $errorReport){
 
-            $this->fileLogAction('7016', 'BatchOperationService::provisionOther', 'Performing Error Report Mail delivery for ' . $errorReport['errorReportId']);
+            $this->fileLogAction('7016', 'BatchOperationService::errorReportNotification', 'Performing Error Report Mail delivery for ' . $errorReport['errorReportId']);
 
             // Send mail to Back Office with Admin in CC for Acceptance / Rejection
 
@@ -3265,7 +3268,7 @@ class BatchOperationService extends CI_Controller {
 
             if($response){
 
-                $this->fileLogAction('7016', 'BatchOperationService::provisionOther', 'Error Report Mail delivery successful for ' . $errorReport['errorReportId']);
+                $this->fileLogAction('7016', 'BatchOperationService::errorReportNotification', 'Error Report Mail delivery successful for ' . $errorReport['errorReportId']);
 
                 // Update State in DB
 
@@ -3278,7 +3281,7 @@ class BatchOperationService extends CI_Controller {
 
             }else{
 
-                $this->fileLogAction('7016', 'BatchOperationService::provisionOther', 'Error Report Mail delivery failed for ' . $errorReport['errorReportId']);
+                $this->fileLogAction('7016', 'BatchOperationService::errorReportNotification', 'Error Report Mail delivery failed for ' . $errorReport['errorReportId']);
 
             }
         }
