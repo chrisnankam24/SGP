@@ -404,7 +404,7 @@ class EmailService {
         $portingDateTime = date('l, M d Y, H:i:s', strtotime($params['portingDateTime']));
         $message = str_replace('[portingDateTime]', $portingDateTime, $template);
 
-        $to = explode(',', EmailParams::TO);
+        $to = explode(',', EmailParams::NOTIF_TO);
         $cc = explode(',', EmailParams::CC);
 
         return $this->send_mail($to, $cc, $subject, $message);
@@ -476,7 +476,7 @@ class EmailService {
         $rollbackDateTime = date('l, M d Y, H:i:s', strtotime($params['rollbackDateTime']));
         $message = str_replace('[rollbackDateTime]', $rollbackDateTime, $template);
 
-        $to = explode(',', EmailParams::TO);
+        $to = explode(',', EmailParams::NOTIF_TO);
         $cc = explode(',', EmailParams::CC);
 
         return $this->send_mail($to, $cc, $subject, $message);
@@ -517,7 +517,7 @@ class EmailService {
 
         $message = str_replace('[submissionDateTime]', $submissionDateTime, $template);
 
-        $to = explode(',', EmailParams::TO);
+        $to = explode(',', EmailParams::NOTIF_TO);
         $cc = explode(',', EmailParams::CC);
 
         return $this->send_mail($to, $cc, $subject, $message);
@@ -564,7 +564,7 @@ class EmailService {
 
         $message = str_replace('[submissionDateTime]', $submissionDateTime, $template);
 
-        $to = explode(',', EmailParams::TO);
+        $to = explode(',', EmailParams::NOTIF_TO);
         $cc = explode(',', EmailParams::CC);
 
         return $this->send_mail($to, $cc, $subject, $message);

@@ -141,6 +141,7 @@ class languageParams{
 
 class EmailParams{
     const TO = 'christian.nankam@orange.com,frank.basseeg@orange.com,sidoin.fometio@orange.com';
+    const NOTIF_TO = 'christian.nankam@orange.com,frank.basseeg@orange.com,sidoin.fometio@orange.com';
     const FROM = '';
     const CC = '';
 }
@@ -339,13 +340,14 @@ function isAuthorized(){
         }else{
             // Not Authorized
             http_response_code(401);
-            throw new SoapFault('Client.Authentication', "Incorrect Token");
+            throw new ldbAdministrationServiceFault('Incorrect Token');
         }
 
     }else{
         // Not Authorized
         http_response_code(401);
-        throw new SoapFault('Client.Authentication', "No Token Found");
+        throw new ldbAdministrationServiceFault('No Token Found');
+
     }
 
 }

@@ -1,10 +1,10 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+require_once "Fault.php";
+require_once "Common.php";
 require_once "Porting.php";
 require_once "PortingNotification.php";
-require_once "Common.php";
-require_once "Fault.php";
 
 require_once APPPATH . "controllers/sms/SMS.php";
 require_once APPPATH . "controllers/email/EmailService.php";

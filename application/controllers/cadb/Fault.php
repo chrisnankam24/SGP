@@ -92,9 +92,9 @@ abstract class faultMessageType extends SoapFault {
  */
 abstract class ldbAdministrationServiceFaultMessageType extends faultMessageType {
 
-    public function __construct($faultname)
+    public function __construct($faultname, $faultmessage)
     {
-        parent::__construct('LDB Internal error', $faultname);
+        parent::__construct($faultmessage, $faultname);
     }
 
 }
@@ -453,9 +453,9 @@ abstract class actionNotAvailableFaultMessageType extends faultMessageType {
  */
 class ldbAdministrationServiceFault extends ldbAdministrationServiceFaultMessageType {
 
-    public function __construct()
+    public function __construct($faultmessage = 'LDB Internal error')
     {
-        parent::__construct(Fault::LDB_ADMINISTRATION_SERVICE);
+        parent::__construct(Fault::LDB_ADMINISTRATION_SERVICE, $faultmessage);
     }
 
 }
