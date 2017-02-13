@@ -1,0 +1,626 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions name="PortingOperationService"
+		targetNamespace="http://www.kapsch.hr/cadb/schemas/PortingOperationService"
+		xmlns="http://schemas.xmlsoap.org/wsdl/"
+		xmlns:tns="http://www.kapsch.hr/cadb/schemas/PortingOperationService"
+		xmlns:fault="http://www.kapsch.hr/cadb/schemas/fault"
+		xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+		xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+	<types>
+		<xsd:schema targetNamespace="http://www.kapsch.hr/cadb/schemas/PortingOperationService">
+			<xsd:include schemaLocation="../xsd/porting.xsd"/>
+		</xsd:schema>
+		<xsd:schema targetNamespace="http://www.kapsch.hr/cadb/schemas/fault">
+			<xsd:include schemaLocation="../xsd/fault.xsd"/>
+		</xsd:schema>
+	</types>
+
+	<message name="OrderRequestMessage">
+		<part name="body" element="tns:orderRequest"/>
+	</message>
+
+	<message name="OrderResponseMessage">
+		<part name="body" element="tns:orderResponse"/>
+	</message>
+
+	<message name="ApproveRequestMessage">
+		<part name="body" element="tns:approveRequest"/>
+	</message>
+
+	<message name="ApproveResponseMessage">
+		<part name="body" element="tns:approveResponse"/>
+	</message>
+
+	<message name="AcceptRequestMessage">
+		<part name="body" element="tns:acceptRequest"/>
+	</message>
+
+	<message name="AcceptResponseMessage">
+		<part name="body" element="tns:acceptResponse"/>
+	</message>
+
+	<message name="ConfirmRequestMessage">
+		<part name="body" element="tns:confirmRequest"/>
+	</message>
+
+	<message name="ConfirmResponseMessage">
+		<part name="body" element="tns:confirmResponse"/>
+	</message>
+
+	<message name="RejectRequestMessage">
+		<part name="body" element="tns:rejectRequest"/>
+	</message>
+
+	<message name="RejectResponseMessage">
+		<part name="body" element="tns:rejectResponse"/>
+	</message>
+
+	<message name="DenyRequestMessage">
+		<part name="body" element="tns:denyRequest"/>
+	</message>
+
+	<message name="DenyResponseMessage">
+		<part name="body" element="tns:denyResponse"/>
+	</message>
+
+	<message name="GetPortingRequestMessage">
+		<part name="body" element="tns:getPortingRequest"/>
+	</message>
+
+	<message name="GetPortingResponseMessage">
+		<part name="body" element="tns:getPortingResponse"/>
+	</message>
+
+	<message name="GetOrderedPortingsRequestMessage">
+		<part name="body" element="tns:getOrderedPortingsRequest"/>
+	</message>
+
+	<message name="GetOrderedPortingsResponseMessage">
+		<part name="body" element="tns:getOrderedPortingsResponse"/>
+	</message>
+
+	<message name="GetApprovedPortingsRequestMessage">
+		<part name="body" element="tns:getApprovedPortingsRequest"/>
+	</message>
+
+	<message name="GetApprovedPortingsResponseMessage">
+		<part name="body" element="tns:getApprovedPortingsResponse"/>
+	</message>
+
+	<message name="GetAcceptedPortingsRequestMessage">
+		<part name="body" element="tns:getAcceptedPortingsRequest"/>
+	</message>
+
+	<message name="GetAcceptedPortingsResponseMessage">
+		<part name="body" element="tns:getAcceptedPortingsResponse"/>
+	</message>
+
+	<message name="GetConfirmedPortingsRequestMessage">
+		<part name="body" element="tns:getConfirmedPortingsRequest"/>
+	</message>
+
+	<message name="GetConfirmedPortingsResponseMessage">
+		<part name="body" element="tns:getConfirmedPortingsResponse"/>
+	</message>
+
+	<message name="GetDeniedPortingsRequestMessage">
+		<part name="body" element="tns:getDeniedPortingsRequest"/>
+	</message>
+
+	<message name="GetDeniedPortingsResponseMessage">
+		<part name="body" element="tns:getDeniedPortingsResponse"/>
+	</message>
+
+	<message name="GetRejectedPortingsRequestMessage">
+		<part name="body" element="tns:getRejectedPortingsRequest"/>
+	</message>
+
+	<message name="GetRejectedPortingsResponseMessage">
+		<part name="body" element="tns:getRejectedPortingsResponse"/>
+	</message>
+
+	<message name="InvalidOperatorFaultMessage">
+		<part name="body" element="fault:invalidOperatorFault"/>
+	</message>
+
+	<message name="ActionNotAuthorizedFaultMessage">
+		<part name="body" element="fault:actionNotAuthorizedFault"/>
+	</message>
+
+	<message name="InvalidPortingIdFaultMessage">
+		<part name="body" element="fault:invalidPortingIdFault"/>
+	</message>
+
+	<message name="InvalidPortingDateAndTimeFaultMessage">
+		<part name="body" element="fault:invalidPortingDateAndTimeFault"/>
+	</message>
+
+	<message name="InvalidRequestFormatFaultMessage">
+		<part name="body" element="fault:invalidRequestFormatFault"/>
+	</message>
+
+	<message name="NumberRangesOverlapFaultMessage">
+		<part name="body" element="fault:numberRangesOverlapFault"/>
+	</message>
+
+	<message name="NumberReservedByProcessFaultMessage">
+		<part name="body" element="fault:numberReservedByProcessFault"/>
+	</message>
+
+	<message name="NumberNotOwnedByOperatorFaultMessage">
+		<part name="body" element="fault:numberNotOwnedByOperatorFault"/>
+	</message>
+
+	<message name="UnknownNumberFaultMessage">
+		<part name="body" element="fault:unknownNumberFault"/>
+	</message>
+
+	<message name="NumberRangeQuantityLimitExceededFaultMessage">
+		<part name="body" element="fault:numberRangeQuantityLimitExceededFault"/>
+	</message>
+
+	<message name="TooNearPortedPeriodFaultMessage">
+		<part name="body" element="fault:tooNearPortedPeriodFault"/>
+	</message>
+
+	<message name="PortingNotAllowedRequestsFaultMessage">
+		<part name="body" element="fault:portingNotAllowedRequestsFault"/>
+	</message>
+
+	<message name="SubscriberDataMissingFaultMessage">
+		<part name="body" element="fault:subscriberDataMissingFault"/>
+	</message>
+
+	<message name="RioNotValidFaultMessage">
+		<part name="body" element="fault:rioNotValidFault"/>
+	</message>
+
+	<message name="PortingActionNotAvailableFaultMessage">
+		<part name="body" element="fault:portingActionNotAvailableFault"/>
+	</message>
+
+	<message name="CauseMissingFaultMessage">
+		<part name="body" element="fault:causeMissingFault"/>
+	</message>
+
+	<message name="CountOverMaxCountLimitFaultMessage">
+		<part name="body" element="fault:countOverMaxCountLimitFault"/>
+	</message>
+
+	<portType name="PortingOperationServicePortType">
+		<operation name="order">
+			<input message="tns:OrderRequestMessage"/>
+			<output message="tns:OrderResponseMessage"/>
+			<fault name="invalidOperatorFault" message="tns:InvalidOperatorFaultMessage"/>
+			<fault name="actionNotAuthorizedFault" message="tns:ActionNotAuthorizedFaultMessage"/>
+			<fault name="invalidPortingDateAndTimeFault" message="tns:InvalidPortingDateAndTimeFaultMessage"/>
+			<fault name="invalidRequestFormatFault" message="tns:InvalidRequestFormatFaultMessage"/>
+			<fault name="numberRangesOverlapFault" message="tns:NumberRangesOverlapFaultMessage"/>
+			<fault name="numberReservedByProcessFault" message="tns:NumberReservedByProcessFaultMessage"/>
+			<fault name="numberNotOwnedByOperatorFault" message="tns:NumberNotOwnedByOperatorFaultMessage"/>
+			<fault name="unknownNumberFault" message="tns:UnknownNumberFaultMessage"/>
+			<fault name="numberRangeQuantityLimitExceededFault" message="tns:NumberRangeQuantityLimitExceededFaultMessage"/>
+			<fault name="tooNearPortedPeriodFault" message="tns:TooNearPortedPeriodFaultMessage"/>
+			<fault name="portingNotAllowedRequestsFault" message="tns:PortingNotAllowedRequestsFaultMessage"/>
+			<fault name="subscriberDataMissingFault" message="tns:SubscriberDataMissingFaultMessage"/>
+			<fault name="rioNotValidFault" message="tns:RioNotValidFaultMessage"/>
+		</operation>
+		<operation name="approve">
+			<input message="tns:ApproveRequestMessage"/>
+			<output message="tns:ApproveResponseMessage"/>
+			<fault name="invalidOperatorFault" message="tns:InvalidOperatorFaultMessage"/>
+			<fault name="portingActionNotAvailableFault" message="tns:PortingActionNotAvailableFaultMessage"/>
+			<fault name="invalidPortingIdFault" message="tns:InvalidPortingIdFaultMessage"/>
+			<fault name="invalidRequestFormatFault" message="tns:InvalidRequestFormatFaultMessage"/>
+		</operation>
+		<operation name="accept">
+			<input message="tns:AcceptRequestMessage"/>
+			<output message="tns:AcceptResponseMessage"/>
+			<fault name="invalidOperatorFault" message="tns:InvalidOperatorFaultMessage"/>
+			<fault name="portingActionNotAvailableFault" message="tns:PortingActionNotAvailableFaultMessage"/>
+			<fault name="invalidPortingIdFault" message="tns:InvalidPortingIdFaultMessage"/>
+			<fault name="invalidRequestFormatFault" message="tns:InvalidRequestFormatFaultMessage"/>
+		</operation>
+		<operation name="confirm">
+			<input message="tns:ConfirmRequestMessage"/>
+			<output message="tns:ConfirmResponseMessage"/>
+			<fault name="invalidOperatorFault" message="tns:InvalidOperatorFaultMessage"/>
+			<fault name="portingActionNotAvailableFault" message="tns:PortingActionNotAvailableFaultMessage"/>
+			<fault name="invalidPortingIdFault" message="tns:InvalidPortingIdFaultMessage"/>
+			<fault name="invalidPortingDateAndTimeFault" message="tns:InvalidPortingDateAndTimeFaultMessage"/>
+			<fault name="invalidRequestFormatFault" message="tns:InvalidRequestFormatFaultMessage"/>
+		</operation>
+		<operation name="reject">
+			<input message="tns:RejectRequestMessage"/>
+			<output message="tns:RejectResponseMessage"/>
+			<fault name="invalidOperatorFault" message="tns:InvalidOperatorFaultMessage"/>
+			<fault name="portingActionNotAvailableFault" message="tns:PortingActionNotAvailableFaultMessage"/>
+			<fault name="invalidPortingIdFault" message="tns:InvalidPortingIdFaultMessage"/>
+			<fault name="invalidRequestFormatFault" message="tns:InvalidRequestFormatFaultMessage"/>
+			<fault name="causeMissingFault" message="tns:CauseMissingFaultMessage"/>
+		</operation>
+		<operation name="deny">
+			<input message="tns:DenyRequestMessage"/>
+			<output message="tns:DenyResponseMessage"/>
+			<fault name="invalidOperatorFault" message="tns:InvalidOperatorFaultMessage"/>
+			<fault name="portingActionNotAvailableFault" message="tns:PortingActionNotAvailableFaultMessage"/>
+			<fault name="invalidPortingIdFault" message="tns:InvalidPortingIdFaultMessage"/>
+			<fault name="invalidRequestFormatFault" message="tns:InvalidRequestFormatFaultMessage"/>
+			<fault name="causeMissingFault" message="tns:CauseMissingFaultMessage"/>
+		</operation>
+		<operation name="getPorting">
+			<input message="tns:GetPortingRequestMessage"/>
+			<output message="tns:GetPortingResponseMessage"/>
+			<fault name="invalidOperatorFault" message="tns:InvalidOperatorFaultMessage"/>
+			<fault name="actionNotAuthorizedFault" message="tns:ActionNotAuthorizedFaultMessage"/>
+			<fault name="invalidPortingIdFault" message="tns:InvalidPortingIdFaultMessage"/>
+			<fault name="invalidRequestFormatFault" message="tns:InvalidRequestFormatFaultMessage"/>
+		</operation>
+		<operation name="getOrderedPortings">
+			<input message="tns:GetOrderedPortingsRequestMessage"/>
+			<output message="tns:GetOrderedPortingsResponseMessage"/>
+			<fault name="invalidOperatorFault" message="tns:InvalidOperatorFaultMessage"/>
+			<fault name="actionNotAuthorizedFault" message="tns:ActionNotAuthorizedFaultMessage"/>
+			<fault name="invalidRequestFormatFault" message="tns:InvalidRequestFormatFaultMessage"/>
+		</operation>
+		<operation name="getApprovedPortings">
+			<input message="tns:GetApprovedPortingsRequestMessage"/>
+			<output message="tns:GetApprovedPortingsResponseMessage"/>
+			<fault name="invalidOperatorFault" message="tns:InvalidOperatorFaultMessage"/>
+			<fault name="actionNotAuthorizedFault" message="tns:ActionNotAuthorizedFaultMessage"/>
+			<fault name="invalidRequestFormatFault" message="tns:InvalidRequestFormatFaultMessage"/>
+		</operation>
+		<operation name="getAcceptedPortings">
+			<input message="tns:GetAcceptedPortingsRequestMessage"/>
+			<output message="tns:GetAcceptedPortingsResponseMessage"/>
+			<fault name="invalidOperatorFault" message="tns:InvalidOperatorFaultMessage"/>
+			<fault name="actionNotAuthorizedFault" message="tns:ActionNotAuthorizedFaultMessage"/>
+			<fault name="invalidRequestFormatFault" message="tns:InvalidRequestFormatFaultMessage"/>
+		</operation>
+		<operation name="getConfirmedPortings">
+			<input message="tns:GetConfirmedPortingsRequestMessage"/>
+			<output message="tns:GetConfirmedPortingsResponseMessage"/>
+			<fault name="invalidOperatorFault" message="tns:InvalidOperatorFaultMessage"/>
+			<fault name="actionNotAuthorizedFault" message="tns:ActionNotAuthorizedFaultMessage"/>
+			<fault name="invalidRequestFormatFault" message="tns:InvalidRequestFormatFaultMessage"/>
+		</operation>
+		<operation name="getDeniedPortings">
+			<input message="tns:GetDeniedPortingsRequestMessage"/>
+			<output message="tns:GetDeniedPortingsResponseMessage"/>
+			<fault name="invalidOperatorFault" message="tns:InvalidOperatorFaultMessage"/>
+			<fault name="actionNotAuthorizedFault" message="tns:ActionNotAuthorizedFaultMessage"/>
+			<fault name="invalidRequestFormatFault" message="tns:InvalidRequestFormatFaultMessage"/>
+			<fault name="countOverMaxCountLimitFault" message="tns:CountOverMaxCountLimitFaultMessage"/>
+		</operation>
+		<operation name="getRejectedPortings">
+			<input message="tns:GetRejectedPortingsRequestMessage"/>
+			<output message="tns:GetRejectedPortingsResponseMessage"/>
+			<fault name="invalidOperatorFault" message="tns:InvalidOperatorFaultMessage"/>
+			<fault name="actionNotAuthorizedFault" message="tns:ActionNotAuthorizedFaultMessage"/>
+			<fault name="invalidRequestFormatFault" message="tns:InvalidRequestFormatFaultMessage"/>
+			<fault name="countOverMaxCountLimitFault" message="tns:CountOverMaxCountLimitFaultMessage"/>
+		</operation>
+	</portType>
+
+	<binding name="PortingOperationServiceBinding" type="tns:PortingOperationServicePortType">
+		<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+		<operation name="order">
+			<soap:operation soapAction="order"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="numberRangesOverlapFault">
+				<soap:fault name="numberRangesOverlapFault" use="literal"/>
+			</fault>
+			<fault name="numberReservedByProcessFault">
+				<soap:fault name="numberReservedByProcessFault" use="literal"/>
+			</fault>
+			<fault name="numberNotOwnedByOperatorFault">
+				<soap:fault name="numberNotOwnedByOperatorFault" use="literal"/>
+			</fault>
+			<fault name="unknownNumberFault">
+				<soap:fault name="unknownNumberFault" use="literal"/>
+			</fault>
+			<fault name="numberRangeQuantityLimitExceededFault">
+				<soap:fault name="numberRangeQuantityLimitExceededFault" use="literal"/>
+			</fault>
+			<fault name="invalidOperatorFault">
+				<soap:fault name="invalidOperatorFault" use="literal"/>
+			</fault>
+			<fault name="invalidPortingDateAndTimeFault">
+				<soap:fault name="invalidPortingDateAndTimeFault" use="literal"/>
+			</fault>
+			<fault name="invalidRequestFormatFault">
+				<soap:fault name="invalidRequestFormatFault" use="literal"/>
+			</fault>
+			<fault name="actionNotAuthorizedFault">
+				<soap:fault name="actionNotAuthorizedFault" use="literal"/>
+			</fault>
+			<fault name="tooNearPortedPeriodFault">
+				<soap:fault name="tooNearPortedPeriodFault" use="literal"/>
+			</fault>
+			<fault name="portingNotAllowedRequestsFault">
+				<soap:fault name="portingNotAllowedRequestsFault" use="literal"/>
+			</fault>
+			<fault name="subscriberDataMissingFault">
+				<soap:fault name="subscriberDataMissingFault" use="literal"/>
+			</fault>
+			<fault name="rioNotValidFault">
+				<soap:fault name="rioNotValidFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="approve">
+			<soap:operation soapAction="approve"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="invalidOperatorFault">
+				<soap:fault name="invalidOperatorFault" use="literal"/>
+			</fault>
+			<fault name="portingActionNotAvailableFault">
+				<soap:fault name="portingActionNotAvailableFault" use="literal"/>
+			</fault>
+			<fault name="invalidPortingIdFault">
+				<soap:fault name="invalidPortingIdFault" use="literal"/>
+			</fault>
+			<fault name="invalidRequestFormatFault">
+				<soap:fault name="invalidRequestFormatFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="accept">
+			<soap:operation soapAction="accept"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="invalidOperatorFault">
+				<soap:fault name="invalidOperatorFault" use="literal"/>
+			</fault>
+			<fault name="portingActionNotAvailableFault">
+				<soap:fault name="portingActionNotAvailableFault" use="literal"/>
+			</fault>
+			<fault name="invalidPortingIdFault">
+				<soap:fault name="invalidPortingIdFault" use="literal"/>
+			</fault>
+			<fault name="invalidRequestFormatFault">
+				<soap:fault name="invalidRequestFormatFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="confirm">
+			<soap:operation soapAction="confirm"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="invalidOperatorFault">
+				<soap:fault name="invalidOperatorFault" use="literal"/>
+			</fault>
+			<fault name="portingActionNotAvailableFault">
+				<soap:fault name="portingActionNotAvailableFault" use="literal"/>
+			</fault>
+			<fault name="invalidPortingIdFault">
+				<soap:fault name="invalidPortingIdFault" use="literal"/>
+			</fault>
+			<fault name="invalidPortingDateAndTimeFault">
+				<soap:fault name="invalidPortingDateAndTimeFault" use="literal"/>
+			</fault>
+			<fault name="invalidRequestFormatFault">
+				<soap:fault name="invalidRequestFormatFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="reject">
+			<soap:operation soapAction="reject"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="invalidOperatorFault">
+				<soap:fault name="invalidOperatorFault" use="literal"/>
+			</fault>
+			<fault name="portingActionNotAvailableFault">
+				<soap:fault name="portingActionNotAvailableFault" use="literal"/>
+			</fault>
+			<fault name="invalidPortingIdFault">
+				<soap:fault name="invalidPortingIdFault" use="literal"/>
+			</fault>
+			<fault name="invalidRequestFormatFault">
+				<soap:fault name="invalidRequestFormatFault" use="literal"/>
+			</fault>
+			<fault name="causeMissingFault">
+				<soap:fault name="causeMissingFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="deny">
+			<soap:operation soapAction="deny"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="invalidOperatorFault">
+				<soap:fault name="invalidOperatorFault" use="literal"/>
+			</fault>
+			<fault name="portingActionNotAvailableFault">
+				<soap:fault name="portingActionNotAvailableFault" use="literal"/>
+			</fault>
+			<fault name="invalidPortingIdFault">
+				<soap:fault name="invalidPortingIdFault" use="literal"/>
+			</fault>
+			<fault name="invalidRequestFormatFault">
+				<soap:fault name="invalidRequestFormatFault" use="literal"/>
+			</fault>
+			<fault name="causeMissingFault">
+				<soap:fault name="causeMissingFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="getPorting">
+			<soap:operation soapAction="getPorting"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="invalidOperatorFault">
+				<soap:fault name="invalidOperatorFault" use="literal"/>
+			</fault>
+			<fault name="actionNotAuthorizedFault">
+				<soap:fault name="actionNotAuthorizedFault" use="literal"/>
+			</fault>
+			<fault name="invalidPortingIdFault">
+				<soap:fault name="invalidPortingIdFault" use="literal"/>
+			</fault>
+			<fault name="invalidRequestFormatFault">
+				<soap:fault name="invalidRequestFormatFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="getOrderedPortings">
+			<soap:operation soapAction="getOrderedPortings"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="invalidOperatorFault">
+				<soap:fault name="invalidOperatorFault" use="literal"/>
+			</fault>
+			<fault name="actionNotAuthorizedFault">
+				<soap:fault name="actionNotAuthorizedFault" use="literal"/>
+			</fault>
+			<fault name="invalidRequestFormatFault">
+				<soap:fault name="invalidRequestFormatFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="getApprovedPortings">
+			<soap:operation soapAction="getApprovedPortings"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="invalidOperatorFault">
+				<soap:fault name="invalidOperatorFault" use="literal"/>
+			</fault>
+			<fault name="actionNotAuthorizedFault">
+				<soap:fault name="actionNotAuthorizedFault" use="literal"/>
+			</fault>
+			<fault name="invalidRequestFormatFault">
+				<soap:fault name="invalidRequestFormatFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="getAcceptedPortings">
+			<soap:operation soapAction="getAcceptedPortings"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="invalidOperatorFault">
+				<soap:fault name="invalidOperatorFault" use="literal"/>
+			</fault>
+			<fault name="actionNotAuthorizedFault">
+				<soap:fault name="actionNotAuthorizedFault" use="literal"/>
+			</fault>
+			<fault name="invalidRequestFormatFault">
+				<soap:fault name="invalidRequestFormatFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="getConfirmedPortings">
+			<soap:operation soapAction="getConfirmedPortings"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="invalidOperatorFault">
+				<soap:fault name="invalidOperatorFault" use="literal"/>
+			</fault>
+			<fault name="actionNotAuthorizedFault">
+				<soap:fault name="actionNotAuthorizedFault" use="literal"/>
+			</fault>
+			<fault name="invalidRequestFormatFault">
+				<soap:fault name="invalidRequestFormatFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="getDeniedPortings">
+			<soap:operation soapAction="getDeniedPortings"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="invalidOperatorFault">
+				<soap:fault name="invalidOperatorFault" use="literal"/>
+			</fault>
+			<fault name="actionNotAuthorizedFault">
+				<soap:fault name="actionNotAuthorizedFault" use="literal"/>
+			</fault>
+			<fault name="invalidRequestFormatFault">
+				<soap:fault name="invalidRequestFormatFault" use="literal"/>
+			</fault>
+			<fault name="countOverMaxCountLimitFault">
+				<soap:fault name="countOverMaxCountLimitFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="getRejectedPortings">
+			<soap:operation soapAction="getRejectedPortings"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="invalidOperatorFault">
+				<soap:fault name="invalidOperatorFault" use="literal"/>
+			</fault>
+			<fault name="actionNotAuthorizedFault">
+				<soap:fault name="actionNotAuthorizedFault" use="literal"/>
+			</fault>
+			<fault name="invalidRequestFormatFault">
+				<soap:fault name="invalidRequestFormatFault" use="literal"/>
+			</fault>
+			<fault name="countOverMaxCountLimitFault">
+				<soap:fault name="countOverMaxCountLimitFault" use="literal"/>
+			</fault>
+		</operation>
+	</binding>
+
+	<service name="PortingOperationService">
+		<port name="PortingOperationServicePort" binding="tns:PortingOperationServiceBinding">
+			<soap:address location="http://cameroonmnp.campost.cm/cadb/services/PortingOperationService/"/>
+		</port>
+	</service>
+
+</definitions>

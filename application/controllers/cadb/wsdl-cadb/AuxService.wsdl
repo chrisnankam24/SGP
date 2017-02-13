@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions name="AuxService"
+		targetNamespace="http://www.kapsch.hr/cadb/schemas/AuxService"
+		xmlns="http://schemas.xmlsoap.org/wsdl/"
+		xmlns:tns="http://www.kapsch.hr/cadb/schemas/AuxService"
+		xmlns:fault="http://www.kapsch.hr/cadb/schemas/fault"
+		xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+		xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+	<types>
+		<xsd:schema targetNamespace="http://www.kapsch.hr/cadb/schemas/AuxService">
+			<xsd:include schemaLocation="../xsd/_aux.xsd"/>
+		</xsd:schema>
+		<xsd:schema targetNamespace="http://www.kapsch.hr/cadb/schemas/fault">
+			<xsd:include schemaLocation="../xsd/fault.xsd"/>
+		</xsd:schema>
+	</types>
+
+	<message name="GetOperatorRequestMessage">
+		<part name="body" element="tns:getOperatorRequest"/>
+	</message>
+
+	<message name="getOperatorResponseMessage">
+		<part name="body" element="tns:getOperatorResponse"/>
+	</message>
+
+	<message name="GetOperatorsRequestMessage">
+		<part name="body" element="tns:getOperatorsRequest"/>
+	</message>
+
+	<message name="getOperatorsResponseMessage">
+		<part name="body" element="tns:getOperatorsResponse"/>
+	</message>
+
+	<message name="InvalidOperatorFaultMessage">
+		<part name="body" element="fault:invalidOperatorFault"/>
+	</message>
+
+	<message name="InvalidRequestFormatFaultMessage">
+		<part name="body" element="fault:invalidRequestFormatFault"/>
+	</message>
+
+	<portType name="AuxServicePortType">
+		<operation name="getOperator">
+			<input message="tns:GetOperatorRequestMessage"/>
+			<output message="tns:getOperatorResponseMessage"/>
+			<fault name="invalidOperatorFault" message="tns:InvalidOperatorFaultMessage"/>
+			<fault name="invalidRequestFormatFault" message="tns:InvalidRequestFormatFaultMessage"/>
+		</operation>
+		<operation name="getOperators">
+			<input message="tns:GetOperatorsRequestMessage"/>
+			<output message="tns:getOperatorsResponseMessage"/>
+			<fault name="invalidRequestFormatFault" message="tns:InvalidRequestFormatFaultMessage"/>
+		</operation>
+	</portType>
+
+	<binding name="AuxServiceBinding" type="tns:AuxServicePortType">
+		<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+		<operation name="getOperator">
+			<soap:operation soapAction="getOperator"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="invalidOperatorFault">
+				<soap:fault name="invalidOperatorFault" use="literal"/>
+			</fault>
+			<fault name="invalidRequestFormatFault">
+				<soap:fault name="invalidRequestFormatFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="getOperators">
+			<soap:operation soapAction="getOperators"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="invalidRequestFormatFault">
+				<soap:fault name="invalidRequestFormatFault" use="literal"/>
+			</fault>
+		</operation>
+	</binding>
+
+	<service name="AuxService">
+		<port name="AuxServicePort" binding="tns:AuxServiceBinding">
+			<soap:address location="http://cameroonmnp.campost.cm/cadb/services/AuxService/"/>
+		</port>
+	</service>
+
+</definitions>

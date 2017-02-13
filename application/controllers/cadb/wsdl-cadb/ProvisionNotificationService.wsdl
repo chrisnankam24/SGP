@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions name="ProvisionNotificationService"
+		targetNamespace="http://www.kapsch.hr/cadb/schemas/ProvisionNotificationService"
+		xmlns="http://schemas.xmlsoap.org/wsdl/"
+		xmlns:tns="http://www.kapsch.hr/cadb/schemas/ProvisionNotificationService"
+		xmlns:fault="http://www.kapsch.hr/cadb/schemas/fault" 
+		xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+		xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+	<types>
+		<xsd:schema targetNamespace="http://www.kapsch.hr/cadb/schemas/ProvisionNotificationService">
+			<xsd:include schemaLocation="../xsd/provisionNotification.xsd"/>
+		</xsd:schema>
+		<xsd:schema targetNamespace="http://www.kapsch.hr/cadb/schemas/fault">
+			<xsd:include schemaLocation="../xsd/fault.xsd"/>
+		</xsd:schema>
+	</types>
+
+	<message name="NotifyRoutingDataRequestMessage">
+		<part name="body" element="tns:notifyRoutingDataRequest"/>
+	</message>
+
+	<message name="NotifyRoutingDataResponseMessage">
+		<part name="body" element="tns:notifyRoutingDataResponse"/>
+	</message>
+
+	<message name="LdbAdministrationServiceFaultMessage">
+		<part name="body" element="fault:ldbAdministrationServiceFault"/>
+	</message>
+
+	<portType name="ProvisionNotificationServicePortType">
+		<operation name="notifyRoutingData">
+			<input message="tns:NotifyRoutingDataRequestMessage"/>
+			<output message="tns:NotifyRoutingDataResponseMessage"/>
+			<fault name="ldbAdministrationServiceFault" message="tns:LdbAdministrationServiceFaultMessage"/>
+		</operation>
+	</portType>
+
+	<binding name="ProvisionNotificationServiceBinding" type="tns:ProvisionNotificationServicePortType">
+		<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+		<operation name="notifyRoutingData">
+			<soap:operation soapAction="notifyRoutingData"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="ldbAdministrationServiceFault">
+				<soap:fault name="ldbAdministrationServiceFault" use="literal"/>
+			</fault>
+		</operation>
+	</binding>
+
+	<service name="ProvisionNotificationService">
+		<port name="ProvisionNotificationServicePort" binding="tns:ProvisionNotificationServiceBinding">
+			<soap:address location="http://172.21.75.34/SGP/cadb/ProvisionNotificationService"/>
+		</port>
+	</service>
+
+</definitions>

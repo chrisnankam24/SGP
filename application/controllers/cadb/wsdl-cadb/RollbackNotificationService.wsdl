@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions name="RollbackNotificationService"
+		targetNamespace="http://www.kapsch.hr/cadb/schemas/RollbackNotificationService"
+		xmlns="http://schemas.xmlsoap.org/wsdl/" 
+		xmlns:tns="http://www.kapsch.hr/cadb/schemas/RollbackNotificationService"
+		xmlns:fault="http://www.kapsch.hr/cadb/schemas/fault"
+		xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+		xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+	<types>
+		<xsd:schema targetNamespace="http://www.kapsch.hr/cadb/schemas/RollbackNotificationService">
+			<xsd:include schemaLocation="../xsd/rollbackNotification.xsd"/>
+		</xsd:schema>
+		<xsd:schema targetNamespace="http://www.kapsch.hr/cadb/schemas/fault">
+			<xsd:include schemaLocation="../xsd/fault.xsd"/>
+		</xsd:schema>
+	</types>
+
+	<message name="NotifyOpenedRequestMessage">
+		<part name="body" element="tns:notifyOpenedRequest"/>
+	</message>
+
+	<message name="NotifyOpenedResponseMessage">
+		<part name="body" element="tns:notifyOpenedResponse"/>
+	</message>
+
+	<message name="NotifyAcceptedRequestMessage">
+		<part name="body" element="tns:notifyAcceptedRequest"/>
+	</message>
+
+	<message name="NotifyAcceptedResponseMessage">
+		<part name="body" element="tns:notifyAcceptedResponse"/>
+	</message>
+
+	<message name="NotifyAutoAcceptRequestMessage">
+		<part name="body" element="tns:notifyAutoAcceptRequest"/>
+	</message>
+
+	<message name="NotifyAutoAcceptResponseMessage">
+		<part name="body" element="tns:notifyAutoAcceptResponse"/>
+	</message>
+
+	<message name="NotifyAutoConfirmRequestMessage">
+		<part name="body" element="tns:notifyAutoConfirmRequest"/>
+	</message>
+
+	<message name="NotifyAutoConfirmResponseMessage">
+		<part name="body" element="tns:notifyAutoConfirmResponse"/>
+	</message>
+
+	<message name="NotifyRejectedRequestMessage">
+		<part name="body" element="tns:notifyRejectedRequest"/>
+	</message>
+
+	<message name="NotifyRejectedResponseMessage">
+		<part name="body" element="tns:notifyRejectedResponse"/>
+	</message>
+
+	<message name="NotifyAbandonedRequestMessage">
+		<part name="body" element="tns:notifyAbandonedRequest"/>
+	</message>
+
+	<message name="NotifyAbandonedResponseMessage">
+		<part name="body" element="tns:notifyAbandonedResponse"/>
+	</message>
+
+	<message name="LdbAdministrationServiceFaultMessage">
+		<part name="body" element="fault:ldbAdministrationServiceFault"/>
+	</message>
+
+	<portType name="RollbackNotificationServicePortType">
+		<operation name="notifyOpened">
+			<input message="tns:NotifyOpenedRequestMessage"/>
+			<output message="tns:NotifyOpenedResponseMessage"/>
+			<fault name="ldbAdministrationServiceFault" message="tns:LdbAdministrationServiceFaultMessage"/>
+		</operation>
+		<operation name="notifyAccepted">
+			<input message="tns:NotifyAcceptedRequestMessage"/>
+			<output message="tns:NotifyAcceptedResponseMessage"/>
+			<fault name="ldbAdministrationServiceFault" message="tns:LdbAdministrationServiceFaultMessage"/>
+		</operation>
+		<operation name="notifyAutoAccept">
+			<input message="tns:NotifyAutoAcceptRequestMessage"/>
+			<output message="tns:NotifyAutoAcceptResponseMessage"/>
+			<fault name="ldbAdministrationServiceFault" message="tns:LdbAdministrationServiceFaultMessage"/>
+		</operation>
+		<operation name="notifyAutoConfirm">
+			<input message="tns:NotifyAutoConfirmRequestMessage"/>
+			<output message="tns:NotifyAutoConfirmResponseMessage"/>
+			<fault name="ldbAdministrationServiceFault" message="tns:LdbAdministrationServiceFaultMessage"/>
+		</operation>
+		<operation name="notifyRejected">
+			<input message="tns:NotifyRejectedRequestMessage"/>
+			<output message="tns:NotifyRejectedResponseMessage"/>
+			<fault name="ldbAdministrationServiceFault" message="tns:LdbAdministrationServiceFaultMessage"/>
+		</operation>
+		<operation name="notifyAbandoned">
+			<input message="tns:NotifyAbandonedRequestMessage"/>
+			<output message="tns:NotifyRejectedResponseMessage"/>
+			<fault name="ldbAdministrationServiceFault" message="tns:LdbAdministrationServiceFaultMessage"/>
+		</operation>
+	</portType>
+
+	<binding name="RollbackNotificationServiceBinding" type="tns:RollbackNotificationServicePortType">
+		<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+		<operation name="notifyOpened">
+			<soap:operation soapAction="notifyOpened"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="ldbAdministrationServiceFault">
+				<soap:fault name="ldbAdministrationServiceFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="notifyAccepted">
+			<soap:operation soapAction="notifyAccepted"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="ldbAdministrationServiceFault">
+				<soap:fault name="ldbAdministrationServiceFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="notifyAutoAccept">
+			<soap:operation soapAction="notifyAutoAccept"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="ldbAdministrationServiceFault">
+				<soap:fault name="ldbAdministrationServiceFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="notifyAutoConfirm">
+			<soap:operation soapAction="notifyAutoConfirm"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="ldbAdministrationServiceFault">
+				<soap:fault name="ldbAdministrationServiceFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="notifyRejected">
+			<soap:operation soapAction="notifyRejected"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="ldbAdministrationServiceFault">
+				<soap:fault name="ldbAdministrationServiceFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="notifyAbandoned">
+			<soap:operation soapAction="notifyAbandoned"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="ldbAdministrationServiceFault">
+				<soap:fault name="ldbAdministrationServiceFault" use="literal"/>
+			</fault>
+		</operation>
+	</binding>
+
+	<service name="RollbackNotificationService">
+		<port name="RollbackNotificationServicePort" binding="tns:RollbackNotificationServiceBinding">
+			<soap:address location="http://172.21.75.34/SGP/cadb/RollbackNotificationService"/>
+		</port>
+	</service>
+
+</definitions>
