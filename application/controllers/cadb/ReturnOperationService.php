@@ -384,66 +384,6 @@ class ReturnOperationService {
                 $response['success'] = false;
 
                 switch ($fault) {
-                    // Terminal Processes
-                    case Fault::INVALID_OPERATOR_FAULT:
-
-                        $this->db->trans_start();
-
-                        // Insert into Return submission table with state STARTED
-
-                        if($returnOperator == 0) {
-                            // MTN
-                            $primaryOwnerNetworkId = Operator::MTN_NETWORK_ID;
-                            $primaryOwnerNetworkNumber = Operator::MTN_ROUTING_NUMBER;
-                        }else{
-                            // Orange
-                            $primaryOwnerNetworkId = Operator::NEXTTEL_NETWORK_ID;
-                            $primaryOwnerNetworkNumber = Operator::NEXTTEL_ROUTING_NUMBER;
-                        }
-
-                        $nrsParams = array(
-                            'primaryOwnerNetworkId' => $primaryOwnerNetworkId,
-                            'primaryOwnerNetworkNumber' => $primaryOwnerNetworkNumber,
-                            'returnMSISDN' => $returnMSISDN,
-                            'submissionState' => \ReturnService\_Return\returnSubmissionStateType::STARTED,
-                            'submissionDateTime' => date('c'),
-                            'userId' => $userId
-                        );
-
-                        $this->Numberreturnsubmission_model->add_numberreturnsubmission($nrsParams);
-
-                        $response['success'] = true;
-
-                        if ($this->db->trans_status() === FALSE) {
-
-                            $error = $this->db->error();
-
-                            $this->fileLogAction($error['code'], 'ReturnOperationService', "Number Return submission OPENING failed with $error");
-
-                            $this->fileLogAction($error['code'], 'ReturnOperationService', $error['message']);
-
-                            $nrParams = array(
-                                'ownerNetworkId' => Operator::ORANGE_NETWORK_ID,
-                                'returnMSISDN' => $returnMSISDN,
-                                'returnId' => '',
-                                'returnNumberState' => 'N/A'
-                            );
-
-                            $emailService->adminErrorReport('RETURN_REQUESTED_OPERATOR_INACTIVE_BUT_STARTED_INCOMPLETE', $nrParams, processType::_RETURN);
-                            $response['message'] = 'Operator is currently Inactive. We have nonetheless encountered problems saving your request. Please contact Back Office';
-
-                        }else{
-
-                            $this->fileLogAction('8010', 'ReturnOperationService', "Number Return submission OPENING successful");
-
-                            $response['message'] = 'Operator is currently Inactive. You request has been saved and will be performed as soon as possible';
-
-                        }
-
-                        $this->db->trans_complete();
-
-                        break;
-
                     // Terminal Error Processes
                     case Fault::NUMBER_RESERVED_BY_PROCESS:
                         $response['message'] = 'Number already in transaction';
@@ -461,6 +401,7 @@ class ReturnOperationService {
                         $response['message'] = 'Primary Owner cannot be resolved';
                         break;
 
+                    case Fault::INVALID_OPERATOR_FAULT:
                     case Fault::INVALID_REQUEST_FORMAT:
                     case Fault::ACTION_NOT_AUTHORIZED:
                     case Fault::NUMBER_RANGE_QUANTITY_LIMIT_EXCEEDED:

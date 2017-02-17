@@ -93,7 +93,7 @@ class PortingNotificationService extends CI_Controller
             'recipientNetworkId' => $notifyOrderedRequest->portingTransaction->recipientNrn->networkId,
             'recipientRoutingNumber' => $notifyOrderedRequest->portingTransaction->recipientNrn->routingNumber,
             'donorNetworkId' => $notifyOrderedRequest->portingTransaction->donorNrn->networkId,
-            'donorRoutingNumber' => $notifyOrderedRequest->portingTransaction->recipientNrn->routingNumber,
+            'donorRoutingNumber' => $notifyOrderedRequest->portingTransaction->donorNrn->routingNumber,
             'recipientSubmissionDateTime' => $notifyOrderedRequest->portingTransaction->recipientSubmissionDateTime,
             'portingDateTime' => $notifyOrderedRequest->portingTransaction->portingDateTime,
             'rio' =>  $notifyOrderedRequest->portingTransaction->rio,

@@ -869,6 +869,7 @@ class Porting extends CI_Controller
 
             $responseData['ste'] = $data['STE'];
             $responseData['num_registre'] = $data['NUM_REGISTRE'];
+            $responseData['num_compte'] = $data['NUM_COMPTE'];
             // TODO: Include contact number and TIN
 
             $response['data'] = $responseData;

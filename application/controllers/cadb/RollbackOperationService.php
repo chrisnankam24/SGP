@@ -573,53 +573,6 @@ class RollbackOperationService {
                 $response['success'] = false;
 
                 switch ($fault) {
-                    // Terminal Processes
-                    case Fault::INVALID_OPERATOR_FAULT:
-
-                        $this->db->trans_start();
-
-                        // Insert into Rollback submission table
-
-                        $submissionParams = array(
-                            'originalPortingId' => $originalPortingId,
-                            'preferredRollbackDateTime' => $rollbackDateTime,
-                            'submissionState' => \RollbackService\Rollback\rollbackSubmissionStateType::STARTED,
-                            'openedDateTime' => date('c'),
-                            'contractId' => $contractId,
-                            'temporalMSISDN' => $temporalNumber,
-                            'userId' => $userId
-                        );
-
-                        $this->Rollbacksubmission_model->add_rollbacksubmission($submissionParams);
-
-                        $response['success'] = true;
-
-                        if ($this->db->trans_status() === FALSE) {
-
-                            $error = $this->db->error();
-                            $this->fileLogAction($error['code'], 'RollbackOperationService', $error['message']);
-
-                            $portingParams = $this->Porting_model->get_porting($originalPortingId);
-
-                            $rollbackParams = array_merge($submissionParams, $portingParams);
-
-                            $rollbackParams['rollbackId'] = '';
-                            $rollbackParams['donorSubmissionDateTime'] = date('c');
-                            $rollbackParams['rollbackState'] = 'NA';
-
-                            $emailService->adminErrorReport('ROLLBACK_REQUESTED_OPERATOR_INACTIVE_BUT_STARTED_INCOMPLETE', $rollbackParams, processType::ROLLBACK);
-
-                            $response['message'] = 'Operator is currently Inactive. We have nonetheless encountered problems saving your request. Please contact Back Office';
-
-                        }else{
-
-                            $response['message'] = 'Operator is currently Inactive. You request has been saved and will be performed as soon as possible';
-
-                        }
-
-                        $this->db->trans_complete();
-
-                        break;
 
                     // Terminal Error Processes
                     case Fault::ROLLBACK_NOT_ALLOWED:
@@ -630,6 +583,7 @@ class RollbackOperationService {
                         $response['message'] = 'Cannot match ID of the original Porting to any transaction';
                         break;
 
+                    case Fault::INVALID_OPERATOR_FAULT:
                     case Fault::INVALID_REQUEST_FORMAT:
                     case Fault::ACTION_NOT_AUTHORIZED:
                     default:

@@ -814,7 +814,7 @@ class PortingOperationService  {
                 'recipientNetworkId' => $orderResponse->portingTransaction->recipientNrn->networkId,
                 'recipientRoutingNumber' => $orderResponse->portingTransaction->recipientNrn->routingNumber,
                 'donorNetworkId' => $orderResponse->portingTransaction->donorNrn->networkId,
-                'donorRoutingNumber' => $orderResponse->portingTransaction->recipientNrn->routingNumber,
+                'donorRoutingNumber' => $orderResponse->portingTransaction->donorNrn->routingNumber,
                 'recipientSubmissionDateTime' => $orderResponse->portingTransaction->recipientSubmissionDateTime,
                 'portingDateTime' => $orderResponse->portingTransaction->portingDateTime,
                 'rio' =>  $orderResponse->portingTransaction->rio,
@@ -886,80 +886,8 @@ class PortingOperationService  {
             $response['success'] = false;
 
             switch ($fault) {
+
                 // Terminal Processes
-                case Fault::INVALID_OPERATOR_FAULT:
-                    $response['success'] = true;
-
-                    if($donorOperator == 0) {
-                        // MTN
-                        $donorNetworkId = Operator::MTN_NETWORK_ID;
-                        $donorRoutingNumber = Operator::MTN_ROUTING_NUMBER;
-                    }else{
-                        // Orange
-                        $donorNetworkId = Operator::NEXTTEL_NETWORK_ID;
-                        $donorRoutingNumber = Operator::NEXTTEL_ROUTING_NUMBER;
-                    }
-
-                    $this->db->trans_start();
-
-                    $submissionParams = array(
-                        'donorNetworkId' => $donorNetworkId,
-                        'donorRoutingNumber' => $donorRoutingNumber,
-                        'subscriberSubmissionDateTime' => date('c'),
-                        'portingDateTime' => $portingDateTime,
-                        'rio' => $rio,
-                        'documentType' => $documentType,
-                        'portingMSISDN' => $portingMsisdn,
-                        'contractId' => $contractId,
-                        'language' => $language,
-                        'temporalMSISDN' => $temporalNumber,
-                        'submissionState' => \PortingService\Porting\portingSubmissionStateType::STARTED,
-                        'userId' => $userId
-                    );
-
-                    if($subscriberType == 0) {
-                        $submissionParams['physicalPersonFirstName'] = $physicalPersonFirstName;
-                        $submissionParams['physicalPersonLastName'] = $physicalPersonLastName;
-                        $submissionParams['physicalPersonIdNumber'] = $physicalPersonIdNumber;
-                    }
-                    else{
-                        $submissionParams['legalPersonName'] = $legalPersonName;
-                        $submissionParams['legalPersonTin'] = $legalPersonTin;
-                        $submissionParams['contactNumber'] = $contactNumber;
-                    }
-
-                    $this->Portingsubmission_model->add_portingsubmission($submissionParams);
-
-                    $response['success'] = true;
-
-                    if ($this->db->trans_status() === FALSE) {
-
-                        $error = $this->db->error();
-
-                        $this->fileLogAction($error['code'], 'PortingOperationService', $error['message']);
-
-                        $response['success'] = false;
-
-                        $submissionParams['portingMSISDN'] = $portingMsisdn;
-                        $submissionParams['portingId'] = '';
-                        $submissionParams['recipient_network'] = Operator::ORANGE_NETWORK_ID;
-                        $submissionParams['lastChangeDateTime'] = date('c');
-                        $submissionParams['recipientSubmissionDateTime'] = date('c');
-
-                        $emailService = new EmailService();
-                        $emailService->adminErrorReport('PORTING_REQUESTED_OPERATOR_INACTIVE_BUT_STARTED_INCOMPLETE', $submissionParams, processType::PORTING);
-                        $response['message'] = 'Operator is currently Inactive. We have nonetheless encountered problems saving your request. Please contact Back Office';
-
-                    }else {
-
-                        $response['message'] = 'Operator is currently Inactive. You request has been saved and will be performed as soon as possible';
-
-                    }
-
-                    $this->db->trans_complete();
-
-                    break;
-
                 case Fault::NUMBER_NOT_OWNED_BY_OPERATOR:
                     $response['message'] = 'Porting number not owned by donor';
                     break;
@@ -989,6 +917,7 @@ class PortingOperationService  {
                     break;
 
                 // Terminal Error Processes
+                case Fault::INVALID_OPERATOR_FAULT:
                 case Fault::NUMBER_RANGES_OVERLAP:
                 case Fault::NUMBER_RANGE_QUANTITY_LIMIT_EXCEEDED:
                 case Fault::INVALID_REQUEST_FORMAT:
@@ -1008,7 +937,7 @@ class PortingOperationService  {
                 );
 
                 $emailService->adminErrorReport($fault, $portingParams, processType::PORTING);
-                    $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
+                $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
 
             }
 
