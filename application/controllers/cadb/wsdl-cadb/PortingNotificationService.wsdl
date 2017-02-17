@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions name="PortingNotificationService"
+		targetNamespace="http://www.kapsch.hr/cadb/schemas/PortingNotificationService"
+		xmlns="http://schemas.xmlsoap.org/wsdl/"
+		xmlns:tns="http://www.kapsch.hr/cadb/schemas/PortingNotificationService"
+		xmlns:fault="http://www.kapsch.hr/cadb/schemas/fault"
+		xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+		xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+	<types>
+		<xsd:schema targetNamespace="http://www.kapsch.hr/cadb/schemas/PortingNotificationService">
+			<xsd:include schemaLocation="../xsd/portingNotification.xsd"/>
+		</xsd:schema>
+		<xsd:schema targetNamespace="http://www.kapsch.hr/cadb/schemas/fault">
+			<xsd:include schemaLocation="../xsd/fault.xsd"/>
+		</xsd:schema>
+	</types>
+
+	<message name="NotifyOrderedRequestMessage">
+		<part name="body" element="tns:notifyOrderedRequest"/>
+	</message>
+
+	<message name="NotifyOrderedResponseMessage">
+		<part name="body" element="tns:notifyOrderedResponse"/>
+	</message>
+
+	<message name="NotifyApprovedRequestMessage">
+		<part name="body" element="tns:notifyApprovedRequest"/>
+	</message>
+
+	<message name="NotifyApprovedResponseMessage">
+		<part name="body" element="tns:notifyApprovedResponse"/>
+	</message>
+
+	<message name="NotifyAutoApproveRequestMessage">
+		<part name="body" element="tns:notifyAutoApproveRequest"/>
+	</message>
+
+	<message name="NotifyAutoApproveResponseMessage">
+		<part name="body" element="tns:notifyAutoApproveResponse"/>
+	</message>
+
+	<message name="NotifyAcceptedRequestMessage">
+		<part name="body" element="tns:notifyAcceptedRequest"/>
+	</message>
+
+	<message name="NotifyAcceptedResponseMessage">
+		<part name="body" element="tns:notifyAcceptedResponse"/>
+	</message>
+
+	<message name="NotifyAutoAcceptRequestMessage">
+		<part name="body" element="tns:notifyAutoAcceptRequest"/>
+	</message>
+
+	<message name="NotifyAutoAcceptResponseMessage">
+		<part name="body" element="tns:notifyAutoAcceptResponse"/>
+	</message>
+
+	<message name="NotifyAutoConfirmRequestMessage">
+		<part name="body" element="tns:notifyAutoConfirmRequest"/>
+	</message>
+
+	<message name="NotifyAutoConfirmResponseMessage">
+		<part name="body" element="tns:notifyAutoConfirmResponse"/>
+	</message>
+
+	<message name="NotifyDeniedRequestMessage">
+		<part name="body" element="tns:notifyDeniedRequest"/>
+	</message>
+
+	<message name="NotifyDeniedResponseMessage">
+		<part name="body" element="tns:notifyDeniedResponse"/>
+	</message>
+
+	<message name="NotifyRejectedRequestMessage">
+		<part name="body" element="tns:notifyRejectedRequest"/>
+	</message>
+
+	<message name="NotifyRejectedResponseMessage">
+		<part name="body" element="tns:notifyRejectedResponse"/>
+	</message>
+
+	<message name="NotifyAbandonedRequestMessage">
+		<part name="body" element="tns:notifyAbandonedRequest"/>
+	</message>
+
+	<message name="NotifyAbandonedResponseMessage">
+		<part name="body" element="tns:notifyAbandonedResponse"/>
+	</message>
+
+	<message name="LdbAdministrationServiceFaultMessage">
+		<part name="body" element="fault:ldbAdministrationServiceFault"/>
+	</message>
+
+	<portType name="PortingNotificationServicePortType">
+		<operation name="notifyOrdered">
+			<input message="tns:NotifyOrderedRequestMessage"/>
+			<output message="tns:NotifyOrderedResponseMessage"/>
+			<fault name="ldbAdministrationServiceFault" message="tns:LdbAdministrationServiceFaultMessage"/>
+		</operation>
+		<operation name="notifyApproved">
+			<input message="tns:NotifyApprovedRequestMessage"/>
+			<output message="tns:NotifyApprovedResponseMessage"/>
+			<fault name="ldbAdministrationServiceFault" message="tns:LdbAdministrationServiceFaultMessage"/>
+		</operation>
+		<operation name="notifyAutoApprove">
+			<input message="tns:NotifyAutoApproveRequestMessage"/>
+			<output message="tns:NotifyAutoApproveResponseMessage"/>
+			<fault name="ldbAdministrationServiceFault" message="tns:LdbAdministrationServiceFaultMessage"/>
+		</operation>
+		<operation name="notifyAccepted">
+			<input message="tns:NotifyAcceptedRequestMessage"/>
+			<output message="tns:NotifyAcceptedResponseMessage"/>
+			<fault name="ldbAdministrationServiceFault" message="tns:LdbAdministrationServiceFaultMessage"/>
+		</operation>
+		<operation name="notifyAutoAccept">
+			<input message="tns:NotifyAutoAcceptRequestMessage"/>
+			<output message="tns:NotifyAutoAcceptResponseMessage"/>
+			<fault name="ldbAdministrationServiceFault" message="tns:LdbAdministrationServiceFaultMessage"/>
+		</operation>
+		<operation name="notifyAutoConfirm">
+			<input message="tns:NotifyAutoConfirmRequestMessage"/>
+			<output message="tns:NotifyAutoConfirmResponseMessage"/>
+			<fault name="ldbAdministrationServiceFault" message="tns:LdbAdministrationServiceFaultMessage"/>
+		</operation>
+		<operation name="notifyDenied">
+			<input message="tns:NotifyDeniedRequestMessage"/>
+			<output message="tns:NotifyDeniedResponseMessage"/>
+			<fault name="ldbAdministrationServiceFault" message="tns:LdbAdministrationServiceFaultMessage"/>
+		</operation>
+		<operation name="notifyRejected">
+			<input message="tns:NotifyRejectedRequestMessage"/>
+			<output message="tns:NotifyRejectedResponseMessage"/>
+			<fault name="ldbAdministrationServiceFault" message="tns:LdbAdministrationServiceFaultMessage"/>
+		</operation>
+		<operation name="notifyAbandoned">
+			<input message="tns:NotifyAbandonedRequestMessage"/>
+			<output message="tns:NotifyRejectedResponseMessage"/>
+			<fault name="ldbAdministrationServiceFault" message="tns:LdbAdministrationServiceFaultMessage"/>
+		</operation>
+	</portType>
+
+	<binding name="PortingNotificationServiceBinding" type="tns:PortingNotificationServicePortType">
+		<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+		<operation name="notifyOrdered">
+			<soap:operation soapAction="notifyOrdered"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="ldbAdministrationServiceFault">
+				<soap:fault name="ldbAdministrationServiceFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="notifyApproved">
+			<soap:operation soapAction="notifyApproved"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="ldbAdministrationServiceFault">
+				<soap:fault name="ldbAdministrationServiceFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="notifyAutoApprove">
+			<soap:operation soapAction="notifyAutoApprove"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="ldbAdministrationServiceFault">
+				<soap:fault name="ldbAdministrationServiceFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="notifyAccepted">
+			<soap:operation soapAction="notifyAccepted"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="ldbAdministrationServiceFault">
+				<soap:fault name="ldbAdministrationServiceFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="notifyAutoAccept">
+			<soap:operation soapAction="notifyAutoAccept"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="ldbAdministrationServiceFault">
+				<soap:fault name="ldbAdministrationServiceFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="notifyAutoConfirm">
+			<soap:operation soapAction="notifyAutoConfirm"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="ldbAdministrationServiceFault">
+				<soap:fault name="ldbAdministrationServiceFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="notifyDenied">
+			<soap:operation soapAction="notifyDenied"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="ldbAdministrationServiceFault">
+				<soap:fault name="ldbAdministrationServiceFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="notifyRejected">
+			<soap:operation soapAction="notifyRejected"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="ldbAdministrationServiceFault">
+				<soap:fault name="ldbAdministrationServiceFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="notifyAbandoned">
+			<soap:operation soapAction="notifyAbandoned"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="ldbAdministrationServiceFault">
+				<soap:fault name="ldbAdministrationServiceFault" use="literal"/>
+			</fault>
+		</operation>
+	</binding>
+
+	<service name="PortingNotificationService">
+		<port name="PortingNotificationServicePort" binding="tns:PortingNotificationServiceBinding">
+			<soap:address location="http://172.21.75.34/SGP/cadb/PortingNotificationService"/>
+		</port>
+	</service>
+
+</definitions>

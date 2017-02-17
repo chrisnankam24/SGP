@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions name="ReturnNotificationService" 
+		targetNamespace="http://www.kapsch.hr/cadb/schemas/ReturnNotificationService" 
+		xmlns="http://schemas.xmlsoap.org/wsdl/"
+		xmlns:tns="http://www.kapsch.hr/cadb/schemas/ReturnNotificationService" 
+		xmlns:fault="http://www.kapsch.hr/cadb/schemas/fault" 
+		xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" 
+		xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+	<types>
+		<xsd:schema targetNamespace="http://www.kapsch.hr/cadb/schemas/ReturnNotificationService">
+			<xsd:include schemaLocation="../xsd/returnNotification.xsd"/>
+		</xsd:schema>
+		<xsd:schema targetNamespace="http://www.kapsch.hr/cadb/schemas/fault">
+			<xsd:include schemaLocation="../xsd/fault.xsd"/>
+		</xsd:schema>
+	</types>
+
+	<message name="NotifyOpenedRequestMessage">
+		<part name="body" element="tns:notifyOpenedRequest"/>
+	</message>
+
+	<message name="NotifyOpenedResponseMessage">
+		<part name="body" element="tns:notifyOpenedResponse"/>
+	</message>
+
+	<message name="NotifyAcceptedRequestMessage">
+		<part name="body" element="tns:notifyAcceptedRequest"/>
+	</message>
+
+	<message name="NotifyAcceptedResponseMessage">
+		<part name="body" element="tns:notifyAcceptedResponse"/>
+	</message>
+
+	<message name="NotifyRejectedRequestMessage">
+		<part name="body" element="tns:notifyRejectedRequest"/>
+	</message>
+
+	<message name="NotifyRejectedResponseMessage">
+		<part name="body" element="tns:notifyRejectedResponse"/>
+	</message>
+
+	<message name="LdbAdministrationServiceFaultMessage">
+		<part name="body" element="fault:ldbAdministrationServiceFault"/>
+	</message>
+
+	<portType name="ReturnNotificationServicePortType">
+		<operation name="notifyOpened">
+			<input message="tns:NotifyOpenedRequestMessage"/>
+			<output message="tns:NotifyOpenedResponseMessage"/>
+			<fault name="ldbAdministrationServiceFault" message="tns:LdbAdministrationServiceFaultMessage"/>
+		</operation>
+		<operation name="notifyAccepted">
+			<input message="tns:NotifyAcceptedRequestMessage"/>
+			<output message="tns:NotifyAcceptedResponseMessage"/>
+			<fault name="ldbAdministrationServiceFault" message="tns:LdbAdministrationServiceFaultMessage"/>
+		</operation>
+		<operation name="notifyRejected">
+			<input message="tns:NotifyRejectedRequestMessage"/>
+			<output message="tns:NotifyRejectedResponseMessage"/>
+			<fault name="ldbAdministrationServiceFault" message="tns:LdbAdministrationServiceFaultMessage"/>
+		</operation>
+	</portType>
+
+	<binding name="ReturnNotificationServiceBinding" type="tns:ReturnNotificationServicePortType">
+		<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+		<operation name="notifyOpened">
+			<soap:operation soapAction="notifyOpened"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="ldbAdministrationServiceFault">
+				<soap:fault name="ldbAdministrationServiceFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="notifyAccepted">
+			<soap:operation soapAction="notifyAccepted"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="ldbAdministrationServiceFault">
+				<soap:fault name="ldbAdministrationServiceFault" use="literal"/>
+			</fault>
+		</operation>
+
+		<operation name="notifyRejected">
+			<soap:operation soapAction="notifyRejected"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="ldbAdministrationServiceFault">
+				<soap:fault name="ldbAdministrationServiceFault" use="literal"/>
+			</fault>
+		</operation>
+	</binding>
+
+	<service name="ReturnNotificationService">
+		<port name="ReturnNotificationServicePort" binding="tns:ReturnNotificationServiceBinding">
+			<soap:address location="http://172.21.75.34/SGP/cadb/ReturnNotificationService"/>
+		</port>
+	</service>
+
+</definitions>

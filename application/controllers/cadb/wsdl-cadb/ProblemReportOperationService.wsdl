@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions name="ProblemReportOperationService"
+		targetNamespace="http://www.kapsch.hr/cadb/schemas/ProblemReportOperationService"
+		xmlns="http://schemas.xmlsoap.org/wsdl/"
+		xmlns:tns="http://www.kapsch.hr/cadb/schemas/ProblemReportOperationService"
+		xmlns:fault="http://www.kapsch.hr/cadb/schemas/fault"
+		xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+		xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+	<types>
+		<xsd:schema targetNamespace="http://www.kapsch.hr/cadb/schemas/ProblemReportOperationService">
+			<xsd:include schemaLocation="../xsd/problem.xsd"/>
+		</xsd:schema>
+		<xsd:schema targetNamespace="http://www.kapsch.hr/cadb/schemas/fault">
+			<xsd:include schemaLocation="../xsd/fault.xsd"/>
+		</xsd:schema>
+	</types>
+
+	<message name="ReportProblemRequestMessage">
+		<part name="body" element="tns:reportProblemRequest"/>
+	</message>
+
+	<message name="ReportProblemResponseMessage">
+		<part name="body" element="tns:reportProblemResponse"/>
+	</message>
+
+	<message name="UnknownNumberFaultMessage">
+		<part name="body" element="fault:unknownNumberFault"/>
+	</message>
+
+	<message name="UnknownManagedNumberFaultMessage">
+		<part name="body" element="fault:unknownManagedNumberFault"/>
+	</message>
+
+	<message name="InvalidOperatorFaultMessage">
+		<part name="body" element="fault:invalidOperatorFault"/>
+	</message>
+
+	<message name="InvalidRequestFormatFaultMessage">
+		<part name="body" element="fault:invalidRequestFormatFault"/>
+	</message>
+
+	<message name="ActionNotAuthorizedFaultMessage">
+		<part name="body" element="fault:actionNotAuthorizedFault"/>
+	</message>
+
+	<portType name="ProblemReportOperationServicePortType">
+		<operation name="reportProblem">
+			<input message="tns:ReportProblemRequestMessage"/>
+			<output message="tns:ReportProblemResponseMessage"/>
+			<fault name="unknownNumberFault" message="tns:UnknownNumberFaultMessage"/>
+			<fault name="unknownManagedNumberFault" message="tns:UnknownManagedNumberFaultMessage"/>
+			<fault name="invalidOperatorFault" message="tns:InvalidOperatorFaultMessage"/>
+			<fault name="invalidRequestFormatFault" message="tns:InvalidRequestFormatFaultMessage"/>
+			<fault name="actionNotAuthorizedFault" message="tns:ActionNotAuthorizedFaultMessage"/>
+		</operation>
+	</portType>
+
+	<binding name="ProblemReportOperationServiceBinding" type="tns:ProblemReportOperationServicePortType">
+		<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+		<operation name="reportProblem">
+			<soap:operation soapAction="reportProblem"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="unknownNumberFault">
+				<soap:fault name="unknownNumberFault" use="literal"/>
+			</fault>
+			<fault name="unknownManagedNumberFault">
+				<soap:fault name="unknownManagedNumberFault" use="literal"/>
+			</fault>
+			<fault name="invalidOperatorFault">
+				<soap:fault name="invalidOperatorFault" use="literal"/>
+			</fault>
+			<fault name="invalidRequestFormatFault">
+				<soap:fault name="invalidRequestFormatFault" use="literal"/>
+			</fault>
+			<fault name="actionNotAuthorizedFault">
+				<soap:fault name="actionNotAuthorizedFault" use="literal"/>
+			</fault>
+		</operation>
+	</binding>
+
+	<service name="ProblemReportOperationService">
+		<port name="ProblemReportOperationServicePort" binding="tns:ProblemReportOperationServiceBinding">
+			<soap:address location="http://cameroonmnp.campost.cm/cadb/services/ProblemReportOperationService/"/>
+		</port>
+	</service>
+
+</definitions>
