@@ -146,6 +146,8 @@ class PortingOperationService  {
 
                 $fault = key($e->detail);
 
+                $response->message = $e->detail->$fault->message;
+
                 $response->error = $fault;
 
                 return $response;
@@ -189,6 +191,8 @@ class PortingOperationService  {
                 $response = new errorResponse();
 
                 $fault = key($e->detail);
+
+                $response->message = $e->detail->$fault->message;
 
                 $response->error = $fault;
 
@@ -234,6 +238,8 @@ class PortingOperationService  {
                 $response = new errorResponse();
 
                 $fault = key($e->detail);
+
+                $response->message = $e->detail->$fault->message;
 
                 $response->error = $fault;
 
@@ -282,6 +288,8 @@ class PortingOperationService  {
                 $response = new errorResponse();
 
                 $fault = key($e->detail);
+
+                $response->message = $e->detail->$fault->message;
 
                 $response->error = $fault;
 
@@ -335,6 +343,8 @@ class PortingOperationService  {
 
                 $fault = key($e->detail);
 
+                $response->message = $e->detail->$fault->message;
+
                 $response->error = $fault;
 
                 return $response;
@@ -387,6 +397,8 @@ class PortingOperationService  {
 
                 $fault = key($e->detail);
 
+                $response->message = $e->detail->$fault->message;
+
                 $response->error = $fault;
 
                 return $response;
@@ -430,11 +442,11 @@ class PortingOperationService  {
 
                 $response = new errorResponse();
 
-                var_dump($e->xdebug_message);
+                $fault = key($e->detail);
 
-                //$fault = key($e->detail);
+                $response->message = $e->detail->$fault->message;
 
-                //$response->error = $fault;
+                $response->error = $fault;
 
                 return $response;
 
@@ -478,6 +490,8 @@ class PortingOperationService  {
                 $response = new errorResponse();
 
                 $fault = key($e->detail);
+
+                $response->message = $e->detail->$fault->message;
 
                 $response->error = $fault;
 
@@ -524,6 +538,8 @@ class PortingOperationService  {
 
                 $fault = key($e->detail);
 
+                $response->message = $e->detail->$fault->message;
+
                 $response->error = $fault;
 
                 return $response;
@@ -569,6 +585,8 @@ class PortingOperationService  {
 
                 $fault = key($e->detail);
 
+                $response->message = $e->detail->$fault->message;
+
                 $response->error = $fault;
 
                 return $response;
@@ -613,6 +631,8 @@ class PortingOperationService  {
                 $response = new errorResponse();
 
                 $fault = key($e->detail);
+
+                $response->message = $e->detail->$fault->message;
 
                 $response->error = $fault;
 
@@ -661,6 +681,8 @@ class PortingOperationService  {
 
                 $fault = key($e->detail);
 
+                $response->message = $e->detail->$fault->message;
+
                 $response->error = $fault;
 
                 return $response;
@@ -707,6 +729,8 @@ class PortingOperationService  {
                 $response = new errorResponse();
 
                 $fault = key($e->detail);
+
+                $response->message = $e->detail->$fault->message;
 
                 $response->error = $fault;
 
@@ -757,15 +781,23 @@ class PortingOperationService  {
             $subscriberInfo->physicalPersonFirstName = $physicalPersonFirstName;
             $subscriberInfo->physicalPersonLastName = $physicalPersonLastName;
             $subscriberInfo->physicalPersonIdNumber = $physicalPersonIdNumber;
+            $subscriberInfo->contactNumber = $portingMsisdn;
         }else{
             $subscriberInfo->legalPersonName = $legalPersonName;
             $subscriberInfo->legalPersonTin = $legalPersonTin;
             $subscriberInfo->contactNumber = $contactNumber;
         }
 
+        // Strips only null values
+        $subscriberInfo = (object) array_filter((array) $subscriberInfo, function ($val){
+           return !is_null($val);
+        });
+
         // Make Order Porting Operation
 
         //$portingDateTime = getRecipientPortingDateTime();
+        $portingDateTime = date_create($portingDateTime);
+        $portingDateTime = date_format($portingDateTime, 'c');
 
         $orderResponse = $this->order($donorOperator, $portingDateTime, $portingMsisdn, $rio, $subscriberInfo);
 

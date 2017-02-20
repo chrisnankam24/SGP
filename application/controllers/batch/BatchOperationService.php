@@ -718,7 +718,7 @@ class BatchOperationService extends CI_Controller {
                     $faultCode = $updateResponse->error;
                     $faultReason = $updateResponse->message;
 
-                    $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'CONTRACT_DELETED_CONFIRMED failed for ' . $portingId . ' with ' . $faultCode . ' :: ' . $faultReason);
+                    $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'UPDATE STATUS failed for ' . $portingId . ' with ' . $faultCode . ' :: ' . $faultReason);
 
                     switch ($faultCode) {
                         // Terminal Processes
@@ -1441,7 +1441,7 @@ class BatchOperationService extends CI_Controller {
                     $faultCode = $updateResponse->error;
                     $faultReason = $updateResponse->message;
 
-                    $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'CONTRACT_DELETE failed for ' . $rollbackId . ' with ' . $faultCode . ' :: ' . $faultReason);
+                    $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'STATUS UPDATE failed for ' . $rollbackId . ' with ' . $faultCode . ' :: ' . $faultReason);
 
                     $fault = '';
 
