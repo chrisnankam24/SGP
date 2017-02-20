@@ -136,6 +136,9 @@ class BscsParams {
     const HMCODE = '179';
     const MTN_PLCODE = '354';
     const NEXTTEL_PLCODE = '355';
+
+    const PORTING_OUT_STATUS = '02';
+    const PORTING_OUT_REASON = '36';
 }
 
 class languageParams{

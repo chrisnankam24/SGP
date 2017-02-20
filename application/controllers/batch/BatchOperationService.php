@@ -566,8 +566,7 @@ class BatchOperationService extends CI_Controller {
     /**
      * Executed as OPD
      * BATCH_004_{A, B, C}
-     * Checks for all ports in ACCEPTED state, if any performs porting to CONTRACT_DELETED_CONFIRMED state
-     * Checks for all ports in CONTRACT_DELETED_CONFIRMED state, if any performs porting to MSISDN_EXPORT_CONFIRMED, state
+     * Checks for all ports in ACCEPTED state, if any performs porting to MSISDN_EXPORT_CONFIRMED state after updating status
      * Checks for all ports in MSISDN_EXPORT_CONFIRMED state, if any perform porting to CONFIRMED state updating Porting/Provision table
      */
     public function portingOPD(){
@@ -578,13 +577,7 @@ class BatchOperationService extends CI_Controller {
 
         $acceptedPorts = $this->Porting_model->get_porting_by_state_and_donor(\PortingService\Porting\portingStateType::ACCEPTED, Operator::ORANGE_NETWORK_ID);
 
-        $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'Preparing CONTRACT_DELETE of ' . count($acceptedPorts) . ' accepted ports');
-
-        // Load ports in Porting table in CONTRACT_DELETED_CONFIRMED state in which we are OPD
-
-        $msisdnContractDeletedPorts = $this->Porting_model->get_porting_by_state_and_donor(\PortingService\Porting\portingStateType::CONTRACT_DELETED_CONFIRMED, Operator::ORANGE_NETWORK_ID);
-
-        $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'Preparing MSISDN_EXPORT of ' . count($msisdnContractDeletedPorts) . ' contract deleted ports');
+        $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'Preparing MSISDN EXPORT of ' . count($acceptedPorts) . ' accepted ports');
 
         // Load ports in Porting table in MSISDN_EXPORT_CONFIRMED state in which we are OPD
 
@@ -609,62 +602,121 @@ class BatchOperationService extends CI_Controller {
 
             if($provisionPort){
 
-                $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'Process provisioned. Performing CONTRACT_DELETED_CONFIRMED for ' . $portingId);
+                $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'Process provisioned. Performing STATUS UPDATE for ' . $portingId);
 
-                // Porting already provisioned. Start porting moving to CONTRACT_DELETED_CONFIRMED state
+                // Porting already provisioned. Start porting moving to STATUS UPDATE state
 
                 $contractId = $acceptedPort['contractId'];
 
-                $deleteResponse = $bscsOperationService->deleteContract($contractId);
+                $updateResponse = $bscsOperationService->updateContractStatus($contractId);
 
-                if($deleteResponse->success){
+                if($updateResponse->success){
 
-                    $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'CONTRACT_DELETED_CONFIRMED Successful for ' . $portingId);
+                    $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'STATUS UPDATED Successful for ' . $portingId);
 
-                    $this->db->trans_start();
+                    $portingId = $acceptedPort['portingId'];
 
-                    // Insert into porting Evolution state table
+                    $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'Performing MSISDN_EXPORT_CONFIRMED for ' . $portingId);
 
-                    $portingEvolutionParams = array(
-                        'lastChangeDateTime' => date('c'),
-                        'portingState' => \PortingService\Porting\portingStateType::CONTRACT_DELETED_CONFIRMED,
-                        'isAutoReached' => false,
-                        'portingId' => $portingId,
-                    );
+                    // Porting already provisioned. Start porting moving to MSISDN_EXPORT_CONFIRMED state
+                    $subscriberMSISDN = $acceptedPort['startMSISDN'];
+                    $recipientNetworkId = $acceptedPort['recipientNetworkId'];
+
+                    $exportResponse = $bscsOperationService->exportMSISDN($subscriberMSISDN, $recipientNetworkId);
+
+                    if($exportResponse->success){
+
+                        $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'MSISDN_EXPORT_CONFIRMED Successful for ' . $portingId);
+
+                        $this->db->trans_start();
+
+                        // Insert into porting Evolution state table
+
+                        $portingEvolutionParams = array(
+                            'lastChangeDateTime' => date('c'),
+                            'portingState' => \PortingService\Porting\portingStateType::MSISDN_EXPORT_CONFIRMED,
+                            'isAutoReached' => false,
+                            'portingId' => $portingId,
+                        );
 
 
-                    $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
+                        $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
 
-                    // Update Porting table
+                        // Update Porting table
 
-                    $portingParams = array(
-                        'lastChangeDateTime' => date('c'),
-                        'portingState' => \PortingService\Porting\portingStateType::CONTRACT_DELETED_CONFIRMED
-                    );
+                        $portingParams = array(
+                            'lastChangeDateTime' => date('c'),
+                            'portingState' => \PortingService\Porting\portingStateType::MSISDN_EXPORT_CONFIRMED
+                        );
 
-                    $this->Porting_model->update_porting($portingId, $portingParams);
+                        $this->Porting_model->update_porting($portingId, $portingParams);
 
-                    // Notify Agents/Admin
+                        // Notify Agents/Admin
 
-                    if ($this->db->trans_status() === FALSE) {
+                        if ($this->db->trans_status() === FALSE) {
 
-                        $error = $this->db->error();
-                        $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
+                            $error = $this->db->error();
+                            $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
-                        $emailService->adminErrorReport('PORTING-MSISDN-CONTRACT DELETED BUT DB FILLED INCOMPLETE', $acceptedPort, processType::PORTING);
+                            $emailService->adminErrorReport('PORTING-MSISDN-EXPORTED BUT DB FILLED INCOMPLETE', $acceptedPort, processType::PORTING);
 
-                    }else{
+                        }else{
+
+                        }
+
+                        $this->db->trans_complete();
 
                     }
+                    else{
 
-                    $this->db->trans_complete();
+                        // Notify Admin on failed Export
+                        $faultCode = $exportResponse->error;
+                        $faultReason = $exportResponse->message;
+
+                        $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'MSISDN-EXPORT-CONFIRMED failed for ' . $portingId . ' with ' . $faultCode . ' :: ' . $faultReason);
+
+                        $fault = '';
+
+                        switch ($faultCode) {
+                            // Terminal Processes
+                            case Fault::SERVICE_BREAK_DOWN_CODE:
+                                $fault = Fault::SERVICE_BREAK_DOWN;
+                                break;
+                            case Fault::SIGNATURE_MISMATCH_CODE:
+                                $fault = Fault::SIGNATURE_MISMATCH;
+                                break;
+                            case Fault::DENIED_ACCESS_CODE:
+                                $fault = Fault::DENIED_ACCESS;
+                                break;
+                            case Fault::UNKNOWN_COMMAND_CODE:
+                                $fault = Fault::UNKNOWN_COMMAND;
+                                break;
+                            case Fault::INVALID_PARAMETER_TYPE_CODE:
+                                $fault = Fault::INVALID_PARAMETER_TYPE;
+                                break;
+
+                            case Fault::PARAMETER_LIST_CODE:
+                                $fault = Fault::PARAMETER_LIST;
+                                break;
+
+                            case Fault::CMS_EXECUTION_CODE:
+                                $fault = Fault::CMS_EXECUTION;
+                                break;
+
+                            default:
+                                $fault = $faultCode;
+                        }
+
+                        $emailService->adminErrorReport($fault, $acceptedPort, processType::PORTING);
+
+                    }
 
                 }
                 else{
 
                     // Notify Admin on failed Export
-                    $faultCode = $deleteResponse->error;
-                    $faultReason = $deleteResponse->message;
+                    $faultCode = $updateResponse->error;
+                    $faultReason = $updateResponse->message;
 
                     $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'CONTRACT_DELETED_CONFIRMED failed for ' . $portingId . ' with ' . $faultCode . ' :: ' . $faultReason);
 
@@ -704,106 +756,6 @@ class BatchOperationService extends CI_Controller {
                 //Port not yet Provisioned. Do nothing, wait till provision
 
                 $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'Process not yet provisioned for ' . $portingId);
-
-            }
-        }
-
-        foreach ($msisdnContractDeletedPorts as $msisdnContractDeletedPort){
-
-            $portingId = $msisdnContractDeletedPort['portingId'];
-
-            $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'Performing MSISDN_EXPORT_CONFIRMED for ' . $portingId);
-
-            // Porting already provisioned. Start porting moving to MSISDN_EXPORT_CONFIRMED state
-            $subscriberMSISDN = $msisdnContractDeletedPort['startMSISDN'];
-            $recipientNetworkId = $msisdnContractDeletedPort['recipientNetworkId'];
-
-            $exportResponse = $bscsOperationService->exportMSISDN($subscriberMSISDN, $recipientNetworkId);
-
-            if($exportResponse->success){
-
-                $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'MSISDN_EXPORT_CONFIRMED Successful for ' . $portingId);
-
-                $this->db->trans_start();
-
-                // Insert into porting Evolution state table
-
-                $portingEvolutionParams = array(
-                    'lastChangeDateTime' => date('c'),
-                    'portingState' => \PortingService\Porting\portingStateType::MSISDN_EXPORT_CONFIRMED,
-                    'isAutoReached' => false,
-                    'portingId' => $portingId,
-                );
-
-
-                $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
-
-                // Update Porting table
-
-                $portingParams = array(
-                    'lastChangeDateTime' => date('c'),
-                    'portingState' => \PortingService\Porting\portingStateType::MSISDN_EXPORT_CONFIRMED
-                );
-
-                $this->Porting_model->update_porting($portingId, $portingParams);
-
-                // Notify Agents/Admin
-
-                if ($this->db->trans_status() === FALSE) {
-
-                    $error = $this->db->error();
-                    $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
-
-                    $emailService->adminErrorReport('PORTING-MSISDN-EXPORTED BUT DB FILLED INCOMPLETE', $msisdnContractDeletedPort, processType::PORTING);
-
-                }else{
-
-                }
-
-                $this->db->trans_complete();
-
-            }
-            else{
-
-                // Notify Admin on failed Export
-                $faultCode = $exportResponse->error;
-                $faultReason = $exportResponse->message;
-
-                $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'MSISDN-EXPORT-CONFIRMED failed for ' . $portingId . ' with ' . $faultCode . ' :: ' . $faultReason);
-
-                $fault = '';
-
-                switch ($faultCode) {
-                    // Terminal Processes
-                    case Fault::SERVICE_BREAK_DOWN_CODE:
-                        $fault = Fault::SERVICE_BREAK_DOWN;
-                        break;
-                    case Fault::SIGNATURE_MISMATCH_CODE:
-                        $fault = Fault::SIGNATURE_MISMATCH;
-                        break;
-                    case Fault::DENIED_ACCESS_CODE:
-                        $fault = Fault::DENIED_ACCESS;
-                        break;
-                    case Fault::UNKNOWN_COMMAND_CODE:
-                        $fault = Fault::UNKNOWN_COMMAND;
-                        break;
-                    case Fault::INVALID_PARAMETER_TYPE_CODE:
-                        $fault = Fault::INVALID_PARAMETER_TYPE;
-                        break;
-
-                    case Fault::PARAMETER_LIST_CODE:
-                        $fault = Fault::PARAMETER_LIST;
-                        break;
-
-                    case Fault::CMS_EXECUTION_CODE:
-                        $fault = Fault::CMS_EXECUTION;
-                        break;
-
-                    default:
-                        $fault = $faultCode;
-                }
-
-                $emailService->adminErrorReport($fault, $msisdnContractDeletedPort, processType::PORTING);
 
             }
         }
@@ -1334,9 +1286,8 @@ class BatchOperationService extends CI_Controller {
     /**
      * Executed as OPR
      * BATCH_008_{A, B}
-     * Checks for all rollbacks in ACCEPTED state, if any performs rollbacks to CONTRACT_DELETED_CONFIRMED state
-     * Checks for all rollbacks in CONTRACT_DELETED_CONFIRMED state, if any performs rollbacks to MSISDN_EXPORT_CONFIRMED, state
-     * Checks for all rollbacks in MSISDN_EXPORT_CONFIRMED state, if any perform rollbacks to CONFIRMED state updating Porting/Provision table
+     * Checks for all ports in ACCEPTED state, if any performs porting to MSISDN_EXPORT_CONFIRMED state after updating status
+     * Checks for all ports in MSISDN_EXPORT_CONFIRMED state, if any perform porting to CONFIRMED state updating Porting/Provision table
      */
     public function rollbackOPR(){
 
@@ -1346,13 +1297,7 @@ class BatchOperationService extends CI_Controller {
 
         $acceptedRollbacks = $this->Rollback_model->get_rollback_by_state_and_recipient(\RollbackService\Rollback\rollbackStateType::ACCEPTED, Operator::ORANGE_NETWORK_ID);
 
-        $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'Preparing CONTRACT_DELETE of ' . count($acceptedRollbacks) . ' accepted rollbacks');
-
-        // Load rollbacks in Rollback table in CONTRACT_DELETED_CONFIRMED state in which we are OPR
-
-        $msisdnContractDeletedRollbacks = $this->Rollback_model->get_rollback_by_state_and_recipient(\RollbackService\Rollback\rollbackStateType::CONTRACT_DELETED_CONFIRMED, Operator::ORANGE_NETWORK_ID);
-
-        $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'Preparing MSISDN_EXPORT of ' . count($msisdnContractDeletedRollbacks) . ' contract deleted rollbacks');
+        $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'Preparing MSISDN-EXPORT of ' . count($acceptedRollbacks) . ' accepted rollbacks');
 
         // Load rollbacks in Rollback table in MSISDN_EXPORT_CONFIRMED state in which we are OPR
 
@@ -1377,65 +1322,124 @@ class BatchOperationService extends CI_Controller {
 
             if($provisionRollback){
 
-                $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'Proccess provisioned. Performing CONTRACT_DELETE for ' . $rollbackId);
+                $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'Proccess provisioned. Performing STATUS UPDATE for ' . $rollbackId);
 
-                // Rollback already provisioned. Start rollback moving to CONTRACT_DELETED_CONFIRMED state
+                // Rollback already provisioned. Start rollback moving to STATUS UPDATE state
                 $subscriberMSISDN = $acceptedRollback['startMSISDN'];
 
                 $contractId = $bscsOperationService->getContractId($subscriberMSISDN);
 
-                $deleteResponse = $bscsOperationService->deleteContract($contractId);
+                $updateResponse = $bscsOperationService->updateContractStatus($contractId);
 
-                if($deleteResponse->success){
+                if($updateResponse->success){
 
-                    $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'CONTRACT_DELETE successful for ' . $rollbackId);
+                    $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'STATUS UPDATE successful for ' . $rollbackId);
 
-                    $this->db->trans_start();
+                    $subscriberMSISDN = $acceptedRollback['startMSISDN'];
 
-                    // Insert into Rollback Evolution state table
+                    $donorNetworkId = $acceptedRollback['donorNetworkId'];
 
-                    $rollbackEvolutionParams = array(
-                        'lastChangeDateTime' => date('c'),
-                        'rollbackState' => \RollbackService\Rollback\rollbackStateType::CONTRACT_DELETED_CONFIRMED,
-                        'isAutoReached' => false,
-                        'rollbackId' => $rollbackId,
-                    );
+                    $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'Performing MSISDN_EXPORT for ' . $rollbackId);
+
+                    $exportResponse = $bscsOperationService->exportMSISDN($subscriberMSISDN, $donorNetworkId);
+
+                    if($exportResponse->success){
+
+                        $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'MSISDN_EXPORT successful for ' . $rollbackId);
+
+                        $this->db->trans_start();
+
+                        // Insert into Rollback Evolution state table
+
+                        $rollbackEvolutionParams = array(
+                            'lastChangeDateTime' => date('c'),
+                            'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_EXPORT_CONFIRMED,
+                            'isAutoReached' => false,
+                            'rollbackId' => $rollbackId,
+                        );
 
 
-                    $this->Rollbackstateevolution_model->add_rollbackstateevolution($rollbackEvolutionParams);
+                        $this->Rollbackstateevolution_model->add_rollbackstateevolution($rollbackEvolutionParams);
 
-                    // Update Rollback table
+                        // Update Rollback table
 
-                    $rollbackParams = array(
-                        'lastChangeDateTime' => date('c'),
-                        'rollbackState' => \RollbackService\Rollback\rollbackStateType::CONTRACT_DELETED_CONFIRMED
-                    );
+                        $rollbackParams = array(
+                            'lastChangeDateTime' => date('c'),
+                            'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_EXPORT_CONFIRMED
+                        );
 
-                    $this->Rollback_model->update_rollback($rollbackId, $rollbackParams);
+                        $this->Rollback_model->update_rollback($rollbackId, $rollbackParams);
 
-                    // Notify Agents/Admin
+                        // Notify Agents/Admin
 
-                    if ($this->db->trans_status() === FALSE) {
+                        if ($this->db->trans_status() === FALSE) {
 
-                        $error = $this->db->error();
-                        $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
+                            $error = $this->db->error();
+                            $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
+
+                            $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
+
+                            $emailService->adminErrorReport('ROLLBACK MSISDN EXPORTED BUT DB FILLED INCOMPLETE', $rollbackParams, processType::ROLLBACK);
+
+                        }else{
+
+                        }
+
+                        $this->db->trans_complete();
+
+                    }
+                    else{
+
+                        // Notify Admin on failed Export
+                        $faultCode = $exportResponse->error;
+                        $faultReason = $exportResponse->message;
+
+                        $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'MSISDN_EXPORT failed for ' . $rollbackId . ' with ' . $faultCode . ' :: ' . $faultReason);
+
+                        $fault = '';
+
+                        switch ($faultCode) {
+                            // Terminal Processes
+                            case Fault::SERVICE_BREAK_DOWN_CODE:
+                                $fault = Fault::SERVICE_BREAK_DOWN;
+                                break;
+                            case Fault::SIGNATURE_MISMATCH_CODE:
+                                $fault = Fault::SIGNATURE_MISMATCH;
+                                break;
+                            case Fault::DENIED_ACCESS_CODE:
+                                $fault = Fault::DENIED_ACCESS;
+                                break;
+                            case Fault::UNKNOWN_COMMAND_CODE:
+                                $fault = Fault::UNKNOWN_COMMAND;
+                                break;
+                            case Fault::INVALID_PARAMETER_TYPE_CODE:
+                                $fault = Fault::INVALID_PARAMETER_TYPE;
+                                break;
+
+                            case Fault::PARAMETER_LIST_CODE:
+                                $fault = Fault::PARAMETER_LIST;
+                                break;
+
+                            case Fault::CMS_EXECUTION_CODE:
+                                $fault = Fault::CMS_EXECUTION;
+                                break;
+
+                            default:
+                                $fault = $faultCode;
+                        }
 
                         $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
 
-                        $emailService->adminErrorReport('ROLLBACK CONTRACT DELETED BUT DB FILLED INCOMPLETE', $rollbackParams, processType::ROLLBACK);
-
-                    }else{
+                        $emailService->adminErrorReport($fault, $rollbackParams, processType::ROLLBACK);
 
                     }
-
-                    $this->db->trans_complete();
 
                 }
                 else{
 
                     // Notify Admin on failed Export
-                    $faultCode = $deleteResponse->error;
-                    $faultReason = $deleteResponse->message;
+                    $faultCode = $updateResponse->error;
+                    $faultReason = $updateResponse->message;
 
                     $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'CONTRACT_DELETE failed for ' . $rollbackId . ' with ' . $faultCode . ' :: ' . $faultReason);
 
@@ -1479,110 +1483,6 @@ class BatchOperationService extends CI_Controller {
                 $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'Provisioning not yet done for ' . $rollbackId);
 
                 //Rollback not yet Provisioned. Do nothing, wait till provision
-
-            }
-        }
-
-        foreach ($msisdnContractDeletedRollbacks as $msisdnContractDeletedRollback){
-
-            $rollbackId = $msisdnContractDeletedRollback['rollbackId'];
-
-            $subscriberMSISDN = $msisdnContractDeletedRollback['startMSISDN'];
-
-            $donorNetworkId = $msisdnContractDeletedRollback['donorNetworkId'];
-
-            $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'Performing MSISDN_EXPORT for ' . $rollbackId);
-
-            $exportResponse = $bscsOperationService->exportMSISDN($subscriberMSISDN, $donorNetworkId);
-
-            if($exportResponse->success){
-
-                $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'MSISDN_EXPORT successful for ' . $rollbackId);
-
-                $this->db->trans_start();
-
-                // Insert into Rollback Evolution state table
-
-                $rollbackEvolutionParams = array(
-                    'lastChangeDateTime' => date('c'),
-                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_EXPORT_CONFIRMED,
-                    'isAutoReached' => false,
-                    'rollbackId' => $rollbackId,
-                );
-
-
-                $this->Rollbackstateevolution_model->add_rollbackstateevolution($rollbackEvolutionParams);
-
-                // Update Rollback table
-
-                $rollbackParams = array(
-                    'lastChangeDateTime' => date('c'),
-                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_EXPORT_CONFIRMED
-                );
-
-                $this->Rollback_model->update_rollback($rollbackId, $rollbackParams);
-
-                // Notify Agents/Admin
-
-                if ($this->db->trans_status() === FALSE) {
-
-                    $error = $this->db->error();
-                    $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
-
-                    $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
-
-                    $emailService->adminErrorReport('ROLLBACK MSISDN EXPORTED BUT DB FILLED INCOMPLETE', $rollbackParams, processType::ROLLBACK);
-
-                }else{
-
-                }
-
-                $this->db->trans_complete();
-
-            }
-            else{
-
-                // Notify Admin on failed Export
-                $faultCode = $exportResponse->error;
-                $faultReason = $exportResponse->message;
-
-                $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'MSISDN_EXPORT failed for ' . $rollbackId . ' with ' . $faultCode . ' :: ' . $faultReason);
-
-                $fault = '';
-
-                switch ($faultCode) {
-                    // Terminal Processes
-                    case Fault::SERVICE_BREAK_DOWN_CODE:
-                        $fault = Fault::SERVICE_BREAK_DOWN;
-                        break;
-                    case Fault::SIGNATURE_MISMATCH_CODE:
-                        $fault = Fault::SIGNATURE_MISMATCH;
-                        break;
-                    case Fault::DENIED_ACCESS_CODE:
-                        $fault = Fault::DENIED_ACCESS;
-                        break;
-                    case Fault::UNKNOWN_COMMAND_CODE:
-                        $fault = Fault::UNKNOWN_COMMAND;
-                        break;
-                    case Fault::INVALID_PARAMETER_TYPE_CODE:
-                        $fault = Fault::INVALID_PARAMETER_TYPE;
-                        break;
-
-                    case Fault::PARAMETER_LIST_CODE:
-                        $fault = Fault::PARAMETER_LIST;
-                        break;
-
-                    case Fault::CMS_EXECUTION_CODE:
-                        $fault = Fault::CMS_EXECUTION;
-                        break;
-
-                    default:
-                        $fault = $faultCode;
-                }
-
-                $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
-
-                $emailService->adminErrorReport($fault, $rollbackParams, processType::ROLLBACK);
 
             }
         }

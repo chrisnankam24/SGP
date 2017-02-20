@@ -741,6 +741,75 @@ class BscsOperationService {
 
     }
 
+    /**
+     * Updates contract status in BSCS
+     * @param $contractId
+     * @return errorResponse
+     */
+    public function updateContractStatus($contractId){
+
+        if($this->contractClient) {
+
+            $logonResponse = $this->logonContract();
+
+            if($logonResponse->success){
+
+                // Make updateContractStatus request
+                $request = new BscsTypes\updateContractStatus();
+
+                $request->i_co_id = $contractId;
+                $request->autoCommit = true;
+                $request->endUserName = BscsParams::endUserName;
+                $request->i_new_status = BscsParams::PORTING_OUT_STATUS;
+                $request->i_reason = BscsParams::PORTING_OUT_REASON;
+
+                try {
+
+                    $response = $this->contractClient->updateContractStatus($request);
+
+                    $response->success = true;
+
+                    $this->logoutContract();
+
+                    return $response;
+
+                }
+                catch (SoapFault $e){
+
+                    $response = new errorResponse();
+
+                    $fault = key($e->detail);
+
+                    $response->message = $e->detail->$fault->reason;
+
+                    $response->error = $fault;
+
+                    $this->logoutContract();
+
+                    return $response;
+
+                }
+
+            }else{
+
+                return $logonResponse;
+
+            }
+
+        }else{
+            // Client null
+
+            $response = new errorResponse();
+
+            $response->error = Fault::CLIENT_INIT_FAULT;
+
+            return $response;
+
+        }
+
+    }
+
+
     public function logonContract(){
 
         // Make logon request
