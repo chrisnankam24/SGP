@@ -18,10 +18,10 @@ class SMS extends CI_Controller {
 
     // Denomination of various operators to be used in SMS messages
     public static $DENOMINATION_COMMERCIALE_MTN = 'MTN CM';
-    public static $DENOMINATION_COMMERCIALE_ORANGE = 'Orange CM';
+    public static $DENOMINATION_COMMERCIALE_ORANGE = 'ORANGE CM';
     public static $DENOMINATION_COMMERCIALE_NEXTTEL = 'NEXTTEL';
 
-    public static $CUSTOMER_SERVICE = '901';
+    public static $CUSTOMER_SERVICE = '905';
 
     public function __construct()
     {

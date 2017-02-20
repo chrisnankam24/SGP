@@ -17,6 +17,7 @@ class SVI extends CI_Controller {
 
     public function __construct()
     {
+
         parent::__construct();
 
         $this->load->model('FileLog_model');
@@ -63,7 +64,7 @@ class SVI extends CI_Controller {
 
         }
 
-        $this->fileLogAction('8001', 'SVI', 'SVI Request received from ' . $msisdn);
+        $this->fileLogAction('8002', 'SVI', 'SVI Request received from ' . $msisdn);
 
         $rioWithInfo = RIO::getRIOAndInfo($msisdn);
 
@@ -86,7 +87,7 @@ class SVI extends CI_Controller {
 
         }
 
-        $this->fileLogAction('8001', 'SVI', 'SVI Response sent to ' . $msisdn);
+        $this->fileLogAction('8002', 'SVI', 'SVI Response sent to ' . $msisdn);
 
         return $response;
     }

@@ -52,8 +52,6 @@ class RIO extends CI_Controller {
 
         if($subsInfo){
 
-            $contractId = $subsInfo['CONTRACT_ID'];
-
             if($subsInfo['TYPE_CLIENT'] == 'C'){
 
                 return RIO::calculateRIO($subsInfo, $msisdn);
@@ -87,8 +85,6 @@ class RIO extends CI_Controller {
             $result = false;
 
             if($subsInfo){
-
-                $contractId = $subsInfo['CONTRACT_ID'];
 
                 $result = RIO::calculateRIO($subsInfo, $msisdn);
 

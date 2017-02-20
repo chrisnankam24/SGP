@@ -94,9 +94,7 @@ class USSD extends CI_Controller {
                 $template = file_get_contents(__DIR__ . '/en_error_ussd_template_rio.txt');
             }
 
-            // Set Subscriber RIO
-            $message = str_replace('[rio]', $rio, $template);
-
+            $message = $template;
 
         }
 
@@ -130,10 +128,12 @@ class USSD extends CI_Controller {
         $this->fileLogAction('8001', 'USSD', 'USSD Response sent to ' . $msisdn);
 
         if($rio && !$gotLanguage){
+
             // Load en template
             $template = file_get_contents(__DIR__ . '/en_ussd_template_rio.txt');
+
             // Set Subscriber RIO
-            $message_en = str_replace('[rio]', $rio, '. ' . $template);
+            $message_en = str_replace('[rio]', $rio, $template);
 
             $message = $message . $message_en;
 

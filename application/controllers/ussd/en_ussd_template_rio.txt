@@ -1,1 +1,1 @@
-Your RIO is [rio]
+Dear customer your RIO is [rio].

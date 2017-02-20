@@ -1,1 +1,1 @@
-Votre numéro RIO est [rio]
+Cher client, votre numéro RIO est [rio].

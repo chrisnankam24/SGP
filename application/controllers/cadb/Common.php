@@ -12,7 +12,7 @@
  * CADB Authorization Token
  */
 Class Auth {
-    const CADB_AUTH_BEARER = 'f6afe198-954c-4774-a0a9-27124dea306b';
+    const CADB_AUTH_BEARER = 'b584f5bb-c637-4fe2-a379-bd74235ecc79';
     const LDB_AUTH_BEARER = 'e161bb0f103f4c6589f97a00bb27eb921933c1e7f7c39a8049fb3e2a53e1eab0'; // var_dump(hash('sha256', '#SGP*2016%ORANGE$CM'));
 }
 
@@ -24,9 +24,13 @@ class Operator {
     const ORANGE_NETWORK_ID = '02';
     const NEXTTEL_NETWORK_ID = '04';
 
+    const ORANGE_DUMMY_NETWORK_ID = '92';
+
     const MTN_ROUTING_NUMBER = '1601';
     const ORANGE_ROUTING_NUMBER = '1602';
     const NEXTTEL_ROUTING_NUMBER = '1603';
+
+    const ORANGE_DUMMY_ROUTING_NUMBER = '1692';
 
     const MTN_OPERATOR_NAME = 'MTN Cameroon';
     const ORANGE_OPERATOR_NAME = 'Orange Cameroon';

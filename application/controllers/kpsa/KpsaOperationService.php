@@ -77,8 +77,6 @@ class KpsaOperationService extends CI_Controller {
         $response = [];
         $response['success'] = true;
 
-        //create MSISDN with routing number toOperator
-
         $deleteResponse = $this->deleteSubscriberTEKELEC($msisdn);
 
         if($deleteResponse['success'] == true){
@@ -105,8 +103,6 @@ class KpsaOperationService extends CI_Controller {
 
         $response = [];
         $response['success'] = true;
-
-        //create MSISDN with routing number toOperator
 
         $createResponse = $this->creationSubscriberTEKELEC($msisdn, $toRoutingNumber);
 

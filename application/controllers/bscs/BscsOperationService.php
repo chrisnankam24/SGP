@@ -61,10 +61,6 @@ class BscsOperationService {
         // Set the class for the soap server
         $server->setClass("ServerFunctionalities");
 
-        //$postdata = file_get_contents("php://input");
-
-        //$this->FileLog_model->write_log('BSCS', 'BSCS', 'XML Received: ' . json_encode($postdata));
-
         // Handle soap operations
         $server->handle();
 
@@ -132,7 +128,7 @@ class BscsOperationService {
 
         }
 
-        return '560565';
+        return $contractId;
 
     }
 
