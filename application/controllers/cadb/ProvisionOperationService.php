@@ -67,6 +67,8 @@ class ProvisionOperationService {
 
                 $fault = key($e->detail);
 
+                $response->message = $e->detail->$fault->message;
+
                 $response->error = $fault;
 
                 return $response;

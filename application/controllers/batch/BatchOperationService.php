@@ -348,8 +348,9 @@ class BatchOperationService extends CI_Controller {
                     else{
 
                         $fault = $approveResponse->error;
+                        $message = $approveResponse->message;
 
-                        $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'APPROVE failed for ' . $portingId . ' with ' . $fault);
+                        $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'APPROVE failed for ' . $portingId . ' with ' . $fault . ' :: ' . $message);
 
                         switch ($fault) {
                             // Terminal Processes
@@ -437,8 +438,9 @@ class BatchOperationService extends CI_Controller {
                     else{
 
                         $fault = $denyResponse->error;
+                        $message = $denyResponse->message;
 
-                        $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'DENY failed for ' . $portingId . ' with ' . $fault);
+                        $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'DENY failed for ' . $portingId . ' with ' . $fault . ' :: ' . $message);
 
                         switch ($fault) {
                             // Terminal Processes

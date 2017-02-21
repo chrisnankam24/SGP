@@ -110,6 +110,8 @@ class RollbackOperationService {
 
                 $fault = key($e->detail);
 
+                $response->message = $e->detail->$fault->message;
+
                 $response->error = $fault;
 
                 return $response;
@@ -155,6 +157,8 @@ class RollbackOperationService {
                 $response = new errorResponse();
 
                 $fault = key($e->detail);
+
+                $response->message = $e->detail->$fault->message;
 
                 $response->error = $fault;
 
@@ -208,6 +212,8 @@ class RollbackOperationService {
 
                 $fault = key($e->detail);
 
+                $response->message = $e->detail->$fault->message;
+
                 $response->error = $fault;
 
                 return $response;
@@ -251,6 +257,7 @@ class RollbackOperationService {
 
                 $response = new errorResponse();
                 $fault = key($e->detail);
+                $response->message = $e->detail->$fault->message;
                 $response->error = $fault;
                 return $response;
 
@@ -287,6 +294,7 @@ class RollbackOperationService {
 
                 $response = new errorResponse();
                 $fault = key($e->detail);
+                $response->message = $e->detail->$fault->message;
                 $response->error = $fault;
                 return $response;
 
@@ -323,6 +331,7 @@ class RollbackOperationService {
 
                 $response = new errorResponse();
                 $fault = key($e->detail);
+                $response->message = $e->detail->$fault->message;
                 $response->error = $fault;
                 return $response;
 
@@ -359,6 +368,7 @@ class RollbackOperationService {
 
                 $response = new errorResponse();
                 $fault = key($e->detail);
+                $response->message = $e->detail->$fault->message;
                 $response->error = $fault;
                 return $response;
 
@@ -395,6 +405,7 @@ class RollbackOperationService {
 
                 $response = new errorResponse();
                 $fault = key($e->detail);
+                $response->message = $e->detail->$fault->message;
                 $response->error = $fault;
                 return $response;
 
@@ -433,6 +444,7 @@ class RollbackOperationService {
 
                 $response = new errorResponse();
                 $fault = key($e->detail);
+                $response->message = $e->detail->$fault->message;
                 $response->error = $fault;
                 return $response;
 
