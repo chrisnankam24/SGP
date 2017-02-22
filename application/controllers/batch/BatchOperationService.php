@@ -783,37 +783,7 @@ class BatchOperationService extends CI_Controller {
 
             if($kpsaResponse['success']){
 
-                $this->db->trans_start();
-
                 $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'KPSA_OPERATION Successful for ' . $portingId);
-
-                // Insert into porting Evolution state table
-
-                $portingEvolutionParams = array(
-                    'lastChangeDateTime' => date('c'),
-                    'portingState' => \PortingService\Porting\portingStateType::COMPLETED,
-                    'isAutoReached' => false,
-                    'portingId' => $portingId,
-                );
-
-                $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
-
-                // Update Porting table
-
-                $portingParams = array(
-                    'lastChangeDateTime' => date('c'),
-                    'portingState' => \PortingService\Porting\portingStateType::COMPLETED
-                );
-
-                $this->Porting_model->update_porting($portingId, $portingParams);
-
-                // Update Provisioning table
-
-                $prParams = array(
-                    'provisionState' => \ProvisionService\ProvisionNotification\provisionStateType::COMPLETED,
-                );
-
-                $this->Provisioning_model->update_provisioning($portingId, $prParams);
 
                 // Confirm Routing Data
                 $provisionOperationService = new ProvisionOperationService();
@@ -825,28 +795,57 @@ class BatchOperationService extends CI_Controller {
                     // Process terminated
                     $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'CONFIRM Successful for ' . $portingId);
 
+                    $this->db->trans_start();
+
+                    // Insert into porting Evolution state table
+
+                    $portingEvolutionParams = array(
+                        'lastChangeDateTime' => date('c'),
+                        'portingState' => \PortingService\Porting\portingStateType::COMPLETED,
+                        'isAutoReached' => false,
+                        'portingId' => $portingId,
+                    );
+
+                    $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
+
+                    // Update Porting table
+
+                    $portingParams = array(
+                        'lastChangeDateTime' => date('c'),
+                        'portingState' => \PortingService\Porting\portingStateType::COMPLETED
+                    );
+
+                    $this->Porting_model->update_porting($portingId, $portingParams);
+
+                    // Update Provisioning table
+
+                    $prParams = array(
+                        'provisionState' => \ProvisionService\ProvisionNotification\provisionStateType::COMPLETED,
+                    );
+
+                    $this->Provisioning_model->update_provisioning($portingId, $prParams);
+
+                    // Notify Agents/Admin
+
+                    if ($this->db->trans_status() === FALSE) {
+
+                        $error = $this->db->error();
+                        $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
+
+                        $emailService->adminErrorReport('PORTING COMPLETED BUT DB FILLED INCOMPLETE', $msisdnExportedPort, processType::PORTING);
+
+                    }else{
+
+                    }
+
+                    $this->db->trans_complete();
+
                 }
                 else{
 
-                    // Who cares, its auto anyway :)
                     $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'CONFIRM failed for ' . $portingId);
 
                 }
-
-                // Notify Agents/Admin
-
-                if ($this->db->trans_status() === FALSE) {
-
-                    $error = $this->db->error();
-                    $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
-
-                    $emailService->adminErrorReport('PORTING COMPLETED BUT DB FILLED INCOMPLETE', $msisdnExportedPort, processType::PORTING);
-
-                }else{
-
-                }
-
-                $this->db->trans_complete();
 
             }
 
@@ -1262,55 +1261,55 @@ class BatchOperationService extends CI_Controller {
                     // Process terminated
                     $this->fileLogAction('7005', 'BatchOperationService::portingOPR', 'ConfirmRoutingData successful for ' . $portingId);
 
+                    // Updating Porting State to COMPLETED
+
+                    $this->db->trans_start();
+
+                    // Insert into porting Evolution state table
+
+                    $portingEvolutionParams = array(
+                        'lastChangeDateTime' => date('c'),
+                        'portingState' => \PortingService\Porting\portingStateType::COMPLETED,
+                        'isAutoReached' => false,
+                        'portingId' => $portingId,
+                    );
+
+                    $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
+
+                    // Update Porting table
+
+                    $portingParams = array(
+                        'lastChangeDateTime' => date('c'),
+                        'portingState' => \PortingService\Porting\portingStateType::COMPLETED
+                    );
+
+                    $this->Porting_model->update_porting($portingId, $portingParams);
+
+                    // Notify Agents/Admin
+
+                    if ($this->db->trans_status() === FALSE) {
+
+                        $error = $this->db->error();
+                        $this->fileLogAction($error['code'], 'ProvisionNotificationService', $error['message']);
+
+                        $portingParams = $confirmedPort;
+
+                        $emailService->adminErrorReport('PORTING COMPLETED FROM PROVISIONING BUT DB FILLED INCOMPLETE', $portingParams, processType::PORTING);
+
+                    }else{
+
+                    }
+
+                    $this->db->trans_complete();
+
                 }
+
                 else{
 
                     // Who cares, its auto anyway :)
                     $this->fileLogAction('7005', 'BatchOperationService::portingOPR', 'ConfirmRoutingData failed for ' . $portingId);
 
                 }
-
-                // Updating Porting State to COMPLETED
-
-                $this->db->trans_start();
-
-                // Insert into porting Evolution state table
-
-                $portingEvolutionParams = array(
-                    'lastChangeDateTime' => date('c'),
-                    'portingState' => \PortingService\Porting\portingStateType::COMPLETED,
-                    'isAutoReached' => false,
-                    'portingId' => $portingId,
-                );
-
-                $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
-
-                // Update Porting table
-
-                $portingParams = array(
-                    'lastChangeDateTime' => date('c'),
-                    'portingState' => \PortingService\Porting\portingStateType::COMPLETED
-                );
-
-                $this->Porting_model->update_porting($portingId, $portingParams);
-
-                // Notify Agents/Admin
-
-                if ($this->db->trans_status() === FALSE) {
-
-                    $error = $this->db->error();
-                    $this->fileLogAction($error['code'], 'ProvisionNotificationService', $error['message']);
-
-                    $portingParams = $confirmedPort;
-
-                    $emailService->adminErrorReport('PORTING COMPLETED FROM PROVISIONING BUT DB FILLED INCOMPLETE', $portingParams, processType::PORTING);
-
-                }else{
-
-                }
-
-                $this->db->trans_complete();
-
 
             }else{
 
@@ -1601,36 +1600,6 @@ class BatchOperationService extends CI_Controller {
 
                 $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'KPSA_OPERATION successful for ' . $rollbackId);
 
-                $this->db->trans_start();
-
-                // Insert into Rollback Evolution state table
-
-                $rollbackEvolutionParams = array(
-                    'lastChangeDateTime' => date('c'),
-                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::COMPLETED,
-                    'isAutoReached' => false,
-                    'rollbackId' => $rollbackId,
-                );
-
-                $this->Rollbackstateevolution_model->add_rollbackstateevolution($rollbackEvolutionParams);
-
-                // Update Rollback table
-
-                $rollbackParams = array(
-                    'lastChangeDateTime' => date('c'),
-                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::COMPLETED
-                );
-
-                $this->Rollback_model->update_rollback($rollbackId, $rollbackParams);
-
-                // Update Provisioning table
-
-                $prParams = array(
-                    'provisionState' => \ProvisionService\ProvisionNotification\provisionStateType::COMPLETED,
-                );
-
-                $this->Provisioning_model->update_provisioning($rollbackId, $prParams);
-
                 // Confirm Routing Data
                 $provisionOperationService = new ProvisionOperationService();
 
@@ -1641,28 +1610,58 @@ class BatchOperationService extends CI_Controller {
                     // Process terminated
                     $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'CONFIRM successful for ' . $rollbackId);
 
+                    $this->db->trans_start();
+
+                    // Insert into Rollback Evolution state table
+
+                    $rollbackEvolutionParams = array(
+                        'lastChangeDateTime' => date('c'),
+                        'rollbackState' => \RollbackService\Rollback\rollbackStateType::COMPLETED,
+                        'isAutoReached' => false,
+                        'rollbackId' => $rollbackId,
+                    );
+
+                    $this->Rollbackstateevolution_model->add_rollbackstateevolution($rollbackEvolutionParams);
+
+                    // Update Rollback table
+
+                    $rollbackParams = array(
+                        'lastChangeDateTime' => date('c'),
+                        'rollbackState' => \RollbackService\Rollback\rollbackStateType::COMPLETED
+                    );
+
+                    $this->Rollback_model->update_rollback($rollbackId, $rollbackParams);
+
+                    // Update Provisioning table
+
+                    $prParams = array(
+                        'provisionState' => \ProvisionService\ProvisionNotification\provisionStateType::COMPLETED,
+                    );
+
+                    $this->Provisioning_model->update_provisioning($rollbackId, $prParams);
+
+                    // Notify Agents/Admin
+
+                    if ($this->db->trans_status() === FALSE) {
+
+                        $error = $this->db->error();
+                        $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
+
+                        $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
+
+                        $emailService->adminErrorReport('ROLLBACK COMPLETED BUT DB FILLED INCOMPLETE', $rollbackParams, processType::ROLLBACK);
+
+                    }
+
+                    $this->db->trans_complete();
+
                 }
                 else{
 
-                    // Who cares, its auto anyway :)
                     $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'CONFIRM failed for ' . $rollbackId);
 
                 }
 
-                // Notify Agents/Admin
-
-                if ($this->db->trans_status() === FALSE) {
-
-                    $error = $this->db->error();
-                    $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
-
-                    $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
-
-                    $emailService->adminErrorReport('ROLLBACK COMPLETED BUT DB FILLED INCOMPLETE', $rollbackParams, processType::ROLLBACK);
-
-                }
-
-                $this->db->trans_complete();
 
             }
 
@@ -1711,7 +1710,7 @@ class BatchOperationService extends CI_Controller {
 
         $confirmedRollbacks = $this->Rollback_model->get_rollback_by_state_and_donor(\RollbackService\Rollback\rollbackStateType::CONFIRMED, Operator::ORANGE_NETWORK_ID);
 
-        $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'Preparing CONFIRM of ' . count($msisdnConfirmedRollbacks) . ' msisdn change imported rollbacks');
+        $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'Preparing COMPLETE of ' . count($confirmedRollbacks) . ' confirmed rollbacks');
 
         $bscsOperationService = new BscsOperationService();
 
@@ -2094,6 +2093,47 @@ class BatchOperationService extends CI_Controller {
                     // Process terminated
                     $this->fileLogAction('7009', 'BatchOperationService::rollbackOPD', 'ConfirmRoutingData successful for ' . $rollbackId);
 
+                    // Update Rollback to COMPLETED
+
+                    $this->db->trans_start();
+
+                    // Insert into Rollback Evolution state table
+
+                    $rollbackEvolutionParams = array(
+                        'lastChangeDateTime' => date('c'),
+                        'rollbackState' => \RollbackService\Rollback\rollbackStateType::COMPLETED,
+                        'isAutoReached' => false,
+                        'rollbackId' => $rollbackId,
+                    );
+
+                    $this->Rollbackstateevolution_model->add_rollbackstateevolution($rollbackEvolutionParams);
+
+                    // Update Rollback table
+
+                    $rollbackParams = array(
+                        'lastChangeDateTime' => date('c'),
+                        'rollbackState' => \RollbackService\Rollback\rollbackStateType::COMPLETED
+                    );
+
+                    $this->Rollback_model->update_rollback($rollbackId, $rollbackParams);
+
+                    // Notify Agents/Admin
+
+                    if ($this->db->trans_status() === FALSE) {
+
+                        $error = $this->db->error();
+                        $this->fileLogAction($error['code'], 'ProvisionNotificationService', $error['message']);
+
+                        $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
+
+                        $emailService->adminErrorReport('ROLLBACK COMPLETED FROM PROVISIONING BUT DB FILLED INCOMPLETE', $rollbackParams, processType::ROLLBACK);
+
+                    }else{
+
+                    }
+
+                    $this->db->trans_complete();
+
                 }
                 else{
 
@@ -2101,47 +2141,6 @@ class BatchOperationService extends CI_Controller {
                     $this->fileLogAction('7009', 'BatchOperationService::rollbackOPD', 'ConfirmRoutingData failed for ' . $rollbackId);
 
                 }
-
-                // Update Rollback to COMPLETED
-
-                $this->db->trans_start();
-
-                // Insert into Rollback Evolution state table
-
-                $rollbackEvolutionParams = array(
-                    'lastChangeDateTime' => date('c'),
-                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::COMPLETED,
-                    'isAutoReached' => false,
-                    'rollbackId' => $rollbackId,
-                );
-
-                $this->Rollbackstateevolution_model->add_rollbackstateevolution($rollbackEvolutionParams);
-
-                // Update Rollback table
-
-                $rollbackParams = array(
-                    'lastChangeDateTime' => date('c'),
-                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::COMPLETED
-                );
-
-                $this->Rollback_model->update_rollback($rollbackId, $rollbackParams);
-
-                // Notify Agents/Admin
-
-                if ($this->db->trans_status() === FALSE) {
-
-                    $error = $this->db->error();
-                    $this->fileLogAction($error['code'], 'ProvisionNotificationService', $error['message']);
-
-                    $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
-
-                    $emailService->adminErrorReport('ROLLBACK COMPLETED FROM PROVISIONING BUT DB FILLED INCOMPLETE', $rollbackParams, processType::ROLLBACK);
-
-                }else{
-
-                }
-
-                $this->db->trans_complete();
 
             }else{
 
@@ -2365,35 +2364,6 @@ class BatchOperationService extends CI_Controller {
 
                     $this->fileLogAction('7013', 'BatchOperationService::numberReturnCO', 'KPSA_OPERATION successful for ' . $returnId);
 
-                    $this->db->trans_start();
-
-                    // Insert into Return Evolution state table
-
-                    $returnEvolutionParams = array(
-                        'lastChangeDateTime' => date('c'),
-                        'returnNumberState' => \ReturnService\_Return\returnStateType::COMPLETED,
-                        'returnId' => $returnId,
-                    );
-
-
-                    $this->Numberreturnstateevolution_model->add_numberreturnstateevolution($returnEvolutionParams);
-
-                    // Update Return table
-
-                    $returnParams = array(
-                        'returnNumberState' => \ReturnService\_Return\returnStateType::COMPLETED
-                    );
-
-                    $this->Numberreturn_model->update_numberreturn($returnId, $returnParams);
-
-                    // Update Provisioning table
-
-                    $prParams = array(
-                        'provisionState' => \ProvisionService\ProvisionNotification\provisionStateType::COMPLETED
-                    );
-
-                    $this->Provisioning_model->update_provisioning($returnId, $prParams);
-
                     // Confirm Routing Data
                     $provisionOperationService = new ProvisionOperationService();
 
@@ -2405,6 +2375,52 @@ class BatchOperationService extends CI_Controller {
 
                         // Process terminated
 
+                        $this->db->trans_start();
+
+                        // Insert into Return Evolution state table
+
+                        $returnEvolutionParams = array(
+                            'lastChangeDateTime' => date('c'),
+                            'returnNumberState' => \ReturnService\_Return\returnStateType::COMPLETED,
+                            'returnId' => $returnId,
+                        );
+
+
+                        $this->Numberreturnstateevolution_model->add_numberreturnstateevolution($returnEvolutionParams);
+
+                        // Update Return table
+
+                        $returnParams = array(
+                            'returnNumberState' => \ReturnService\_Return\returnStateType::COMPLETED
+                        );
+
+                        $this->Numberreturn_model->update_numberreturn($returnId, $returnParams);
+
+                        // Update Provisioning table
+
+                        $prParams = array(
+                            'provisionState' => \ProvisionService\ProvisionNotification\provisionStateType::COMPLETED
+                        );
+
+                        $this->Provisioning_model->update_provisioning($returnId, $prParams);
+
+                        // Notify Agents/Admin
+
+                        if ($this->db->trans_status() === FALSE) {
+
+                            $error = $this->db->error();
+                            $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
+
+                            $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
+
+                            $emailService->adminErrorReport('RETURN_COMPLETED_BUT_DB_FILLED_INCOMPLETE', $nrParams, processType::_RETURN);
+
+                        }else{
+
+                        }
+
+                        $this->db->trans_complete();
+
                     }
                     else{
 
@@ -2413,23 +2429,6 @@ class BatchOperationService extends CI_Controller {
                         // Who cares, its auto anyway :)
 
                     }
-
-                    // Notify Agents/Admin
-
-                    if ($this->db->trans_status() === FALSE) {
-
-                        $error = $this->db->error();
-                        $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
-
-                        $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
-
-                        $emailService->adminErrorReport('RETURN_COMPLETED_BUT_DB_FILLED_INCOMPLETE', $nrParams, processType::_RETURN);
-
-                    }else{
-
-                    }
-
-                    $this->db->trans_complete();
 
                 }
 
@@ -2605,34 +2604,6 @@ class BatchOperationService extends CI_Controller {
 
                     $this->fileLogAction('7014', 'BatchOperationService::numberReturnPO', 'KPSA_OPERATION successful for ' . $returnId);
 
-                    $this->db->trans_start();
-
-                    // Insert into Return Evolution state table
-
-                    $returnEvolutionParams = array(
-                        'lastChangeDateTime' => date('c'),
-                        'returnNumberState' => \ReturnService\_Return\returnStateType::COMPLETED,
-                        'returnId' => $returnId,
-                    );
-
-                    $this->Numberreturnstateevolution_model->add_numberreturnstateevolution($returnEvolutionParams);
-
-                    // Update Return table
-
-                    $returnParams = array(
-                        'returnNumberState' => \ReturnService\_Return\returnStateType::COMPLETED
-                    );
-
-                    $this->Numberreturn_model->update_numberreturn($returnId, $returnParams);
-
-                    // Update Provisioning table
-
-                    $prParams = array(
-                        'provisionState' => \ProvisionService\ProvisionNotification\provisionStateType::COMPLETED
-                    );
-
-                    $this->Provisioning_model->update_provisioning($returnId, $prParams);
-
                     // Confirm Routing Data
                     $provisionOperationService = new ProvisionOperationService();
 
@@ -2643,6 +2614,49 @@ class BatchOperationService extends CI_Controller {
                         // Process terminated
                         $this->fileLogAction('7014', 'BatchOperationService::numberReturnPO', 'CONFIRM successful for ' . $returnId);
 
+                        $this->db->trans_start();
+
+                        // Insert into Return Evolution state table
+
+                        $returnEvolutionParams = array(
+                            'lastChangeDateTime' => date('c'),
+                            'returnNumberState' => \ReturnService\_Return\returnStateType::COMPLETED,
+                            'returnId' => $returnId,
+                        );
+
+                        $this->Numberreturnstateevolution_model->add_numberreturnstateevolution($returnEvolutionParams);
+
+                        // Update Return table
+
+                        $returnParams = array(
+                            'returnNumberState' => \ReturnService\_Return\returnStateType::COMPLETED
+                        );
+
+                        $this->Numberreturn_model->update_numberreturn($returnId, $returnParams);
+
+                        // Update Provisioning table
+
+                        $prParams = array(
+                            'provisionState' => \ProvisionService\ProvisionNotification\provisionStateType::COMPLETED
+                        );
+
+                        $this->Provisioning_model->update_provisioning($returnId, $prParams);
+
+                        // Notify Agents/Admin
+
+                        if ($this->db->trans_status() === FALSE) {
+
+                            $error = $this->db->error();
+                            $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
+
+                            $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
+
+                            $emailService->adminErrorReport('RETURN COMPLETED BUT DB FILLED INCOMPLETE', $nrParams, processType::_RETURN);
+
+                        }
+
+                        $this->db->trans_complete();
+
                     }
                     else{
 
@@ -2650,21 +2664,6 @@ class BatchOperationService extends CI_Controller {
                         $this->fileLogAction('7014', 'BatchOperationService::numberReturnPO', 'CONFIRM failed for ' . $returnId);
 
                     }
-
-                    // Notify Agents/Admin
-
-                    if ($this->db->trans_status() === FALSE) {
-
-                        $error = $this->db->error();
-                        $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
-
-                        $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
-
-                        $emailService->adminErrorReport('RETURN COMPLETED BUT DB FILLED INCOMPLETE', $nrParams, processType::_RETURN);
-
-                    }
-
-                    $this->db->trans_complete();
 
                 }
 
@@ -2741,16 +2740,6 @@ class BatchOperationService extends CI_Controller {
 
                 $this->fileLogAction('7015', 'BatchOperationService::provisionOther', 'KPSA_OPERATION successful for ' . $processId);
 
-                $this->db->trans_start();
-
-                // Update Provisioning table
-
-                $prParams = array(
-                    'provisionState' => \ProvisionService\ProvisionNotification\provisionStateType::COMPLETED
-                );
-
-                $this->Provisioning_model->update_provisioning($processId, $prParams);
-
                 // Confirm Routing Data
                 $provisionOperationService = new ProvisionOperationService();
 
@@ -2762,38 +2751,46 @@ class BatchOperationService extends CI_Controller {
 
                     // Process terminated
 
+                    $this->db->trans_start();
+
+                    // Update Provisioning table
+
+                    $prParams = array(
+                        'provisionState' => \ProvisionService\ProvisionNotification\provisionStateType::COMPLETED
+                    );
+
+                    $this->Provisioning_model->update_provisioning($processId, $prParams);
+
+                    // Notify Agents/Admin
+
+                    if ($this->db->trans_status() === FALSE) {
+
+                        $error = $this->db->error();
+                        $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
+
+                        $emailService = new EmailService();
+
+                        $eParams = array(
+                            'errorReportId' => $processId,
+                            'cadbNumber' => '',
+                            'problem' => 'NB: This is a provisioning problem',
+                            'reporterNetworkId' => '',
+                            'submissionDateTime' => date('c'),
+                            'processType' => $processType
+                        );
+
+                        $emailService->adminErrorReport('PROVISION COMPLETED BUT DB FILLED INCOMPLETE', $eParams, processType::ERROR);
+
+                    }
+
+                    $this->db->trans_complete();
+
                 }
                 else{
 
                     $this->fileLogAction('7015', 'BatchOperationService::provisionOther', 'CONFIRM failed for ' . $processId);
 
-                    // Who cares, its auto anyway :)
-
                 }
-
-                // Notify Agents/Admin
-
-                if ($this->db->trans_status() === FALSE) {
-
-                    $error = $this->db->error();
-                    $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
-
-                    $emailService = new EmailService();
-
-                    $eParams = array(
-                        'errorReportId' => $processId,
-                        'cadbNumber' => '',
-                        'problem' => 'NB: This is a provisioning problem',
-                        'reporterNetworkId' => '',
-                        'submissionDateTime' => date('c'),
-                        'processType' => $processType
-                    );
-
-                    $emailService->adminErrorReport('PROVISION COMPLETED BUT DB FILLED INCOMPLETE', $eParams, processType::ERROR);
-
-                }
-
-                $this->db->trans_complete();
 
             }
 
