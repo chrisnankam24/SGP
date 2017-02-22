@@ -80,132 +80,10 @@ class ProvisionNotificationService  extends CI_Controller {
 
         $provisionState = ProvisionNotification\provisionStateType::STARTED;
 
-        $emailService = new EmailService();
-
         if(($processType == processType::PORTING || $processType == processType::ROLLBACK) && $endNetworkId == Operator::ORANGE_NETWORK_ID){
 
             // OPR in porting, OPD in rollback
             $provisionState = ProvisionNotification\provisionStateType::COMPLETED;
-
-            // Update process state from CONFIRMED to COMPLETED or Error if not in CONFIRMED state
-            if($processType == processType::PORTING){
-                $porting = $this->Porting_model->get_porting($processId);
-
-                if($porting['portingState'] == \PortingService\Porting\portingStateType::CONFIRMED) {
-
-                    $this->db->trans_start();
-
-                    // Insert into porting Evolution state table
-
-                    $portingEvolutionParams = array(
-                        'lastChangeDateTime' => date('c'),
-                        'portingState' => \PortingService\Porting\portingStateType::COMPLETED,
-                        'isAutoReached' => false,
-                        'portingId' => $processId,
-                    );
-
-                    $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
-
-                    // Update Porting table
-
-                    $portingParams = array(
-                        'lastChangeDateTime' => date('c'),
-                        'portingState' => \PortingService\Porting\portingStateType::COMPLETED
-                    );
-
-                    $this->Porting_model->update_porting($processId, $portingParams);
-
-                    // Notify Agents/Admin
-
-                    if ($this->db->trans_status() === FALSE) {
-
-                        $error = $this->db->error();
-                        $this->fileLogAction($error['code'], 'ProvisionNotificationService', $error['message']);
-
-                        $portingParams = $this->Porting_model->get_porting($processId);
-
-                        $emailService->adminErrorReport('PORTING_COMPLETED_FROM_PROVISIONING_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
-
-                    }else{
-
-                    }
-
-                    $this->db->trans_complete();
-
-                }else{
-
-                    $emailService->cadbPortingStateOffConfirmed([]);
-
-                }
-            }elseif($processType == processType::ROLLBACK){
-
-                $rollback = $this->Rollback_model->get_full_rollback($processId);
-
-                if($rollback['rollbackState'] == \RollbackService\Rollback\rollbackStateType::CONFIRMED) {
-
-                    $this->db->trans_start();
-
-                    // Insert into Rollback Evolution state table
-
-                    $rollbackEvolutionParams = array(
-                        'lastChangeDateTime' => date('c'),
-                        'rollbackState' => \RollbackService\Rollback\rollbackStateType::COMPLETED,
-                        'isAutoReached' => false,
-                        'rollbackId' => $processId,
-                    );
-
-                    $this->Rollbackstateevolution_model->add_rollbackstateevolution($rollbackEvolutionParams);
-
-                    // Update Rollback table
-
-                    $rollbackParams = array(
-                        'lastChangeDateTime' => date('c'),
-                        'rollbackState' => \RollbackService\Rollback\rollbackStateType::COMPLETED
-                    );
-
-                    $this->Rollback_model->update_rollback($processId, $rollbackParams);
-
-                    // Notify Agents/Admin
-
-                    if ($this->db->trans_status() === FALSE) {
-
-                        $error = $this->db->error();
-                        $this->fileLogAction($error['code'], 'ProvisionNotificationService', $error['message']);
-
-                        $rollbackParams = $this->Rollback_model->get_full_rollback($processId);
-
-                        $emailService->adminErrorReport('ROLLBACK_COMPLETED_FROM_PROVISIONING_BUT_DB_FILLED_INCOMPLETE', $rollbackParams, processType::ROLLBACK);
-
-                    }else{
-
-                    }
-
-                    $this->db->trans_complete();
-
-                }else{
-
-                    $emailService->cadbPortingStateOffConfirmed([]);
-
-                }
-
-            }
-
-            // Confirm Routing Data
-            $provisionOperationService = new ProvisionOperationService();
-
-            $prResponse = $provisionOperationService->confirmRoutingData($processId);
-
-            if($prResponse->success){
-
-                // Process terminated
-
-            }
-            else{
-
-                // Who cares, its auto anyway :)
-
-            }
-
 
         }
 
@@ -241,7 +119,7 @@ class ProvisionNotificationService  extends CI_Controller {
                 'processType' => $processType
             );
 
-            $emailService->adminErrorReport('PROVISION_ROUTING_DATA_RECEIVED_BUT_DB_FILLED_INCOMPLETE', $eParams, processType::ERROR);
+            $emailService->adminErrorReport('PROVISION ROUTING DATA RECEIVED BUT DB FILLED INCOMPLETE', $eParams, processType::ERROR);
 
             $this->db->trans_complete();
 

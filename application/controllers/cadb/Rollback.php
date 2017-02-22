@@ -196,7 +196,7 @@ class confirmRequest {
     /**
      * @var \DateTime
      */
-    public $rollbackDateAndTime;
+    public $rollbackDateTime;
 
 }
 

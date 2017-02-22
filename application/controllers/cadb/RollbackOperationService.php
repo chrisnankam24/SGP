@@ -245,7 +245,7 @@ class RollbackOperationService {
             // Make confirm request
             $request = new rollback\confirmRequest();
             $request->rollbackId = $rollbackId;
-            $request->rollbackDateAndTime = $rollbackDateAndTime;
+            $request->rollbackDateTime = $rollbackDateAndTime;
 
             try {
 

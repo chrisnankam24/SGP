@@ -891,6 +891,12 @@ class BatchOperationService extends CI_Controller {
 
         $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'Preparing CONFIRM of ' . count($msisdnChangePorts) . ' change imported ports');
 
+        // Load ports in Porting table in CONFIRMED state in which we are OPR
+
+        $confirmedPorts = $this->Porting_model->get_porting_by_state_and_recipient(\PortingService\Porting\portingStateType::CONFIRMED, Operator::ORANGE_NETWORK_ID);
+
+        $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'Preparing COMPLETE of ' . count($confirmedPorts) . ' confirmed  ports');
+
         $bscsOperationService = new BscsOperationService();
 
         $portingOperationService = new PortingOperationService();
@@ -1228,6 +1234,89 @@ class BatchOperationService extends CI_Controller {
                 $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'KPSA_OPERATION failed for ' . $msisdnChangePort['portingId'] . ' with ' . $kpsaResponse['message']);
 
                 $emailService->adminKPSAError($kpsaResponse['message']. ' :: ' . $subscriberMSISDN);
+
+            }
+
+        }
+
+        foreach ($confirmedPorts as $confirmedPort){
+
+            $portingId = $confirmedPort['portingId'];
+
+            $this->fileLogAction('7005', 'BatchOperationService::portingOPR', 'Checking Provisioning of ' . $portingId);
+
+            // Check if port in provision table in state COMPLETED
+            $provisionPort = $this->Provisioning_model->get_provisioning_by_process_state($portingId, processType::PORTING, provisionStateType::COMPLETED);
+
+            if($provisionPort){
+
+                $this->fileLogAction('7005', 'BatchOperationService::portingOPR', 'Process provisioned. Sending CONFIRM ROUTING DATA for ' . $portingId);
+
+                // Confirm Routing Data
+                $provisionOperationService = new ProvisionOperationService();
+
+                $prResponse = $provisionOperationService->confirmRoutingData($portingId);
+
+                if($prResponse->success){
+
+                    // Process terminated
+                    $this->fileLogAction('7005', 'BatchOperationService::portingOPR', 'ConfirmRoutingData successful for ' . $portingId);
+
+                }
+                else{
+
+                    // Who cares, its auto anyway :)
+                    $this->fileLogAction('7005', 'BatchOperationService::portingOPR', 'ConfirmRoutingData failed for ' . $portingId);
+
+                }
+
+                // Updating Porting State to COMPLETED
+
+                $this->db->trans_start();
+
+                // Insert into porting Evolution state table
+
+                $portingEvolutionParams = array(
+                    'lastChangeDateTime' => date('c'),
+                    'portingState' => \PortingService\Porting\portingStateType::COMPLETED,
+                    'isAutoReached' => false,
+                    'portingId' => $portingId,
+                );
+
+                $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
+
+                // Update Porting table
+
+                $portingParams = array(
+                    'lastChangeDateTime' => date('c'),
+                    'portingState' => \PortingService\Porting\portingStateType::COMPLETED
+                );
+
+                $this->Porting_model->update_porting($portingId, $portingParams);
+
+                // Notify Agents/Admin
+
+                if ($this->db->trans_status() === FALSE) {
+
+                    $error = $this->db->error();
+                    $this->fileLogAction($error['code'], 'ProvisionNotificationService', $error['message']);
+
+                    $portingParams = $confirmedPort;
+
+                    $emailService->adminErrorReport('PORTING COMPLETED FROM PROVISIONING BUT DB FILLED INCOMPLETE', $portingParams, processType::PORTING);
+
+                }else{
+
+                }
+
+                $this->db->trans_complete();
+
+
+            }else{
+
+                //Port not yet Provisioned. Do nothing, wait till provision
+
+                $this->fileLogAction('7005', 'BatchOperationService::portingOPR', 'Process not yet provisioned for ' . $portingId);
 
             }
 
@@ -1618,6 +1707,12 @@ class BatchOperationService extends CI_Controller {
 
         $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'Preparing CONFIRM of ' . count($msisdnConfirmedRollbacks) . ' msisdn change imported rollbacks');
 
+        // Load rollbacks in Rollback table in CONFIRMED state in which we are OPD
+
+        $confirmedRollbacks = $this->Rollback_model->get_rollback_by_state_and_donor(\RollbackService\Rollback\rollbackStateType::CONFIRMED, Operator::ORANGE_NETWORK_ID);
+
+        $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'Preparing CONFIRM of ' . count($msisdnConfirmedRollbacks) . ' msisdn change imported rollbacks');
+
         $bscsOperationService = new BscsOperationService();
 
         $rollbackOperationService = new RollbackOperationService();
@@ -1971,6 +2066,88 @@ class BatchOperationService extends CI_Controller {
                 $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'KPSA_OPERATION failed for ' . $msisdnChangeRollback['rollbackId'] . ' with ' . $kpsaResponse['message']);
 
                 $emailService->adminKPSAError($kpsaResponse['message']. ' :: ' . $subscriberMSISDN);
+
+            }
+
+        }
+
+        foreach ($confirmedRollbacks as $confirmedRollback){
+
+            $rollbackId = $confirmedRollback['rollbackId'];
+
+            $this->fileLogAction('7009', 'BatchOperationService::rollbackOPD', 'Verifying Provisioning for ' . $rollbackId);
+
+            // Check if rollback in provision table in state COMPLETED
+            $provisionRollback = $this->Provisioning_model->get_provisioning_by_process_state($rollbackId, processType::ROLLBACK, \ProvisionService\ProvisionNotification\provisionStateType::COMPLETED);
+
+            if($provisionRollback){
+
+                $this->fileLogAction('7009', 'BatchOperationService::rollbackOPD', 'Process provisioned. Sending CONFIRM ROUTING DATA for ' . $rollbackId);
+
+                // Confirm Routing Data
+                $provisionOperationService = new ProvisionOperationService();
+
+                $prResponse = $provisionOperationService->confirmRoutingData($rollbackId);
+
+                if($prResponse->success){
+
+                    // Process terminated
+                    $this->fileLogAction('7009', 'BatchOperationService::rollbackOPD', 'ConfirmRoutingData successful for ' . $rollbackId);
+
+                }
+                else{
+
+                    // Who cares, its auto anyway :)
+                    $this->fileLogAction('7009', 'BatchOperationService::rollbackOPD', 'ConfirmRoutingData failed for ' . $rollbackId);
+
+                }
+
+                // Update Rollback to COMPLETED
+
+                $this->db->trans_start();
+
+                // Insert into Rollback Evolution state table
+
+                $rollbackEvolutionParams = array(
+                    'lastChangeDateTime' => date('c'),
+                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::COMPLETED,
+                    'isAutoReached' => false,
+                    'rollbackId' => $rollbackId,
+                );
+
+                $this->Rollbackstateevolution_model->add_rollbackstateevolution($rollbackEvolutionParams);
+
+                // Update Rollback table
+
+                $rollbackParams = array(
+                    'lastChangeDateTime' => date('c'),
+                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::COMPLETED
+                );
+
+                $this->Rollback_model->update_rollback($rollbackId, $rollbackParams);
+
+                // Notify Agents/Admin
+
+                if ($this->db->trans_status() === FALSE) {
+
+                    $error = $this->db->error();
+                    $this->fileLogAction($error['code'], 'ProvisionNotificationService', $error['message']);
+
+                    $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
+
+                    $emailService->adminErrorReport('ROLLBACK COMPLETED FROM PROVISIONING BUT DB FILLED INCOMPLETE', $rollbackParams, processType::ROLLBACK);
+
+                }else{
+
+                }
+
+                $this->db->trans_complete();
+
+            }else{
+
+                $this->fileLogAction('7009', 'BatchOperationService::rollbackOPD', 'Provisioning not yet done for ' . $rollbackId);
+
+                //Rollback not yet Provisioned. Do nothing, wait till provision
 
             }
 

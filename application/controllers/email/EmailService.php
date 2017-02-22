@@ -581,6 +581,10 @@ class EmailService {
 
     }
 
+    public function cadbPortingStateOffConfirmed($message){
+
+    }
+
     public function error($fault, $params){
 
         $subject = 'Error Encountered';
