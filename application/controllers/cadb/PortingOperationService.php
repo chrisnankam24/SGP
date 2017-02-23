@@ -1421,7 +1421,11 @@ class PortingOperationService  {
 
         if($orderedResponse->success){
 
-            $response['data'] = array_merge($response['data'], $orderedResponse->portingTransaction);
+            if(isset($orderedResponse->portingTransaction)){
+
+                $response['data'] = array_merge($response['data'], $orderedResponse->portingTransaction);
+
+            }
 
         }
         else{
@@ -1445,7 +1449,11 @@ class PortingOperationService  {
 
         if($approvedResponse->success){
 
-            $response['data'] = array_merge($response['data'], $approvedResponse->portingTransaction);
+            if(isset($approvedResponse->portingTransaction)){
+
+                $response['data'] = array_merge($response['data'], $approvedResponse->portingTransaction);
+
+            }
 
         }
         else{
@@ -1471,7 +1479,11 @@ class PortingOperationService  {
 
         if($acceptedResponse->success){
 
-            $response['data'] = array_merge($response['data'], $acceptedResponse->portingTransaction);
+            if(isset($acceptedResponse->portingTransaction)){
+
+                $response['data'] = array_merge($response['data'], $acceptedResponse->portingTransaction);
+
+            }
 
         }
         else{
@@ -1497,7 +1509,11 @@ class PortingOperationService  {
 
         if($confirmedResponse->success){
 
-            $response['data'] = array_merge($response['data'], $confirmedResponse->portingTransaction);
+            if(isset($confirmedResponse->portingTransaction)){
+
+                $response['data'] = array_merge($response['data'], $confirmedResponse->portingTransaction);
+
+            }
 
         }
         else{
@@ -1523,7 +1539,11 @@ class PortingOperationService  {
 
         if($deniedResponse->success){
 
-            $response['data'] = array_merge($response['data'], $deniedResponse->portingTransaction);
+            if(isset($orderedResponse->portingTransaction)){
+
+                $response['data'] = array_merge($response['data'], $deniedResponse->portingTransaction);
+
+            }
 
         }
         else{
@@ -1550,7 +1570,11 @@ class PortingOperationService  {
 
         if($rejectedResponse->success){
 
-            $response['data'] = array_merge($response['data'], $rejectedResponse->portingTransaction);
+            if(isset($rejectedResponse->portingTransaction)){
+
+                $response['data'] = array_merge($response['data'], $rejectedResponse->portingTransaction);
+
+            }
 
         }
         else{

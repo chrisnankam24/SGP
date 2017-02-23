@@ -996,7 +996,11 @@ class RollbackOperationService {
 
         if($openedResponse->success){
 
-            $response['data'] = array_merge($response['data'], $openedResponse->rollbackTransaction);
+            if(isset($openedResponse->rollbackTransaction)){
+
+                $response['data'] = array_merge($response['data'], $openedResponse->rollbackTransaction);
+
+            }
 
         }
         else{
@@ -1022,7 +1026,11 @@ class RollbackOperationService {
 
         if($acceptedResponse->success){
 
-            $response['data'] = array_merge($response['data'], $acceptedResponse->rollbackTransaction);
+            if(isset($acceptedResponse->rollbackTransaction)){
+
+                $response['data'] = array_merge($response['data'], $acceptedResponse->rollbackTransaction);
+
+            }
 
         }
         else{
@@ -1048,7 +1056,11 @@ class RollbackOperationService {
 
         if($confirmedResponse->success){
 
-            $response['data'] = array_merge($response['data'], $confirmedResponse->rollbackTransaction);
+            if(isset($confirmedResponse->rollbackTransaction)){
+
+                $response['data'] = array_merge($response['data'], $confirmedResponse->rollbackTransaction);
+
+            }
 
         }
         else{
@@ -1074,7 +1086,11 @@ class RollbackOperationService {
 
         if($rejectedResponse->success){
 
-            $response['data'] = array_merge($response['data'], $rejectedResponse->rollbackTransaction);
+            if(isset($rejectedResponse->rollbackTransaction)){
+
+                $response['data'] = array_merge($response['data'], $rejectedResponse->rollbackTransaction);
+
+            }
 
         }
         else{
