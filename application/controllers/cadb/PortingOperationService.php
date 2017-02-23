@@ -1649,8 +1649,6 @@ class PortingOperationService  {
 
         foreach ($tmpData as $tmpDatum){
 
-            $subscriberType = getSubscriberType($tmpDatum->rio);
-
             $data = array();
 
             $data['portingId'] = $tmpDatum->portingId;
@@ -1667,7 +1665,7 @@ class PortingOperationService  {
             $data['startMSISDN'] = $tmpDatum->numberRanges->numberRange->startNumber;
             $data['endMSISDN'] = $tmpDatum->numberRanges->numberRange->endNumber;
 
-            if($subscriberType == 0) {
+            if(isset($tmpDatum->subscriberInfo->physicalPersonFirstName)) {
 
                 $data['physicalPersonFirstName'] = $tmpDatum->subscriberInfo->physicalPersonFirstName;
                 $data['physicalPersonLastName'] = $tmpDatum->subscriberInfo->physicalPersonLastName;

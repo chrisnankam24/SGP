@@ -1143,6 +1143,59 @@ class RollbackOperationService {
 
         }
 
+        $tmpData = $response['data'];
+
+        $response['data'] = [];
+
+        foreach ($tmpData as $tmpDatum){
+
+            $tmpDatum = new rollback\rollbackTransactionType();
+
+            $data = array();
+
+            $data['originalPortingId'] = $tmpDatum->originalPortingId;
+            $data['donorSubmissionDateTime'] = $tmpDatum->donorSubmissionDateTime;
+            $data['rollbackDateTime'] = $tmpDatum->rollbackDateTime;
+            $data['cadbOpenDateTime'] = $tmpDatum->cadbOpenDateTime;
+            $data['lastChangeDateTime'] = $tmpDatum->lastChangeDateTime;
+            $data['rollbackState'] = $tmpDatum->rollbackState;
+
+            $data['recipientNetworkId'] = $tmpDatum->recipientNrn->networkId;
+            $data['recipientRoutingNumber'] = $tmpDatum->recipientNrn->routingNumber;
+            $data['donorNetworkId'] = $tmpDatum->donorNrn->networkId;
+            $data['donorRoutingNumber'] = $tmpDatum->donorNrn->routingNumber;
+
+            $data['startMSISDN'] = $tmpDatum->numberRanges->numberRange->startNumber;
+            $data['endMSISDN'] = $tmpDatum->numberRanges->numberRange->endNumber;
+
+            if(isset($tmpDatum->subscriberInfo->physicalPersonFirstName)) {
+
+                $data['physicalPersonFirstName'] = $tmpDatum->subscriberInfo->physicalPersonFirstName;
+                $data['physicalPersonLastName'] = $tmpDatum->subscriberInfo->physicalPersonLastName;
+                $data['physicalPersonIdNumber'] = $tmpDatum->subscriberInfo->physicalPersonIdNumber;
+
+                $data['legalPersonName'] = null;
+                $data['legalPersonTin'] = null;
+                $data['contactNumber'] = null;
+
+            }
+            else{
+
+                $data['legalPersonName'] = $tmpDatum->subscriberInfo->legalPersonName;
+                $data['legalPersonTin'] = $tmpDatum->subscriberInfo->legalPersonTin;
+                $data['contactNumber'] = $tmpDatum->subscriberInfo->contactNumber;
+
+                $data['physicalPersonFirstName'] = null;
+                $data['physicalPersonLastName'] = null;
+                $data['physicalPersonIdNumber'] = null;
+
+            }
+
+            array_push($response['data'], $data);
+
+        }
+
+
         return $response;
     }
 
