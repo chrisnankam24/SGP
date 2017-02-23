@@ -79,8 +79,6 @@ class PortingNotificationService extends CI_Controller
 
         $this->fileLogAction('8060', 'PortingNotificationService', 'Porting ORDER received for ID ' . $portingId);
 
-        $subscriberType = getSubscriberType($rio);
-
         $startMSISDN = $notifyOrderedRequest->portingTransaction->numberRanges->numberRange->startNumber;
         $endMSISDN = $notifyOrderedRequest->portingTransaction->numberRanges->numberRange->endNumber;
 
@@ -106,7 +104,7 @@ class PortingNotificationService extends CI_Controller
         $portingParams['lastChangeDateTime'] = $notifyOrderedRequest->portingTransaction->lastChangeDateTime;
         $portingParams['portingState'] = \PortingService\Porting\portingStateType::ORDERED;
 
-        if($subscriberType == 0) {
+        if(isset($notifyOrderedRequest->portingTransaction->subscriberInfo->physicalPersonFirstName)) {
             $portingParams['physicalPersonFirstName'] = $notifyOrderedRequest->portingTransaction->subscriberInfo->physicalPersonFirstName;
             $portingParams['physicalPersonLastName'] = $notifyOrderedRequest->portingTransaction->subscriberInfo->physicalPersonLastName;
             $portingParams['physicalPersonIdNumber'] = $notifyOrderedRequest->portingTransaction->subscriberInfo->physicalPersonIdNumber;

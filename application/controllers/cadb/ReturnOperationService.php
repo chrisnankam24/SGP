@@ -807,6 +807,28 @@ class ReturnOperationService {
 
         }
 
+        $tmpData = $response['data'];
+
+        $response['data'] = [];
+
+        foreach ($tmpData as $tmpDatum){
+
+            $data = array();
+
+            $data['returnId'] = $tmpDatum->returnId;
+            $data['openDateTime'] = $tmpDatum->openDateTime;
+            $data['ownerNetworkId'] = $tmpDatum->ownerNrn->networkId;
+            $data['ownerRoutingNumber'] = $tmpDatum->ownerNrn->routingNumber;
+            $data['primaryOwnerNetworkId'] = $tmpDatum->primaryOwnerNrn->networkId;
+            $data['primaryOwnerRoutingNumber'] = $tmpDatum->primaryOwnerNrn->routingNumber;
+
+            $data['returnMSISDN'] = $tmpDatum->numberRanges->numberRange->startNumber;
+            $data['returnNumberState'] = $tmpDatum->returnNumberState;
+
+            array_push($response['data'], $data);
+
+        }
+
         return $response;
 
     }

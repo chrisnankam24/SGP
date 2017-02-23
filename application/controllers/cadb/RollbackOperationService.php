@@ -1148,9 +1148,7 @@ class RollbackOperationService {
         $response['data'] = [];
 
         foreach ($tmpData as $tmpDatum){
-
-            $tmpDatum = new rollback\rollbackTransactionType();
-
+            
             $data = array();
 
             $data['originalPortingId'] = $tmpDatum->originalPortingId;
@@ -1194,7 +1192,6 @@ class RollbackOperationService {
             array_push($response['data'], $data);
 
         }
-
 
         return $response;
     }
