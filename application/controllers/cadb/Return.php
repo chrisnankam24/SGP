@@ -222,6 +222,6 @@ class getCurrentReturningTransactionsResponse {
     /**
      * @var array returnTransactionType
      */
-    public $returnNumberTransactions;
+    public $returnNumberTransaction;
 
 }

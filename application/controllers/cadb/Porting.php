@@ -441,7 +441,7 @@ class getOrderedPortingsResponse {
     /**
      * @var array portingTransactionType
      */
-    public $portingTransactions;
+    public $portingTransaction;
 
 }
 
@@ -465,7 +465,7 @@ class getApprovedPortingsResponse {
     /**
      * @var array portingTransactionType
      */
-    public $portingTransactions;
+    public $portingTransaction;
 
 }
 
@@ -489,7 +489,7 @@ class getAcceptedPortingsResponse {
     /**
      * @var array portingTransactionType
      */
-    public $portingTransactions;
+    public $portingTransaction;
 
 }
 
@@ -513,7 +513,7 @@ class getConfirmedPortingsResponse {
     /**
      * @var array portingTransactionType
      */
-    public $portingTransactions;
+    public $portingTransaction;
 
 }
 
@@ -543,7 +543,7 @@ class getDeniedPortingsResponse {
     /**
      * @var array portingTransactionType
      */
-    public $portingTransactions;
+    public $portingTransaction;
 
 }
 
@@ -572,6 +572,6 @@ class getRejectedPortingsResponse {
     /**
      * @var array portingTransactionType
      */
-    public $portingTransactions;
+    public $portingTransaction;
 
 }

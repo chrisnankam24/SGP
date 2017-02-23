@@ -996,7 +996,7 @@ class RollbackOperationService {
 
         if($openedResponse->success){
 
-            $response['data'] = array_merge($response['data'], $openedResponse->rollbacks);
+            $response['data'] = array_merge($response['data'], $openedResponse->rollbackTransaction);
 
         }
         else{
@@ -1022,7 +1022,7 @@ class RollbackOperationService {
 
         if($acceptedResponse->success){
 
-            $response['data'] = array_merge($response['data'], $acceptedResponse->rollbacks);
+            $response['data'] = array_merge($response['data'], $acceptedResponse->rollbackTransaction);
 
         }
         else{
@@ -1048,7 +1048,7 @@ class RollbackOperationService {
 
         if($confirmedResponse->success){
 
-            $response['data'] = array_merge($response['data'], $confirmedResponse->rollbacks);
+            $response['data'] = array_merge($response['data'], $confirmedResponse->rollbackTransaction);
 
         }
         else{
@@ -1074,7 +1074,7 @@ class RollbackOperationService {
 
         if($rejectedResponse->success){
 
-            $response['data'] = array_merge($response['data'], $rejectedResponse->rollbacks);
+            $response['data'] = array_merge($response['data'], $rejectedResponse->rollbackTransaction);
 
         }
         else{

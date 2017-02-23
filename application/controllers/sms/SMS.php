@@ -101,7 +101,7 @@ class SMS extends CI_Controller {
     }
 
     /**
-     * SMS sent by OPR (Orange CM) to Subscriber upon receiving DENIED / REJECTED from OPR.
+     * SMS sent by OPR (Orange CM) to Subscriber upon receiving DENIED / REJECTED from OPD.
      * @param $language
      * @param $msisdn string subscriber MSISDN
      */
@@ -113,6 +113,31 @@ class SMS extends CI_Controller {
         }else{
             $message = file_get_contents(__DIR__ . '/fr_sms_template_OPR_Subscriber_KO.txt');
         }
+
+        $response = self::send_response($msisdn, $message);
+
+        return $response;
+    }
+
+    /**
+     * SMS sent by OPR (Orange CM) to Subscriber upon receiving REJECTED BY CANCELLATION from OPD.
+     * @param $language
+     * @param $msisdn string subscriber MSISDN
+     */
+    public static function OPR_Subscriber_KO_Cancel($language, $msisdn, $denom_OPR){
+
+        // Load Message
+        if(strtolower($language) == 'en'){
+            $template = file_get_contents(__DIR__ . '/en_sms_template_OPR_Subscriber_Cancellation.txt');
+        }else{
+            $template = file_get_contents(__DIR__ . '/fr_sms_template_OPR_Subscriber_Cancellation.txt');
+        }
+
+        // Set Denomination of OPR
+        $template = str_replace('[OPR]', $denom_OPR, $template);
+
+        // Set MSISDN
+        $message = str_replace('[subs_msisdn]', $msisdn, $template);
 
         $response = self::send_response($msisdn, $message);
 
@@ -230,7 +255,8 @@ class SMS extends CI_Controller {
 
         $response = self::send_response($msisdn, $message);
 
-        return $response;    }
+        return $response;
+    }
 
     /**
      * SMS sent by OPD (Orange CM) to Subscriber upon receiving ACCEPTED from OPD.

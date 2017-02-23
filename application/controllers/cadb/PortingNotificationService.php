@@ -839,7 +839,15 @@ class PortingNotificationService extends CI_Controller
 
         $subscriberMSISDN = $notifyRejectedRequest->portingTransaction->numberRanges->numberRange->startNumber;
 
-        $smsResponse = SMS::OPR_Subscriber_KO($language, $subscriberMSISDN);
+        if($notifyRejectedRequest->rejectionReason == \PortingService\Porting\rejectionReasonType::SUBSCRIBER_CANCELLED_PORTING){
+
+            $smsResponse = SMS::OPR_Subscriber_Cancellation($language, $subscriberMSISDN);
+
+        }else{
+
+            $smsResponse = SMS::OPR_Subscriber_KO($language, $subscriberMSISDN);
+
+        }
 
         if($smsResponse['success']){
 
@@ -848,7 +856,6 @@ class PortingNotificationService extends CI_Controller
             // Insert Porting SMS Notification
             $smsNotificationparams = array(
                 'portingId' => $portingId,
-                'smsType' => SMSType::OPR_PORTING_KO,
                 'message' => $smsResponse['message'],
                 'msisdn' => $smsResponse['msisdn'],
                 'creationDateTime' => date('c'),
@@ -856,6 +863,16 @@ class PortingNotificationService extends CI_Controller
                 'attemptCount' => 1,
                 'sendDateTime' => date('c')
             );
+
+            if($notifyRejectedRequest->rejectionReason == \PortingService\Porting\rejectionReasonType::SUBSCRIBER_CANCELLED_PORTING){
+
+                $smsNotificationparams['smsType'] = SMSType::OPR_PORTING_CANCELLED;
+
+            }else{
+
+                $smsNotificationparams['smsType'] = SMSType::OPR_PORTING_KO;
+
+            }
 
         }else{
 

@@ -290,7 +290,7 @@ class getOpenedRollbacksResponse {
     /**
      * @var array rollbackTransactionType
      */
-    public $rollbacks;
+    public $rollbackTransaction;
 
 }
 
@@ -314,7 +314,7 @@ class getAcceptedRollbacksResponse {
     /**
      * @var array rollbackTransactionType
      */
-    public $rollbacks;
+    public $rollbackTransaction;
 
 }
 
@@ -338,7 +338,7 @@ class getConfirmedRollbacksResponse {
     /**
      * @var array rollbackTransactionType
      */
-    public $rollbacks;
+    public $rollbackTransaction;
 
 }
 
@@ -367,6 +367,6 @@ class getRejectedRollbacksResponse {
     /**
      * @var array rollbackTransactionType
      */
-    public $rollbacks;
+    public $rollbackTransaction;
 
 }
