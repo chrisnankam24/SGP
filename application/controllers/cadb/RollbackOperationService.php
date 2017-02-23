@@ -998,7 +998,15 @@ class RollbackOperationService {
 
             if(isset($openedResponse->rollbackTransaction)){
 
-                $response['data'] = array_merge($response['data'], $openedResponse->rollbackTransaction);
+                if(is_array($openedResponse->rollbackTransaction)){
+
+                    $response['data'] = array_merge($response['data'], $openedResponse->rollbackTransaction);
+
+                }else{
+
+                    $response['data'][] = $openedResponse->rollbackTransaction;
+
+                }
 
             }
 
@@ -1028,7 +1036,15 @@ class RollbackOperationService {
 
             if(isset($acceptedResponse->rollbackTransaction)){
 
-                $response['data'] = array_merge($response['data'], $acceptedResponse->rollbackTransaction);
+                if(is_array($acceptedResponse->rollbackTransaction)){
+
+                    $response['data'] = array_merge($response['data'], $acceptedResponse->rollbackTransaction);
+
+                }else{
+
+                    $response['data'][] = $acceptedResponse->rollbackTransaction;
+
+                }
 
             }
 
@@ -1058,7 +1074,15 @@ class RollbackOperationService {
 
             if(isset($confirmedResponse->rollbackTransaction)){
 
-                $response['data'] = array_merge($response['data'], $confirmedResponse->rollbackTransaction);
+                if(is_array($confirmedResponse->rollbackTransaction)){
+
+                    $response['data'] = array_merge($response['data'], $confirmedResponse->rollbackTransaction);
+
+                }else{
+
+                    $response['data'][] = $confirmedResponse->rollbackTransaction;
+
+                }
 
             }
 
@@ -1088,7 +1112,15 @@ class RollbackOperationService {
 
             if(isset($rejectedResponse->rollbackTransaction)){
 
-                $response['data'] = array_merge($response['data'], $rejectedResponse->rollbackTransaction);
+                if(is_array($rejectedResponse->rollbackTransaction)){
+
+                    $response['data'] = array_merge($response['data'], $rejectedResponse->rollbackTransaction);
+
+                }else{
+
+                    $response['data'][] = $rejectedResponse->rollbackTransaction;
+
+                }
 
             }
 

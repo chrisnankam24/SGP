@@ -131,6 +131,8 @@ class ProblemReportOperationService {
 
         $prResponse = $this->reportProblem($reporterNetworkId, $cadbNumber, $problem);
 
+        var_dump($prResponse);
+
         // Verify response
 
         if($prResponse->success){

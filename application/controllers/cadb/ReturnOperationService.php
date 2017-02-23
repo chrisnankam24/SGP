@@ -781,7 +781,15 @@ class ReturnOperationService {
 
             if(isset($currentNRResponse->returnNumberTransaction)){
 
-                $response['data'] = array_merge($response['data'], $currentNRResponse->returnNumberTransaction);
+                if(is_array($currentNRResponse->returnNumberTransaction)){
+
+                    $response['data'] = array_merge($response['data'], $currentNRResponse->returnNumberTransaction);
+
+                }else{
+
+                    $response['data'][] =  $currentNRResponse->returnNumberTransaction;
+
+                }
 
             }
 

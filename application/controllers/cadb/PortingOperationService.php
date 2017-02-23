@@ -111,7 +111,7 @@ class PortingOperationService  {
                     $request->donorNrn->networkId = Operator::MTN_NETWORK_ID;
                     $request->donorNrn->routingNumber = Operator::MTN_ROUTING_NUMBER;
                 }else{
-                    // Orange
+                    // Nexttel
                     $request->donorNrn->networkId = Operator::NEXTTEL_NETWORK_ID;
                     $request->donorNrn->routingNumber = Operator::NEXTTEL_ROUTING_NUMBER;
                 }
@@ -366,11 +366,11 @@ class PortingOperationService  {
 
     /**
      * @param $porting_id string porting process to deny
-     * @param $rejectionReason string reson of denial
+     * @param $denialReason string reason of denial
      * @param $cause string description of the denial
      * @return errorResponse
      */
-    public function deny($porting_id, $rejectionReason, $cause) {
+    public function deny($porting_id, $denialReason, $cause) {
 
         if($this->client) {
 
@@ -379,7 +379,7 @@ class PortingOperationService  {
 
             $request->portingId = $porting_id;
 
-            $request->rejectionReason = $rejectionReason;
+            $request->denialReason = $denialReason;
 
             $request->cause = $cause;
 
@@ -1423,7 +1423,15 @@ class PortingOperationService  {
 
             if(isset($orderedResponse->portingTransaction)){
 
-                $response['data'] = array_merge($response['data'], $orderedResponse->portingTransaction);
+                if(is_array($orderedResponse->portingTransaction)){
+
+                    $response['data'] = array_merge($response['data'], $orderedResponse->portingTransaction);
+
+                }else{
+
+                    $response['data'][] = $orderedResponse->portingTransaction;
+
+                }
 
             }
 
@@ -1451,7 +1459,15 @@ class PortingOperationService  {
 
             if(isset($approvedResponse->portingTransaction)){
 
-                $response['data'] = array_merge($response['data'], $approvedResponse->portingTransaction);
+                if(is_array($approvedResponse->portingTransaction)){
+
+                    $response['data'] = array_merge($response['data'], $approvedResponse->portingTransaction);
+
+                }else{
+
+                    $response['data'][] = $approvedResponse->portingTransaction;
+
+                }
 
             }
 
@@ -1481,7 +1497,15 @@ class PortingOperationService  {
 
             if(isset($acceptedResponse->portingTransaction)){
 
-                $response['data'] = array_merge($response['data'], $acceptedResponse->portingTransaction);
+                if(is_array($acceptedResponse->portingTransaction)){
+
+                    $response['data'] = array_merge($response['data'], $acceptedResponse->portingTransaction);
+
+                }else{
+
+                    $response['data'][] = $acceptedResponse->portingTransaction;
+
+                }
 
             }
 
@@ -1511,7 +1535,15 @@ class PortingOperationService  {
 
             if(isset($confirmedResponse->portingTransaction)){
 
-                $response['data'] = array_merge($response['data'], $confirmedResponse->portingTransaction);
+                if(is_array($confirmedResponse->portingTransaction)){
+
+                    $response['data'] = array_merge($response['data'], $confirmedResponse->portingTransaction);
+
+                }else{
+
+                    $response['data'][] = $confirmedResponse->portingTransaction;
+
+                }
 
             }
 
@@ -1539,9 +1571,17 @@ class PortingOperationService  {
 
         if($deniedResponse->success){
 
-            if(isset($orderedResponse->portingTransaction)){
+            if(isset($deniedResponse->portingTransaction)){
 
-                $response['data'] = array_merge($response['data'], $deniedResponse->portingTransaction);
+                if(is_array($deniedResponse->portingTransaction)){
+
+                    $response['data'] = array_merge($response['data'], $deniedResponse->portingTransaction);
+
+                }else{
+
+                    $response['data'][] = $deniedResponse->portingTransaction;
+
+                }
 
             }
 
@@ -1572,7 +1612,15 @@ class PortingOperationService  {
 
             if(isset($rejectedResponse->portingTransaction)){
 
-                $response['data'] = array_merge($response['data'], $rejectedResponse->portingTransaction);
+                if(is_array($rejectedResponse->portingTransaction)){
+
+                    $response['data'] = array_merge($response['data'], $rejectedResponse->portingTransaction);
+
+                }else{
+
+                    $response['data'][] = $rejectedResponse->portingTransaction;
+
+                }
 
             }
 
