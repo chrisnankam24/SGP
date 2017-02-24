@@ -114,10 +114,15 @@ class ReturnOperationService {
             try {
 
                 $response = $this->client->open($request);
+
+                $this->logRequestResponse('open');
+
                 $response->success = true;
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('open');
 
                 $response = new errorResponse();
                 $fault = key($e->detail);
@@ -153,10 +158,15 @@ class ReturnOperationService {
             try {
 
                 $response = $this->client->accept($request);
+
+                $this->logRequestResponse('accept');
+
                 $response->success = true;
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('accept');
 
                 $response = new errorResponse();
                 $fault = key($e->detail);
@@ -193,10 +203,15 @@ class ReturnOperationService {
             try {
 
                 $response = $this->client->reject($request);
+
+                $this->logRequestResponse('reject');
+
                 $response->success = true;
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('reject');
 
                 $response = new errorResponse();
                 $fault = key($e->detail);
@@ -230,10 +245,15 @@ class ReturnOperationService {
             try {
 
                 $response = $this->client->getReturningTransaction($request);
+
+                $this->logRequestResponse('getReturningTransaction');
+
                 $response->success = true;
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('getReturningTransaction');
 
                 $response = new errorResponse();
                 $fault = key($e->detail);
@@ -267,10 +287,15 @@ class ReturnOperationService {
             try {
 
                 $response = $this->client->getCurrentReturningTransactions($request);
+
+                $this->logRequestResponse('getReturningTransactions');
+
                 $response->success = true;
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('getReturningTransactions');
 
                 $response = new errorResponse();
                 $fault = key($e->detail);
@@ -831,6 +856,11 @@ class ReturnOperationService {
 
         return $response;
 
+    }
+
+    private function logRequestResponse($action){
+        $this->fileLogAction('', 'ReturnOperationService', $action . ' Request:: ' . $this->client->__getLastRequest());
+        $this->fileLogAction('', 'ReturnOperationService', $action . ' Response:: ' . $this->client->__getLastResponse());
     }
 
 }
