@@ -22,9 +22,16 @@ class AuxService {
 
     // Declare client
     private $client = null;
+    private $FileLog_model = null;
 
     public function __construct()
     {
+
+        $CI =& get_instance();
+
+        $CI->load->model('FileLog_model');
+
+        $this->FileLog_model = $CI->FileLog_model;
 
         // Disable wsdl_1_4 cache
         ini_set("soap.wsdl_cache_enabled", "0");
@@ -38,6 +45,15 @@ class AuxService {
                 ),
             )),
         ));
+
+    }
+
+    /**
+     * Log action/error to file
+     */
+    private function fileLogAction($code, $class, $message){
+
+        $this->FileLog_model->write_log($code, $class, $message);
 
     }
 
@@ -60,11 +76,13 @@ class AuxService {
 
                 $response->success = true;
 
-                var_dump($this->client->__getLastRequestHeaders());
+                $this->logRequestResponse('getOperator');
 
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('getOperator');
 
                 $response = new errorResponse();
 
@@ -105,11 +123,15 @@ class AuxService {
 
                 $response = $this->client->getOperators($request);
 
+                $this->logRequestResponse('getOperators');
+
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('getOperators');
 
                 $response = new errorResponse();
 
@@ -134,6 +156,11 @@ class AuxService {
 
         }
 
+    }
+
+    private function logRequestResponse($action){
+        $this->fileLogAction('8066', 'AuxService', $action . ' Request:: ' . $this->client->__getLastRequest());
+        $this->fileLogAction('8066', 'AuxService', $action . ' Response:: ' . $this->client->__getLastResponse());
     }
 
 }

@@ -138,7 +138,7 @@ class BscsParams {
     const NEXTTEL_PLCODE = '355';
 
     const PORTING_OUT_STATUS = 4;
-    const PORTING_OUT_REASON = 38;
+    const PORTING_OUT_REASON = 48;
 }
 
 class languageParams{
