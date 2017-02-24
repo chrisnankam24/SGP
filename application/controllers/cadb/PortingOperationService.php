@@ -136,11 +136,15 @@ class PortingOperationService  {
 
                 $response = $this->client->order($request);
 
+                $this->logRequestResponse('order');
+
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('order');
 
                 $response = new errorResponse();
 
@@ -182,11 +186,15 @@ class PortingOperationService  {
 
                 $response = $this->client->approve($request);
 
+                $this->logRequestResponse('approve');
+
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('approve');
 
                 $response = new errorResponse();
 
@@ -229,11 +237,15 @@ class PortingOperationService  {
 
                 $response = $this->client->accept($request);
 
+                $this->logRequestResponse('accept');
+
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('accept');
 
                 $response = new errorResponse();
 
@@ -279,11 +291,15 @@ class PortingOperationService  {
 
                 $response = $this->client->confirm($request);
 
+                $this->logRequestResponse('confirm');
+
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('confirm');
 
                 $response = new errorResponse();
 
@@ -333,11 +349,15 @@ class PortingOperationService  {
 
                 $response = $this->client->reject($request);
 
+                $this->logRequestResponse('reject');
+
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('reject');
 
                 $response = new errorResponse();
 
@@ -387,11 +407,15 @@ class PortingOperationService  {
 
                 $response = $this->client->deny($request);
 
+                $this->logRequestResponse('deny');
+
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('deny');
 
                 $response = new errorResponse();
 
@@ -434,11 +458,15 @@ class PortingOperationService  {
 
                 $response = $this->client->getPorting($request);
 
+                $this->logRequestResponse('getPorting');
+
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('getPorting');
 
                 $response = new errorResponse();
 
@@ -481,11 +509,15 @@ class PortingOperationService  {
 
                 $response = $this->client->getOrderedPortings($request);
 
+                $this->logRequestResponse('getOrderedPortings');
+
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('getOrderedPortings');
 
                 $response = new errorResponse();
 
@@ -528,11 +560,15 @@ class PortingOperationService  {
 
                 $response = $this->client->getApprovedPortings($request);
 
+                $this->logRequestResponse('getApprovedPortings');
+
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('getApprovedPortings');
 
                 $response = new errorResponse();
 
@@ -575,11 +611,15 @@ class PortingOperationService  {
 
                 $response = $this->client->getAcceptedPortings($request);
 
+                $this->logRequestResponse('getAcceptedPortings');
+
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('getAcceptedPortings');
 
                 $response = new errorResponse();
 
@@ -622,11 +662,15 @@ class PortingOperationService  {
 
                 $response = $this->client->getConfirmedPortings($request);
 
+                $this->logRequestResponse('getConfirmedPortings');
+
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('getConfirmedPortings');
 
                 $response = new errorResponse();
 
@@ -671,11 +715,15 @@ class PortingOperationService  {
 
                 $response = $this->client->getDeniedPortings($request);
 
+                $this->logRequestResponse('getDeniedPortings');
+
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('getDeniedPortings');
 
                 $response = new errorResponse();
 
@@ -720,11 +768,15 @@ class PortingOperationService  {
 
                 $response = $this->client->getRejectedPortings($request);
 
+                $this->logRequestResponse('getRejectedPortings');
+
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('getRejectedPortings');
 
                 $response = new errorResponse();
 
@@ -1696,5 +1748,8 @@ class PortingOperationService  {
 
     }
 
-
+    private function logRequestResponse($action){
+        $this->fileLogAction('', 'PortingOperationService', $action . ' Request:: ' . $this->client->__getLastRequest());
+        $this->fileLogAction('', 'PortingOperationService', $action . ' Response:: ' . $this->client->__getLastResponse());
+    }
 }

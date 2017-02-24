@@ -159,8 +159,8 @@ class AuxService {
     }
 
     private function logRequestResponse($action){
-        $this->fileLogAction('8066', 'AuxService', $action . ' Request:: ' . $this->client->__getLastRequest());
-        $this->fileLogAction('8066', 'AuxService', $action . ' Response:: ' . $this->client->__getLastResponse());
+        $this->fileLogAction('', 'AuxService', $action . ' Request:: ' . $this->client->__getLastRequest());
+        $this->fileLogAction('', 'AuxService', $action . ' Response:: ' . $this->client->__getLastResponse());
     }
 
 }

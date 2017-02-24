@@ -57,11 +57,15 @@ class ProvisionOperationService {
 
                 $response = $this->client->confirmRoutingData($request);
 
+                $this->logRequestResponse('confirmRoutingData');
+
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('confirmRoutingData');
 
                 $response = new errorResponse();
 
@@ -88,5 +92,9 @@ class ProvisionOperationService {
 
     }
 
+    private function logRequestResponse($action){
+        $this->fileLogAction('', 'ProvisionOperationService', $action . ' Request:: ' . $this->client->__getLastRequest());
+        $this->fileLogAction('', 'ProvisionOperationService', $action . ' Response:: ' . $this->client->__getLastResponse());
+    }
 
 }

@@ -86,11 +86,15 @@ class ProblemReportOperationService {
 
                 $response = $this->client->reportProblem($request);
 
+                $this->logRequestResponse('reportProblem');
+
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('reportProblem');
 
                 $response = new errorResponse();
 
@@ -225,4 +229,8 @@ class ProblemReportOperationService {
         return $response;
     }
 
+    private function logRequestResponse($action){
+        $this->fileLogAction('', 'ProblemReportOperationService', $action . ' Request:: ' . $this->client->__getLastRequest());
+        $this->fileLogAction('', 'ProblemReportOperationService', $action . ' Response:: ' . $this->client->__getLastResponse());
+    }
 }

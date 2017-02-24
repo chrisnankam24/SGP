@@ -100,11 +100,15 @@ class RollbackOperationService {
 
                 $response = $this->client->open($request);
 
+                $this->logRequestResponse('open');
+
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('open');
 
                 $response = new errorResponse();
 
@@ -148,11 +152,15 @@ class RollbackOperationService {
 
                 $response = $this->client->accept($request);
 
+                $this->logRequestResponse('accept');
+
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('accept');
 
                 $response = new errorResponse();
 
@@ -202,11 +210,15 @@ class RollbackOperationService {
 
                 $response = $this->client->reject($request);
 
+                $this->logRequestResponse('reject');
+
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('reject');
 
                 $response = new errorResponse();
 
@@ -250,15 +262,25 @@ class RollbackOperationService {
             try {
 
                 $response = $this->client->confirm($request);
+
+                $this->logRequestResponse('confirm');
+
                 $response->success = true;
+
                 return $response;
 
             }catch (SoapFault $e){
 
+                $this->logRequestResponse('confirm');
+
                 $response = new errorResponse();
+
                 $fault = key($e->detail);
+
                 $response->message = $e->detail->$fault->message;
+
                 $response->error = $fault;
+
                 return $response;
 
             }
@@ -287,10 +309,16 @@ class RollbackOperationService {
             try {
 
                 $response = $this->client->getRollback($request);
+
+                $this->logRequestResponse('getRollback');
+
                 $response->success = true;
+
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('getRollback');
 
                 $response = new errorResponse();
                 $fault = key($e->detail);
@@ -324,10 +352,15 @@ class RollbackOperationService {
             try {
 
                 $response = $this->client->getOpenedRollbacks($request);
+
+                $this->logRequestResponse('getOpenedRollbacks');
+
                 $response->success = true;
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('getOpenedRollbacks');
 
                 $response = new errorResponse();
                 $fault = key($e->detail);
@@ -361,10 +394,15 @@ class RollbackOperationService {
             try {
 
                 $response = $this->client->getAcceptedRollbacks($request);
+
+                $this->logRequestResponse('getAcceptedRollbacks');
+
                 $response->success = true;
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('getAcceptedRollbacks');
 
                 $response = new errorResponse();
                 $fault = key($e->detail);
@@ -398,10 +436,15 @@ class RollbackOperationService {
             try {
 
                 $response = $this->client->getConfirmedRollbacks($request);
+
+                $this->logRequestResponse('getConfirmedRollbacks');
+
                 $response->success = true;
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('getConfirmedRollbacks');
 
                 $response = new errorResponse();
                 $fault = key($e->detail);
@@ -437,10 +480,15 @@ class RollbackOperationService {
             try {
 
                 $response = $this->client->getRejectedRollbacks($request);
+
+                $this->logRequestResponse('getRejectedRollbacks');
+
                 $response->success = true;
                 return $response;
 
             }catch (SoapFault $e){
+
+                $this->logRequestResponse('getRejectedRollbacks');
 
                 $response = new errorResponse();
                 $fault = key($e->detail);
@@ -1196,4 +1244,8 @@ class RollbackOperationService {
         return $response;
     }
 
+    private function logRequestResponse($action){
+        $this->fileLogAction('', 'RollbackOperationService', $action . ' Request:: ' . $this->client->__getLastRequest());
+        $this->fileLogAction('', 'RollbackOperationService', $action . ' Response:: ' . $this->client->__getLastResponse());
+    }
 }
