@@ -46,7 +46,7 @@ class ProblemReportOperationService {
 
         // Define soap client object
         $this->client = new SoapClient(__DIR__ . '/wsdl/ProblemReportOperationService.wsdl', array(
-            "trace" => false,
+            "trace" => true,
             'stream_context' => stream_context_create(array(
                 'http' => array(
                     'header' => 'Authorization: Bearer ' . Auth::CADB_AUTH_BEARER
