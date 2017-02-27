@@ -2236,8 +2236,6 @@ class BatchOperationService extends CI_Controller {
 
         $bscsOperationService = new BscsOperationService();
 
-        $kpsaOperationService = new KpsaOperationService();
-
         $emailService = new EmailService();
 
         foreach ($acceptedReturns as $acceptedReturn){
@@ -2366,6 +2364,9 @@ class BatchOperationService extends CI_Controller {
                 $fromRoutingNumber = $msisdnConfirmedReturn['ownerRoutingNumber'];
 
                 // Perform KPSA Operation
+
+                $kpsaOperationService = new KpsaOperationService();
+
                 $kpsaResponse = $kpsaOperationService->performKPSAOperation($returnMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
 
                 if($kpsaResponse['success']){
@@ -2481,8 +2482,6 @@ class BatchOperationService extends CI_Controller {
         $this->fileLogAction('7014', 'BatchOperationService::numberReturnPO', 'Preparing CONFIRM of ' . count($msisdnConfirmedReturns) . ' msisdn returned returns');
 
         $bscsOperationService = new BscsOperationService();
-
-        $kpsaOperationService = new KpsaOperationService();
 
         $emailService = new EmailService();
 
@@ -2606,6 +2605,9 @@ class BatchOperationService extends CI_Controller {
                 $toRoutingNumber = $msisdnConfirmedReturn['primaryOwnerRoutingNumber'];
 
                 // Perform KPSA Operation
+
+                $kpsaOperationService = new KpsaOperationService();
+
                 $kpsaResponse = $kpsaOperationService->performKPSAReturnOperation($returnMSISDN, $toOperator, $toRoutingNumber);
 
                 if($kpsaResponse['success']){
