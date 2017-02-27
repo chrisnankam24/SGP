@@ -87,7 +87,7 @@ class SVI extends CI_Controller {
 
         }
 
-        $this->fileLogAction('8002', 'SVI', 'SVI Response sent to ' . $msisdn);
+        $this->fileLogAction('8002', 'SVI', 'SVI Response sent to ' . $msisdn . ' :: ' . json_encode($response));
 
         return $response;
     }

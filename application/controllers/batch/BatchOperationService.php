@@ -510,6 +510,10 @@ class BatchOperationService extends CI_Controller {
 
                     $this->Porting_model->update_porting($approvedPort['portingId'], $portingParams);
 
+                }else{
+
+                    // Notify by SMS
+
                 }
             }
         }

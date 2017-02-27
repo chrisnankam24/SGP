@@ -21,9 +21,18 @@ class ProvisionOperationService {
 
     // Declare client
     private $client = null;
+    private $FileLog_model = null;
 
     public function __construct()
     {
+
+        $CI =& get_instance();
+
+        $this->db = $CI->db;
+
+        $CI->load->model('FileLog_model');
+
+        $this->FileLog_model = $CI->FileLog_model;
 
         // Disable wsdl_1_4 cache
         ini_set("soap.wsdl_cache_enabled", "0");
@@ -37,6 +46,15 @@ class ProvisionOperationService {
                 ),
             )),
         ));
+
+    }
+
+    /**
+     * Log action/error to file
+     */
+    private function fileLogAction($code, $class, $message){
+
+        $this->FileLog_model->write_log($code, $class, $message);
 
     }
 

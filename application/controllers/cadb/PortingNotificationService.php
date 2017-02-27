@@ -596,8 +596,10 @@ class PortingNotificationService extends CI_Controller
 
                 $portingParams = $this->Porting_model->get_porting($portingId);
 
-                $emailService->adminErrorReport('PORTING AUTO CONFIRMED AND MSISDN EXPORTED BUT DB FILLED INCOMPLETE', $portingParams, processType::PORTING);
+                $emailService->adminErrorReport('PORTING_AUTO_CONFIRMED AND MSISDN EXPORTED BUT DB FILLED INCOMPLETE', $portingParams, processType::PORTING);
+
                 $this->db->trans_complete();
+
                 throw new ldbAdministrationServiceFault();
 
             }else{
@@ -616,6 +618,9 @@ class PortingNotificationService extends CI_Controller
         else {
 
             $faultCode = $portingStatedResponse->error;
+            $message = $portingStatedResponse->message;
+
+            $this->fileLogAction('7005', 'PortingNotificationService::notifyAutoConfirm', 'StartOPR failed for ' . $portingId . ' with ' . $faultCode . ' :: ' . $message);
 
             $fault = '';
 
@@ -901,7 +906,7 @@ class PortingNotificationService extends CI_Controller
             $portingParams = $this->Porting_model->get_porting($portingId);
 
             $emailService = new EmailService();
-            $emailService->adminErrorReport('PORTING REJECTED BUT DB FILLED INCOMPLETE', $portingParams, processType::PORTING);
+            $emailService->adminErrorReport('PORTING_REJECTED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
             $this->db->trans_complete();
             throw new ldbAdministrationServiceFault();
 
