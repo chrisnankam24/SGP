@@ -593,8 +593,6 @@ class BatchOperationService extends CI_Controller {
 
         $bscsOperationService = new BscsOperationService();
 
-        $kpsaOperationService = new KpsaOperationService();
-
         $emailService = new EmailService();
 
         foreach ($acceptedPorts as $acceptedPort){
@@ -783,6 +781,9 @@ class BatchOperationService extends CI_Controller {
             $toRoutingNumber = $msisdnExportedPort['recipientRoutingNumber'];
 
             // Perform KPSA Operation
+
+            $kpsaOperationService = new KpsaOperationService();
+
             $kpsaResponse = $kpsaOperationService->performKPSAOperation($subscriberMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
 
             if($kpsaResponse['success']){
@@ -903,8 +904,6 @@ class BatchOperationService extends CI_Controller {
         $bscsOperationService = new BscsOperationService();
 
         $portingOperationService = new PortingOperationService();
-
-        $kpsaOperationService = new KpsaOperationService();
 
         $emailService = new EmailService();
 
@@ -1152,6 +1151,9 @@ class BatchOperationService extends CI_Controller {
             $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'Performing KPSA_OPERATION for ' . $msisdnChangePort['portingId']);
 
             // Perform KPSA Operation
+
+            $kpsaOperationService = new KpsaOperationService();
+
             $kpsaResponse = $kpsaOperationService->performKPSAOperation($subscriberMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
 
             if($kpsaResponse['success']){
@@ -1401,8 +1403,6 @@ class BatchOperationService extends CI_Controller {
 
         $bscsOperationService = new BscsOperationService();
 
-        $kpsaOperationService = new KpsaOperationService();
-
         $emailService = new EmailService();
 
         foreach ($acceptedRollbacks as $acceptedRollback){
@@ -1598,6 +1598,9 @@ class BatchOperationService extends CI_Controller {
             $toRoutingNumber = $msisdnExportedRollback['recipientRoutingNumber'];
 
             // Perform KPSA Operation
+
+            $kpsaOperationService = new KpsaOperationService();
+
             $kpsaResponse = $kpsaOperationService->performKPSAOperation($subscriberMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
 
             if($kpsaResponse['success']){
@@ -1719,8 +1722,6 @@ class BatchOperationService extends CI_Controller {
         $bscsOperationService = new BscsOperationService();
 
         $rollbackOperationService = new RollbackOperationService();
-
-        $kpsaOperationService = new KpsaOperationService();
 
         $emailService = new EmailService();
 
@@ -1980,6 +1981,9 @@ class BatchOperationService extends CI_Controller {
             $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'Performing KPSA_OPERATION for ' . $msisdnChangeRollback['rollbackId']);
 
             // Perform KPSA Operation
+
+            $kpsaOperationService = new KpsaOperationService();
+
             $kpsaResponse = $kpsaOperationService->performKPSAOperation($subscriberMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
 
             if($kpsaResponse['success']){
