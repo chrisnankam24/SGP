@@ -174,4 +174,37 @@ class RIO extends CI_Controller {
         return $rio;
     }
 
+    private static function calculateRIOv2($subsInfo, $msisdn){
+
+        $account_num = $subsInfo['NUM_COMPTE'];
+
+        if(strlen($msisdn) == 12){
+
+            $msisdn = substr($msisdn, 3);
+
+        }
+
+        // RIO == OOQRRRRRRCCC
+
+        $OO = Operator::ORANGE_NETWORK_ID; // Operator ID
+
+        $Q = 'P'; // Subscriber Type :: P == Personal / E == Enterprise
+
+        if($subsInfo['TYPE_CLIENT'] == 'B'){
+
+            $Q = 'E';
+
+        }
+
+        $Q_NC = $Q == 'E' ? '0' : '1';
+
+        $RRRRRR = strtoupper(substr(str_pad(base_convert(explode($account_num, '.')[1], 10, 36), 6, '0', STR_PAD_LEFT), 0, 6)); // Generated
+
+        $CCC = strtoupper(substr(base_convert(Operator::ORANGE_NETWORK_ID_NUMBER . $Q_NC . $msisdn, 10, 36), 0, 3)); // Encrypted Check sum
+
+        $rio = $OO . $Q . $RRRRRR . $CCC;
+
+        return $rio;
+    }
+
 }

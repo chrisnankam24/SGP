@@ -10,11 +10,10 @@ require_once APPPATH . "controllers/cadb/Fault.php";
  * Date: 12/16/2016
  * Time: 8:10 AM
  */
-class KpsaOperationService extends CI_Controller {
+class KpsaOperationService {
 
     public function __construct()
     {
-        parent::__construct();
 
     }
 
