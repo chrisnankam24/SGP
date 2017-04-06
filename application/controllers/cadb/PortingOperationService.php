@@ -5,11 +5,13 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 require_once "Common.php";
 require_once "Porting.php";
 require_once "Fault.php";
+require_once "ProvisionNotification.php";
 require_once APPPATH . "controllers/email/EmailService.php";
 require_once APPPATH . "controllers/bscs/BscsOperationService.php";
 require_once APPPATH . "controllers/sms/SMS.php";
 
 use PortingService\Porting as Porting;
+use \ProvisionService\ProvisionNotification\provisionStateType as provisionStateType;
 
 /**
  * Created by PhpStorm.
@@ -30,6 +32,7 @@ class PortingOperationService  {
     private $db = null;
     private $Porting_model = null;
     private $FileLog_model = null;
+    private $ProcessNumber_model = null;
     private $Portingstateevolution_model = null;
     private $Portingsmsnotification_model = null;
     private $Portingdenyrejectionabandon_model = null;
@@ -43,19 +46,19 @@ class PortingOperationService  {
 
         $CI->load->model('Porting_model');
         $CI->load->model('FileLog_model');
-        $CI->load->model('Portingsubmission_model');
+        $CI->load->model('ProcessNumber_model');
         $CI->load->model('Portingstateevolution_model');
         $CI->load->model('Portingsmsnotification_model');
         $CI->load->model('Portingdenyrejectionabandon_model');
 
         $this->Porting_model = $CI->Porting_model;
         $this->FileLog_model = $CI->FileLog_model;
-        $this->Portingsubmission_model = $CI->Portingsubmission_model;
+        $this->ProcessNumber_model = $CI->ProcessNumber_model;
         $this->Portingstateevolution_model = $CI->Portingstateevolution_model;
         $this->Portingsmsnotification_model = $CI->Portingsmsnotification_model;
         $this->Portingdenyrejectionabandon_model = $CI->Portingdenyrejectionabandon_model;
 
-        // Disable wsdl_1_4 cache
+        // Disable wsdl cache
         ini_set("soap.wsdl_cache_enabled", "0");
 
         libxml_disable_entity_loader(false);
@@ -458,15 +461,11 @@ class PortingOperationService  {
 
                 $response = $this->client->getPorting($request);
 
-                $this->logRequestResponse('getPorting');
-
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
-
-                $this->logRequestResponse('getPorting');
 
                 $response = new errorResponse();
 
@@ -509,15 +508,11 @@ class PortingOperationService  {
 
                 $response = $this->client->getOrderedPortings($request);
 
-                $this->logRequestResponse('getOrderedPortings');
-
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
-
-                $this->logRequestResponse('getOrderedPortings');
 
                 $response = new errorResponse();
 
@@ -560,15 +555,11 @@ class PortingOperationService  {
 
                 $response = $this->client->getApprovedPortings($request);
 
-                $this->logRequestResponse('getApprovedPortings');
-
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
-
-                $this->logRequestResponse('getApprovedPortings');
 
                 $response = new errorResponse();
 
@@ -611,15 +602,11 @@ class PortingOperationService  {
 
                 $response = $this->client->getAcceptedPortings($request);
 
-                $this->logRequestResponse('getAcceptedPortings');
-
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
-
-                $this->logRequestResponse('getAcceptedPortings');
 
                 $response = new errorResponse();
 
@@ -662,15 +649,11 @@ class PortingOperationService  {
 
                 $response = $this->client->getConfirmedPortings($request);
 
-                $this->logRequestResponse('getConfirmedPortings');
-
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
-
-                $this->logRequestResponse('getConfirmedPortings');
 
                 $response = new errorResponse();
 
@@ -715,15 +698,11 @@ class PortingOperationService  {
 
                 $response = $this->client->getDeniedPortings($request);
 
-                $this->logRequestResponse('getDeniedPortings');
-
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
-
-                $this->logRequestResponse('getDeniedPortings');
 
                 $response = new errorResponse();
 
@@ -768,15 +747,11 @@ class PortingOperationService  {
 
                 $response = $this->client->getRejectedPortings($request);
 
-                $this->logRequestResponse('getRejectedPortings');
-
                 $response->success = true;
 
                 return $response;
 
             }catch (SoapFault $e){
-
-                $this->logRequestResponse('getRejectedPortings');
 
                 $response = new errorResponse();
 
@@ -821,7 +796,7 @@ class PortingOperationService  {
      */
     public function orderPort($donorOperator, $portingMsisdn, $subscriberType, $rio, $documentType, $physicalPersonFirstName,
                                $physicalPersonLastName, $physicalPersonIdNumber, $legalPersonName, $legalPersonTin,
-                               $contactNumber, $temporalNumber, $contractId, $language, $portingDateTime, $userId) {
+                               $contactNumber, $temporalNumber, $contractId, $language, $portingDateTime, $userId, $source = portingSource::WEB) {
 
         // Construct subscriber info
 
@@ -829,15 +804,15 @@ class PortingOperationService  {
 
         $subscriberInfo = new \PortingService\Porting\subscriberInfoType();
 
+        $subscriberInfo->contactNumber = $contactNumber;
+
         if($subscriberType == 0){
             $subscriberInfo->physicalPersonFirstName = $physicalPersonFirstName;
             $subscriberInfo->physicalPersonLastName = $physicalPersonLastName;
             $subscriberInfo->physicalPersonIdNumber = $physicalPersonIdNumber;
-            $subscriberInfo->contactNumber = $portingMsisdn;
         }else{
             $subscriberInfo->legalPersonName = $legalPersonName;
             $subscriberInfo->legalPersonTin = $legalPersonTin;
-            $subscriberInfo->contactNumber = $contactNumber;
         }
 
         // Strips only null values
@@ -859,36 +834,6 @@ class PortingOperationService  {
 
             $this->db->trans_start();
 
-            // Fill in submission table with submission state ordered
-
-            $submissionParams = array(
-                'donorNetworkId' => $orderResponse->portingTransaction->donorNrn->networkId,
-                'donorRoutingNumber' => $orderResponse->portingTransaction->donorNrn->routingNumber,
-                'subscriberSubmissionDateTime' => date('c'),
-                'portingDateTime' => $orderResponse->portingTransaction->portingDateTime,
-                'rio' => $rio,
-                'documentType' => $documentType,
-                'portingMSISDN' => $portingMsisdn,
-                'contractId' => $contractId,
-                'language' => $language,
-                'temporalMSISDN' => $temporalNumber,
-                'submissionState' => \PortingService\Porting\portingSubmissionStateType::ORDERED,
-                'orderedDateTime' => date('c'),
-                'userId' => $userId
-            );
-
-            if($subscriberType == 0) {
-                $submissionParams['physicalPersonFirstName'] = $orderResponse->portingTransaction->subscriberInfo->physicalPersonFirstName;
-                $submissionParams['physicalPersonLastName'] = $orderResponse->portingTransaction->subscriberInfo->physicalPersonLastName;
-                $submissionParams['physicalPersonIdNumber'] = $orderResponse->portingTransaction->subscriberInfo->physicalPersonIdNumber;
-            }
-            else{
-                $submissionParams['legalPersonName'] = $orderResponse->portingTransaction->subscriberInfo->legalPersonName;
-                $submissionParams['legalPersonTin'] = $orderResponse->portingTransaction->subscriberInfo->legalPersonTin;
-                $submissionParams['contactNumber'] = $orderResponse->portingTransaction->subscriberInfo->contactNumber;
-            }
-
-            $portingsubmission_id = $this->Portingsubmission_model->add_portingsubmission($submissionParams);
             $portingId = $orderResponse->portingTransaction->portingId;
 
             // Fill in porting table with state ordered
@@ -902,16 +847,14 @@ class PortingOperationService  {
                 'recipientSubmissionDateTime' => $orderResponse->portingTransaction->recipientSubmissionDateTime,
                 'portingDateTime' => $orderResponse->portingTransaction->portingDateTime,
                 'rio' =>  $orderResponse->portingTransaction->rio,
-                'startMSISDN' =>  $orderResponse->portingTransaction->numberRanges->numberRange->startNumber,
-                'endMSISDN' =>  $orderResponse->portingTransaction->numberRanges->numberRange->endNumber,
                 'cadbOrderDateTime' => $orderResponse->portingTransaction->cadbOrderDateTime,
                 'lastChangeDateTime' => $orderResponse->portingTransaction->lastChangeDateTime,
                 'portingState' => \PortingService\Porting\portingStateType::ORDERED,
-                'contractId' => $contractId,
                 'language' => $language,
+                'contactNumber' => $orderResponse->portingTransaction->subscriberInfo->contactNumber,
                 'portingNotificationMailSendStatus' => smsState::CLOSED,
                 'portingNotificationMailSendDateTime' => date('c'),
-                'portingSubmissionId' => $portingsubmission_id,
+                'source' => $source
             );
 
             if($subscriberType == 0) {
@@ -922,11 +865,9 @@ class PortingOperationService  {
             else{
                 $portingParams['legalPersonName'] = $orderResponse->portingTransaction->subscriberInfo->legalPersonName;
                 $portingParams['legalPersonTin'] = $orderResponse->portingTransaction->subscriberInfo->legalPersonTin;
-                $portingParams['contactNumber'] = $orderResponse->portingTransaction->subscriberInfo->contactNumber;
             }
 
             $this->Porting_model->add_porting($portingParams);
-
 
             // Fill in portingStateEvolution table with state ordered
 
@@ -939,6 +880,26 @@ class PortingOperationService  {
 
             $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
 
+            // Fill in Porting process numbers
+
+            $portingNumbers = $this->getPortingNumbers($orderResponse);
+
+            $processNumberParams = [];
+
+            foreach ($portingNumbers as $portingNumber){
+                $processNumberParams[] = array(
+                    'processId' => $portingId,
+                    'msisdn' => $portingNumber,
+                    'numberState' => provisionStateType::STARTED,
+                    'pLastChangeDateTime' => date('c'),
+                    'processType' => processType::PORTING,
+                    'contractId' => $contractId,
+                    'temporalMsisdn' => $temporalNumber
+                );
+            }
+
+            $this->db->insert_batch('processnumber', $processNumberParams);
+
             $response['success'] = true;
 
             if ($this->db->trans_status() === FALSE) {
@@ -947,7 +908,7 @@ class PortingOperationService  {
                 $this->fileLogAction($error['code'], 'PortingOperationService', $error['message']);
 
                 $emailService = new EmailService();
-                $emailService->adminErrorReport('PORTING_ORDERED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
+                $emailService->adminErrorReport('PORTING ORDERED BUT DB FILLED INCOMPLETE', $portingParams, processType::PORTING);
 
             }else {
 
@@ -1015,7 +976,7 @@ class PortingOperationService  {
                     'donorNetworkId' => '',
                     'recipientSubmissionDateTime' => date('c'),
                     'rio' =>  '',
-                    'startMSISDN' =>  $portingMsisdn,
+                    'msisdn' =>  [$portingMsisdn],
                     'lastChangeDateTime' => date('c'),
                     'portingState' => 'NONE'
                 );
@@ -1088,7 +1049,14 @@ class PortingOperationService  {
 
                     $language = $portingInfo['language'];
 
-                    $subscriberMSISDN = $acceptResponse->portingTransaction->numberRanges->numberRange->startNumber;
+                    $portingNumbers = $this->getPortingNumbers($acceptResponse);
+
+                    $sendMsisdn = $acceptResponse->portingTransaction->subscriberInfo->contactNumber;
+                    $subscriberMSISDN = implode(', ', $portingNumbers);
+
+                    if(strlen($subscriberMSISDN) > 26){
+                        $subscriberMSISDN = substr($subscriberMSISDN, 0, 27) . ' ...';
+                    }
 
                     $portingDateTime = $acceptResponse->portingTransaction->portingDateTime;
 
@@ -1102,7 +1070,7 @@ class PortingOperationService  {
                         $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_NEXTTEL;
                     }
 
-                    $smsResponse = SMS::OPD_Subscriber_Reminder($language, $subscriberMSISDN, $denom_OPR, $day, $start_time, $end_time);
+                    $smsResponse = SMS::OPD_Subscriber_Reminder($language, $subscriberMSISDN, $denom_OPR, $day, $start_time, $end_time, $sendMsisdn);
 
                     if($smsResponse['success']){
                         // Insert Porting SMS Notification
@@ -1132,6 +1100,14 @@ class PortingOperationService  {
 
                     $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
 
+                    // Update Number state
+                    $portingNumberParams = array(
+                        'pLastChangeDateTime' => date('c'),
+                        'numberState' => \PortingService\Porting\portingStateType::ACCEPTED
+                    );
+
+                    $this->ProcessNumber_model->update_processnumber_all($portingId, $portingNumberParams);
+
                     $response['success'] = true;
 
                     if ($this->db->trans_status() === FALSE) {
@@ -1142,7 +1118,7 @@ class PortingOperationService  {
                         $portingParams = $this->Porting_model->get_porting($portingId);
 
                         $emailService = new EmailService();
-                        $emailService->adminErrorReport('PORTING_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
+                        $emailService->adminErrorReport('PORTING ACCEPTED BUT DB FILLED INCOMPLETE', $portingParams, processType::PORTING);
 
                     }
 
@@ -1223,8 +1199,7 @@ class PortingOperationService  {
 
             if($dbPort['portingState'] == Porting\portingStateType::APPROVED){
 
-                if($rejectionReason == Porting\rejectionReasonType::OUTSTANDING_OBLIGATIONS_TO_DONOR ||
-                    $rejectionReason == Porting\rejectionReasonType::SUBSCRIBER_CANCELLED_PORTING ||
+                if($rejectionReason == Porting\rejectionReasonType::SUBSCRIBER_CANCELLED_PORTING ||
                     $rejectionReason == Porting\rejectionReasonType::SUBSCRIBER_CHANGED_NUMBER){
 
                     // Make Reject Porting Operation
@@ -1269,6 +1244,24 @@ class PortingOperationService  {
 
                         $this->Portingdenyrejectionabandon_model->add_portingdenyrejectionabandon($pdraParams);
 
+                        // Update number state
+
+                        $portingNumbers = $this->getPortingNumbers($rejectResponse);
+
+                        foreach ($portingNumbers as $portingNumber){
+
+                            // Update Porting Number table
+
+                            $portingNumberParams = array(
+                                'pLastChangeDateTime' => date('c'),
+                                'numberState' => provisionStateType::TERMINATED,
+                                'terminationReason' => $rejectionReason
+                            );
+
+                            $this->ProcessNumber_model->update_processnumber($portingId, $portingNumber, $portingNumberParams);
+
+                        }
+
                         $response['success'] = true;
 
                         if ($this->db->trans_status() === FALSE) {
@@ -1279,7 +1272,7 @@ class PortingOperationService  {
                             $portingParams = $this->Porting_model->get_porting($portingId);
 
                             $emailService = new EmailService();
-                            $emailService->adminErrorReport('PORTING_REJECTED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
+                            $emailService->adminErrorReport('PORTING REJECTED BUT DB FILLED INCOMPLETE', $portingParams, processType::PORTING);
 
                         }else {
 
@@ -1403,8 +1396,8 @@ class PortingOperationService  {
             $data['lastChangeDateTime'] = $tmpData->lastChangeDateTime;
             $data['portingState'] = $tmpData->portingState;
             $data['rio'] = $tmpData->rio;
-            $data['startMSISDN'] = $tmpData->numberRanges->numberRange->startNumber;
-            $data['endMSISDN'] = $tmpData->numberRanges->numberRange->endNumber;
+            $data['msisdn'] = $this->getPortingNumbers($getResponse);
+            $data['contactNumber'] = $tmpData->subscriberInfo->contactNumber;
 
             if($subscriberType == 0) {
 
@@ -1414,14 +1407,12 @@ class PortingOperationService  {
 
                 $data['legalPersonName'] = null;
                 $data['legalPersonTin'] = null;
-                $data['contactNumber'] = null;
 
             }
             else{
 
                 $data['legalPersonName'] = $tmpData->subscriberInfo->legalPersonName;
                 $data['legalPersonTin'] = $tmpData->subscriberInfo->legalPersonTin;
-                $data['contactNumber'] = $tmpData->subscriberInfo->contactNumber;
 
                 $data['physicalPersonFirstName'] = null;
                 $data['physicalPersonLastName'] = null;
@@ -1701,6 +1692,9 @@ class PortingOperationService  {
 
         foreach ($tmpData as $tmpDatum){
 
+            $res = new stdClass();
+            $res->portingTransaction = $tmpDatum;
+
             $data = array();
 
             $data['portingId'] = $tmpDatum->portingId;
@@ -1714,8 +1708,8 @@ class PortingOperationService  {
             $data['lastChangeDateTime'] = $tmpDatum->lastChangeDateTime;
             $data['portingState'] = $tmpDatum->portingState;
             $data['rio'] = $tmpDatum->rio;
-            $data['startMSISDN'] = $tmpDatum->numberRanges->numberRange->startNumber;
-            $data['endMSISDN'] = $tmpDatum->numberRanges->numberRange->endNumber;
+            $data['msisdn'] = $this->getPortingNumbers($res);
+            $data['contactNumber'] = $tmpDatum->subscriberInfo->contactNumber;
 
             if(isset($tmpDatum->subscriberInfo->physicalPersonFirstName)) {
 
@@ -1725,14 +1719,12 @@ class PortingOperationService  {
 
                 $data['legalPersonName'] = null;
                 $data['legalPersonTin'] = null;
-                $data['contactNumber'] = null;
 
             }
             else{
 
                 $data['legalPersonName'] = $tmpDatum->subscriberInfo->legalPersonName;
                 $data['legalPersonTin'] = $tmpDatum->subscriberInfo->legalPersonTin;
-                $data['contactNumber'] = $tmpDatum->subscriberInfo->contactNumber;
 
                 $data['physicalPersonFirstName'] = null;
                 $data['physicalPersonLastName'] = null;
@@ -1752,4 +1744,67 @@ class PortingOperationService  {
         $this->fileLogAction('', 'PortingOperationService', $action . ' Request:: ' . $this->client->__getLastRequest());
         $this->fileLogAction('', 'PortingOperationService', $action . ' Response:: ' . $this->client->__getLastResponse());
     }
+
+    /**
+     * Returns porting MSISDN in process
+     * @param $request
+     * @return array
+     */
+    private function getPortingNumbers($request){
+
+        $numbers = [];
+
+        if(is_array($request->portingTransaction->numberRanges->numberRange)){
+
+            foreach ($request->portingTransaction->numberRanges->numberRange as $numberRange){
+
+                $startMSISDN = $numberRange->startNumber;
+                $endMSISDN = $numberRange->endNumber;
+
+                if(strlen($startMSISDN) == 12){
+                    $startMSISDN = substr($startMSISDN, 3);
+                }
+                if(strlen($endMSISDN) == 12){
+                    $endMSISDN = substr($endMSISDN, 3);
+                }
+
+                $startMSISDN = intval($startMSISDN);
+                $endMSISDN = intval($endMSISDN);
+
+                while ($startMSISDN <= $endMSISDN){
+                    $numbers[] = '237' . $startMSISDN;
+                    $startMSISDN += 1;
+                }
+
+            }
+
+        }
+        else{
+
+            $startMSISDN = $request->portingTransaction->numberRanges->numberRange->startNumber;
+            $endMSISDN = $request->portingTransaction->numberRanges->numberRange->endNumber;
+
+            if(strlen($startMSISDN) == 12){
+                $startMSISDN = substr($startMSISDN, 3);
+            }
+            if(strlen($endMSISDN) == 12){
+                $endMSISDN = substr($endMSISDN, 3);
+            }
+
+            $startMSISDN = intval($startMSISDN);
+            $endMSISDN = intval($endMSISDN);
+
+            while ($startMSISDN <= $endMSISDN){
+                $numbers[] = '237' . $startMSISDN;
+                $startMSISDN += 1;
+            }
+
+        }
+
+        $numbers = array_values(array_unique($numbers));
+
+        return $numbers;
+
+    }
+
 }

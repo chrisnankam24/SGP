@@ -13,12 +13,14 @@ require_once "Fault.php";
 require_once "Common.php";
 require_once "Rollback.php";
 require_once "RollbackNotification.php";
+require_once "ProvisionNotification.php";
 require_once APPPATH . "controllers/sms/SMS.php";
 require_once APPPATH . "controllers/email/EmailService.php";
 require_once APPPATH . "controllers/bscs/BscsOperationService.php";
 require_once APPPATH . "controllers/kpsa/KpsaOperationService.php";
 
 use RollbackService\RollbackNotification as RollbackNotification;
+use \ProvisionService\ProvisionNotification\provisionStateType as provisionStateType;
 
 class RollbackNotificationService extends CI_Controller {
 
@@ -30,7 +32,7 @@ class RollbackNotificationService extends CI_Controller {
         $this->load->model('Porting_model');
         $this->load->model('FileLog_model');
         $this->load->model('Rollback_model');
-        $this->load->model('Rollbacksubmission_model');
+        $this->load->model('ProcessNumber_model');
         $this->load->model('Rollbackstateevolution_model');
         $this->load->model('Rollbacksmsnotification_model');
         $this->load->model('Rollbackrejectionabandon_model');
@@ -70,9 +72,9 @@ class RollbackNotificationService extends CI_Controller {
 
         $rollbackId = $notifyOpenedRequest->rollbackTransaction->rollbackId;
 
-        $this->fileLogAction('8030', 'RollbackNotificationService', 'Rollback OPEN received for ID ' . $rollbackId);
+        $rollbackNumbers = $this->getRollbackNumbers($notifyOpenedRequest);
 
-        $subscriberMSISDN = $notifyOpenedRequest->rollbackTransaction->numberRanges->numberRange->startNumber;
+        $this->fileLogAction('8030', 'RollbackNotificationService', 'Rollback OPEN received for ID ' . $rollbackId);
 
         if($notifyOpenedRequest->rollbackTransaction->donorNrn->networkId == Operator::MTN_NETWORK_ID){
             $denom_OPD = SMS::$DENOMINATION_COMMERCIALE_MTN;
@@ -110,6 +112,22 @@ class RollbackNotificationService extends CI_Controller {
 
         $this->Rollbackstateevolution_model->add_rollbackstateevolution($seParams);
 
+        // Insert Porting Numbers
+
+        $processNumberParams = [];
+
+        foreach ($rollbackNumbers as $rollbackNumber){
+            $processNumberParams[] = array(
+                'processId' => $rollbackId,
+                'msisdn' => $rollbackNumber,
+                'numberState' => provisionStateType::STARTED,
+                'pLastChangeDateTime' => date('c'),
+                'processType' => processType::ROLLBACK
+            );
+        }
+
+        $this->db->insert_batch('processnumber', $processNumberParams);
+
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
@@ -120,9 +138,10 @@ class RollbackNotificationService extends CI_Controller {
 
             $emailService = new EmailService();
 
-            $emailService->adminErrorReport('OPENED_ROLLBACK_RECEIVED_BUT_DB_FILLING_ERROR', $rollbackParams, processType::ROLLBACK);
+            $emailService->adminErrorReport('OPENED ROLLBACK RECEIVED BUT DB FILLING ERROR', $rollbackParams, processType::ROLLBACK);
 
-        }else{
+        }
+        else{
 
             $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback OPEN save successful for $rollbackId");
 
@@ -136,6 +155,8 @@ class RollbackNotificationService extends CI_Controller {
         $portingInfo = $this->Porting_model->get_porting($originalPortingId);
 
         $language = $portingInfo['language'];
+
+        $subscriberMSISDN = $notifyOpenedRequest->rollbackTransaction->subscriberInfo->contactNumber;
 
         $smsResponse = SMS::OPR_Inform_Subscriber($language, $subscriberMSISDN, $denom_OPD, $rollbackId);
 
@@ -189,6 +210,8 @@ class RollbackNotificationService extends CI_Controller {
 
         $rollbackId = $notifyAcceptedRequest->rollbackTransaction->rollbackId;
 
+        $rollbackNumbers = $this->getRollbackNumbers($notifyAcceptedRequest);
+
         $this->fileLogAction('8030', 'RollbackNotificationService', 'Rollback ACCEPT received for ID ' . $rollbackId);
 
         $this->db->trans_start();
@@ -215,6 +238,14 @@ class RollbackNotificationService extends CI_Controller {
 
         $this->Rollbackstateevolution_model->add_rollbackstateevolution($seParams);
 
+        // Update Number state
+        $portingNumberParams = array(
+            'pLastChangeDateTime' => date('c'),
+            'numberState' => \RollbackService\Rollback\rollbackStateType::ACCEPTED
+        );
+
+        $this->ProcessNumber_model->update_processnumber_all($rollbackId, $portingNumberParams);
+
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
@@ -226,9 +257,10 @@ class RollbackNotificationService extends CI_Controller {
             $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
 
             $emailService = new EmailService();
-            $emailService->adminErrorReport('ACCEPTED_ROLLBACK_RECEIVED_BUT_DB_FILLING_ERROR', $rollbackParams, processType::ROLLBACK);
+            $emailService->adminErrorReport('ACCEPTED ROLLBACK RECEIVED BUT DB FILLING ERROR', $rollbackParams, processType::ROLLBACK);
 
-        }else{
+        }
+        else{
 
             $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback ACCEPT save successful for $rollbackId");
 
@@ -244,15 +276,20 @@ class RollbackNotificationService extends CI_Controller {
 
         $language = $portingInfo['language'];
 
-        $subscriberMSISDN = $notifyAcceptedRequest->rollbackTransaction->numberRanges->numberRange->startNumber;
-
         $rollbackDateTime = $notifyAcceptedRequest->rollbackTransaction->rollbackDateTime;
+
+        $sendMsisdn = $notifyAcceptedRequest->rollbackTransaction->subscriberInfo->contactNumber;
+        $subscriberMSISDN = implode(', ', $rollbackNumbers);
+
+        if(strlen($subscriberMSISDN) > 26){
+            $subscriberMSISDN = substr($subscriberMSISDN, 0, 27) . ' ...';
+        }
 
         $day = date('d/m/Y', strtotime($rollbackDateTime));
         $start_time = date('H:i:s', strtotime($rollbackDateTime));
         $end_time = date('H:i:s', strtotime('+2 hours', strtotime($rollbackDateTime)));
 
-        $smsResponse = SMS::OPD_Subscriber_OK($language, $subscriberMSISDN, $day, $start_time, $end_time);
+        $smsResponse = SMS::OPD_Subscriber_OK($language, $subscriberMSISDN, $day, $start_time, $end_time, $sendMsisdn);
 
         if($smsResponse['success']){
 
@@ -269,7 +306,8 @@ class RollbackNotificationService extends CI_Controller {
                 'sendDateTime' => date('c'),
             );
 
-        }else{
+        }
+        else{
 
             $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback ACCEPT SMS sent failed for $rollbackId");
 
@@ -304,6 +342,8 @@ class RollbackNotificationService extends CI_Controller {
 
         $rollbackId = $notifyAutoAcceptRequest->rollbackTransaction->rollbackId;
 
+        $rollbackNumbers = $this->getRollbackNumbers($notifyAutoAcceptRequest);
+
         $this->fileLogAction('8030', 'RollbackNotificationService', 'Rollback AUTO ACCEPT received for ID ' . $rollbackId);
 
         $this->db->trans_start();
@@ -329,6 +369,14 @@ class RollbackNotificationService extends CI_Controller {
         );
 
         $this->Rollbackstateevolution_model->add_rollbackstateevolution($seParams);
+
+        // Update Number state
+        $portingNumberParams = array(
+            'pLastChangeDateTime' => date('c'),
+            'numberState' => \RollbackService\Rollback\rollbackStateType::ACCEPTED
+        );
+
+        $this->ProcessNumber_model->update_processnumber_all($rollbackId, $portingNumberParams);
 
         // Mail Admin AUTO state reached
 
@@ -362,19 +410,24 @@ class RollbackNotificationService extends CI_Controller {
 
         $language = $portingInfo['language'];
 
-        $subscriberMSISDN = $notifyAutoAcceptRequest->rollbackTransaction->numberRanges->numberRange->startNumber;
-
         $rollbackDateTime = $notifyAutoAcceptRequest->rollbackTransaction->rollbackDateTime;
+
+        $sendMsisdn = $notifyAutoAcceptRequest->rollbackTransaction->subscriberInfo->contactNumber;
+        $subscriberMSISDN = implode(', ', $rollbackNumbers);
+
+        if(strlen($subscriberMSISDN) > 26){
+            $subscriberMSISDN = substr($subscriberMSISDN, 0, 27) . ' ...';
+        }
 
         $day = date('d/m/Y', strtotime($rollbackDateTime));
         $start_time = date('H:i:s', strtotime($rollbackDateTime));
         $end_time = date('H:i:s', strtotime('+2 hours', strtotime($rollbackDateTime)));
 
-        $smsResponse = SMS::OPD_Subscriber_OK($language, $subscriberMSISDN, $day, $start_time, $end_time);
+        $smsResponse = SMS::OPD_Subscriber_OK($language, $subscriberMSISDN, $day, $start_time, $end_time, $sendMsisdn);
 
         if($smsResponse['success']){
 
-            $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback AUTO ACCEPT SMS sent successful for $rollbackId");
+            $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback ACCEPT SMS sent successful for $rollbackId");
 
             $smsParams = array(
                 'rollbackId' => $rollbackId,
@@ -387,9 +440,10 @@ class RollbackNotificationService extends CI_Controller {
                 'sendDateTime' => date('c'),
             );
 
-        }else{
+        }
+        else{
 
-            $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback AUTO ACCEPT SMS sent failed for $rollbackId");
+            $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback ACCEPT SMS sent failed for $rollbackId");
 
             $smsParams = array(
                 'rollbackId' => $rollbackId,
@@ -407,7 +461,7 @@ class RollbackNotificationService extends CI_Controller {
 
         $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
 
-        $emailService->adminErrorReport('ROLLBACK_REACHED_AUTO_ACCEPT', $rollbackParams, processType::ROLLBACK);
+        $emailService->adminErrorReport('ROLLBACK REACHED AUTO ACCEPT', $rollbackParams, processType::ROLLBACK);
 
         $response = new RollbackNotification\notifyAutoAcceptResponse();
 
@@ -426,105 +480,121 @@ class RollbackNotificationService extends CI_Controller {
 
         $rollbackId = $notifyAutoConfirmRequest->rollbackTransaction->rollbackId;
 
+        $rollbackNumbers = $this->getRollbackNumbers($notifyAutoConfirmRequest);
+
         $this->fileLogAction('8030', 'RollbackNotificationService', 'Rollback AUTO CONFIRM received for ID ' . $rollbackId);
 
         $recipientNetworkId = $notifyAutoConfirmRequest->rollbackTransaction->recipientNrn->networkId;
-
-        $subscriberMSISDN = $notifyAutoConfirmRequest->rollbackTransaction->numberRanges->numberRange->startNumber;
 
         $emailService = new EmailService();
 
         $nrollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
 
         // Alert admin
-        $emailService->adminErrorReport('ROLLBACK_REACHED_AUTO_CONFIRM', $nrollbackParams, processType::ROLLBACK);
+        $emailService->adminErrorReport('ROLLBACK REACHED AUTO CONFIRM', $nrollbackParams, processType::ROLLBACK);
+
+        // Insert into Rollback State Evolution table
+
+        $seParams = array(
+            'rollbackState' => \RollbackService\Rollback\rollbackStateType::CONFIRMED,
+            'lastChangeDateTime' => $notifyAutoConfirmRequest->rollbackTransaction->lastChangeDateTime,
+            'isAutoReached' => true,
+            'rollbackId' => $rollbackId,
+        );
+
+        $this->Rollbackstateevolution_model->add_rollbackstateevolution($seParams);
 
         // Start rollback process
-        $rollbackStartedResponse = $this->startRollbackOPD($subscriberMSISDN, $recipientNetworkId);
 
-        if($rollbackStartedResponse->success){
+        $rollbackErrors = [];
 
-            $this->db->trans_start();
+        foreach ($rollbackNumbers as $rollbackNumber) {
 
-            // Update Rollback table
+            $subscriberMSISDN = $rollbackNumber;
 
-            $rollbackParams = array(
-                'rollbackId' => $rollbackId,
-                'rollbackDateTime' => $notifyAutoConfirmRequest->rollbackTransaction->rollbackDateTime,
-                'lastChangeDateTime' => $notifyAutoConfirmRequest->rollbackTransaction->lastChangeDateTime,
-                'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_IMPORT_CONFIRMED
-            );
+            $rollbackStartedResponse = $this->startRollbackOPD($subscriberMSISDN, $recipientNetworkId);
 
-            $this->Rollback_model->update_rollback($rollbackId,$rollbackParams);
+            if($rollbackStartedResponse->success){
 
-            // Insert into rollback Evolution state table
+                $this->db->trans_start();
 
-            $seParams = array(
-                'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_IMPORT_CONFIRMED,
-                'lastChangeDateTime' => $notifyAutoConfirmRequest->rollbackTransaction->lastChangeDateTime,
-                'isAutoReached' => true,
-                'rollbackId' => $rollbackId,
-            );
+                // Update Rollback Number table
 
-            $this->Rollbackstateevolution_model->add_rollbackstateevolution($seParams);
+                $rollbackNumberParams = array(
+                    'pLastChangeDateTime' => date('c'),
+                    'numberState' => \RollbackService\Rollback\rollbackStateType::MSISDN_IMPORT_CONFIRMED
+                );
 
-            if ($this->db->trans_status() === FALSE) {
+                $this->ProcessNumber_model->update_processnumber($rollbackId, $subscriberMSISDN, $rollbackNumberParams);
 
-                $error = $this->db->error();
 
-                $this->fileLogAction($error['code'], 'RollbackNotificationService', "Rollback AUTO CONFIRM saving failed for $rollbackId");
+                if ($this->db->trans_status() === FALSE) {
 
-                $this->fileLogAction($error['code'], 'RollbackNotificationService', $error['message']);
+                    $error = $this->db->error();
 
-                $emailService->adminErrorReport('ROLLBACK_AUTO_CONFIRMED_BUT_DB_FILLED_INCOMPLETE', $nrollbackParams, processType::ROLLBACK);
+                    $this->fileLogAction($error['code'], 'RollbackNotificationService', "Rollback AUTO CONFIRM saving failed for $rollbackId");
 
-            }else{
+                    $this->fileLogAction($error['code'], 'RollbackNotificationService', $error['message']);
 
-                $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback AUTO CONFIRM save successful for $rollbackId");
+                    $portingErrors[] = $subscriberMSISDN;
+
+                }
+                else{
+
+                    $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback AUTO CONFIRM save successful for $rollbackId");
+
+                }
+
+                $this->db->trans_complete();
 
             }
+            else {
 
-            $this->db->trans_complete();
+                $faultCode = $rollbackStartedResponse->error;
+
+                $fault = '';
+
+                switch ($faultCode) {
+                    // Terminal Processes
+                    case Fault::SERVICE_BREAK_DOWN_CODE:
+                        $fault = Fault::SERVICE_BREAK_DOWN;
+                        break;
+                    case Fault::SIGNATURE_MISMATCH_CODE:
+                        $fault = Fault::SIGNATURE_MISMATCH;
+                        break;
+                    case Fault::DENIED_ACCESS_CODE:
+                        $fault = Fault::DENIED_ACCESS;
+                        break;
+                    case Fault::UNKNOWN_COMMAND_CODE:
+                        $fault = Fault::UNKNOWN_COMMAND;
+                        break;
+                    case Fault::INVALID_PARAMETER_TYPE_CODE:
+                        $fault = Fault::INVALID_PARAMETER_TYPE;
+                        break;
+
+                    case Fault::PARAMETER_LIST_CODE:
+                        $fault = Fault::PARAMETER_LIST;
+                        break;
+
+                    case Fault::CMS_EXECUTION_CODE:
+                        $fault = Fault::CMS_EXECUTION;
+                        break;
+
+                    default:
+                        $fault = $faultCode;
+                }
+
+                $emailService->adminErrorReport($fault, $nrollbackParams, processType::ROLLBACK);
+
+            }
 
         }
-        else {
 
-            $faultCode = $rollbackStartedResponse->error;
+        if (count($rollbackErrors) > 0){
 
-            $fault = '';
+            $nrollbackParams['msisdn'] = $rollbackErrors;
 
-            switch ($faultCode) {
-                // Terminal Processes
-                case Fault::SERVICE_BREAK_DOWN_CODE:
-                    $fault = Fault::SERVICE_BREAK_DOWN;
-                    break;
-                case Fault::SIGNATURE_MISMATCH_CODE:
-                    $fault = Fault::SIGNATURE_MISMATCH;
-                    break;
-                case Fault::DENIED_ACCESS_CODE:
-                    $fault = Fault::DENIED_ACCESS;
-                    break;
-                case Fault::UNKNOWN_COMMAND_CODE:
-                    $fault = Fault::UNKNOWN_COMMAND;
-                    break;
-                case Fault::INVALID_PARAMETER_TYPE_CODE:
-                    $fault = Fault::INVALID_PARAMETER_TYPE;
-                    break;
-
-                case Fault::PARAMETER_LIST_CODE:
-                    $fault = Fault::PARAMETER_LIST;
-                    break;
-
-                case Fault::CMS_EXECUTION_CODE:
-                    $fault = Fault::CMS_EXECUTION;
-                    break;
-
-                default:
-                    $fault = $faultCode;
-            }
-
-            $emailService->adminErrorReport($fault, $nrollbackParams, processType::ROLLBACK);
-
+            $emailService->adminErrorReport('ROLLBACK AUTO CONFIRMED BUT DB FILLED INCOMPLETE', $nrollbackParams, processType::ROLLBACK);
         }
 
         $response = new RollbackNotification\notifyAutoConfirmResponse();
@@ -543,6 +613,8 @@ class RollbackNotificationService extends CI_Controller {
         isAuthorized();
 
         $rollbackId = $notifyRejectedRequest->rollbackTransaction->rollbackId;
+
+        $rollbackNumbers = $this->getRollbackNumbers($notifyRejectedRequest);
 
         $this->fileLogAction('8030', 'RollbackNotificationService', 'Rollback REJECT received for ID ' . $rollbackId);
 
@@ -580,6 +652,20 @@ class RollbackNotificationService extends CI_Controller {
 
         $this->Rollbackrejectionabandon_model->add_rollbackrejectionabandon($rjParams);
 
+        // Update number state
+
+        foreach ($rollbackNumbers as $rollbackNumber){
+
+            $rollbackNumberParams = array(
+                'pLastChangeDateTime' => date('c'),
+                'numberState' => provisionStateType::TERMINATED,
+                'terminationReason' => $notifyRejectedRequest->rejectionReason
+            );
+
+            $this->ProcessNumber_model->update_processnumber($rollbackId, $rollbackNumber, $rollbackNumberParams);
+
+        }
+
         if ($this->db->trans_status() === FALSE) {
 
             $error = $this->db->error();
@@ -591,8 +677,9 @@ class RollbackNotificationService extends CI_Controller {
             $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
 
             $emailService = new EmailService();
-            $emailService->adminErrorReport('REJECTED_ROLLBACK_RECEIVED_BUT_DB_FILLING_ERROR', $rollbackParams, processType::ROLLBACK);
-        }else{
+            $emailService->adminErrorReport('REJECTED ROLLBACK RECEIVED BUT DB FILLING ERROR', $rollbackParams, processType::ROLLBACK);
+        }
+        else{
 
             $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback REJECT save successful for $rollbackId");
 
@@ -608,7 +695,7 @@ class RollbackNotificationService extends CI_Controller {
 
         $language = $portingInfo['language'];
 
-        $subscriberMSISDN = $notifyRejectedRequest->rollbackTransaction->numberRanges->numberRange->startNumber;
+        $subscriberMSISDN = $notifyRejectedRequest->rollbackTransaction->subscriberInfo->contactNumber;
 
         $smsResponse = SMS::OPD_Subscriber_KO($language, $subscriberMSISDN);
 
@@ -663,6 +750,8 @@ class RollbackNotificationService extends CI_Controller {
 
         $rollbackId = $notifyAbandonedRequest->rollbackTransaction->rollbackId;
 
+        $rollbackNumbers = $this->getRollbackNumbers($notifyAbandonedRequest);
+
         $this->fileLogAction('8030', 'RollbackNotificationService', 'Rollback ABANDON received for ID ' . $rollbackId);
 
         // update rollback table
@@ -696,6 +785,20 @@ class RollbackNotificationService extends CI_Controller {
 
         $this->Rollbackrejectionabandon_model->add_rollbackrejectionabandon($rraParams);
 
+        // Update number state
+
+        foreach ($rollbackNumbers as $rollbackNumber){
+
+            $rollbackNumberParams = array(
+                'pLastChangeDateTime' => date('c'),
+                'numberState' => provisionStateType::TERMINATED,
+                'terminationReason' => $notifyAbandonedRequest->cause
+            );
+
+            $this->ProcessNumber_model->update_processnumber($rollbackId, $rollbackNumber, $rollbackNumberParams);
+
+        }
+
         $emailService = new EmailService();
 
         if ($this->db->trans_status() === FALSE) {
@@ -708,9 +811,11 @@ class RollbackNotificationService extends CI_Controller {
 
             $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
 
-            $emailService->adminErrorReport('ROLLBACK_ABANDONED_BUT_DB_FILLED_INCOMPLETE', $rollbackParams, processType::ROLLBACK);
+            $emailService->adminErrorReport('ROLLBACK ABANDONED BUT DB FILLED INCOMPLETE', $rollbackParams, processType::ROLLBACK);
 
-        }else{
+        }
+
+        else{
 
             $this->fileLogAction('8030', 'RollbackNotificationService', "Rollback ABANDON save successful for $rollbackId");
 
@@ -726,7 +831,7 @@ class RollbackNotificationService extends CI_Controller {
 
         $language = $portingInfo['language'];
 
-        $subscriberMSISDN = $notifyAbandonedRequest->rollbackTransaction->numberRanges->numberRange->startNumber;
+        $subscriberMSISDN = $notifyAbandonedRequest->rollbackTransaction->subscriberInfo->contactNumber;
 
         $smsResponse = SMS::Subscriber_CADB_Abandoned_Rollback($language, $subscriberMSISDN);
 
@@ -787,6 +892,68 @@ class RollbackNotificationService extends CI_Controller {
         $response = $bscsOperationService->importMSISDN($rollbackNumber, $recipientNetworkId);
 
         return $response;
+
+    }
+
+    /**
+     * Returns rollback MSISDN in process
+     * @param $request
+     * @return array
+     */
+    private function getRollbackNumbers($request){
+
+        $numbers = [];
+
+        if(is_array($request->rollbackTransaction->numberRanges->numberRange)){
+
+            foreach ($request->rollbackTransaction->numberRanges->numberRange as $numberRange){
+
+                $startMSISDN = $numberRange->startNumber;
+                $endMSISDN = $numberRange->endNumber;
+
+                if(strlen($startMSISDN) == 12){
+                    $startMSISDN = substr($startMSISDN, 3);
+                }
+                if(strlen($endMSISDN) == 12){
+                    $endMSISDN = substr($endMSISDN, 3);
+                }
+
+                $startMSISDN = intval($startMSISDN);
+                $endMSISDN = intval($endMSISDN);
+
+                while ($startMSISDN <= $endMSISDN){
+                    $numbers[] = '237' . $startMSISDN;
+                    $startMSISDN += 1;
+                }
+
+            }
+
+        }
+        else{
+
+            $startMSISDN = $request->rollbackTransaction->numberRanges->numberRange->startNumber;
+            $endMSISDN = $request->rollbackTransaction->numberRanges->numberRange->endNumber;
+
+            if(strlen($startMSISDN) == 12){
+                $startMSISDN = substr($startMSISDN, 3);
+            }
+            if(strlen($endMSISDN) == 12){
+                $endMSISDN = substr($endMSISDN, 3);
+            }
+
+            $startMSISDN = intval($startMSISDN);
+            $endMSISDN = intval($endMSISDN);
+
+            while ($startMSISDN <= $endMSISDN){
+                $numbers[] = '237' . $startMSISDN;
+                $startMSISDN += 1;
+            }
+
+        }
+
+        $numbers = array_values(array_unique($numbers));
+
+        return $numbers;
 
     }
 

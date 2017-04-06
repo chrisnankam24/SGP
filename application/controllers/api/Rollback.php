@@ -55,65 +55,6 @@ class Rollback extends CI_Controller
             $file_name = $this->input->post('fileName');
             $userId = $this->input->post('userId');
 
-            /*if($file_name != ''){
-                $row = 1;
-
-                if (($handle = fopen(FCPATH . 'uploads/' .$file_name, "r")) !== FALSE) {
-
-                    $response['success'] = true;
-
-                    $tmpData = [];
-
-                    $rollbackOperationService = new RollbackOperationService();
-
-                    while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
-                        if($row == 1){
-                            // Check if header Ok
-                            $errorFound = false;
-                            if(isset($data[0]) && strtolower($data[0]) != 'originalportingid'){
-                                $errorFound = true;
-                            }
-                            if(isset($data[1]) && strtolower($data[1]) != 'temporalnumber'){
-                                $errorFound = true;
-                            }
-                            if($errorFound){
-                                $response['success'] = false;
-                                $response['message'] = 'Invalid file content format. Columns do not match defined template. If you have difficulties creating file, please contact administrator';
-
-                                $this->send_response($response);
-
-                                unlink(FCPATH . 'uploads/' .$file_name);
-
-                                return;
-                            }
-                            $row++;
-                        }else{
-
-                            $originalPortingId = $data[0]; // originalPortingId
-                            $temporalNumber = $data[1]; // temporalNumber
-
-                            $tempResponse = $rollbackOperationService->makeOpen($originalPortingId, $temporalNumber, $userId);
-                            $tempResponse['temporalNumber'] = $temporalNumber;
-
-                            $tmpData[] = $tempResponse;
-
-                        }
-                    }
-
-                    $response['data'] = $tmpData;
-
-                    fclose($handle);
-
-                    unlink(FCPATH . 'uploads/' .$file_name);
-
-                }
-
-            }
-            else{
-                $response['success'] = false;
-                $response['message'] = 'No file name found';
-            }*/
-
             $fileObject = PHPExcel_IOFactory::load(FCPATH . 'uploads/' .$file_name);
 
             if($fileObject){

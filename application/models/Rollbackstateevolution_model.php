@@ -20,6 +20,14 @@ class Rollbackstateevolution_model extends CI_Model
     }
 
     /*
+     * Get rollbackstateevolution by rollbackId
+     */
+    function get_rse($rollbackId, $state)
+    {
+        return $this->db->get_where('rollbackstateevolution',array('rollbackId'=>$rollbackId, 'rollbackState' => $state))->result_array();
+    }
+
+    /*
      * Get all rollbackstateevolution
      */
     function get_all_rollbackstateevolution()

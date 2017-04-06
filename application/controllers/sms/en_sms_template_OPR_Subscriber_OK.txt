@@ -1,1 +1,1 @@
-Conformément à votre demande, la portabilité de votre numéro [subs_msisdn] vers [OPR] sera effectuée le [day] entre [start_time] et [end_time] . Il vous est demande de changer votre SIM à [start_time].
+In accordance with your request, the porting of your number [subs_msisdn] to [OPR] shall be effective on [day] between [start_time] and [end_time]. You are requested to change your SIM at [start_time].

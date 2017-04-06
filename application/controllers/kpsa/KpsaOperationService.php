@@ -124,7 +124,7 @@ class KpsaOperationService {
      * @param $routingNumber
      * @return array
      */
-    private function creationSubscriberTEKELEC($msisdn, $routingNumber){
+    public function creationSubscriberTEKELEC($msisdn, $routingNumber){
 
         $creationResponse = [];
         $creationResponse['success'] = -1; // -1 means connection to KPSA failed, false means connection to KPSA ok but STATUS is FAILED, and finally, true means connected to KPSA with STATUS COMPLETED
@@ -135,6 +135,9 @@ class KpsaOperationService {
 
             $response = file_get_contents("https://" . KPSAParams::HOST . ":" . KPSAParams::PORT .
                 "/exec_mcp?MCP={ID=$requestId;ACT=TEKELEC_CREATE_NEW_PORT;MSISDN=$msisdn;MOBILE_NETWORK=$routingNumber}");
+
+            echo "https://" . KPSAParams::HOST . ":" . KPSAParams::PORT .
+                "/exec_mcp?MCP={ID=$requestId;ACT=TEKELEC_CREATE_NEW_PORT;MSISDN=$msisdn;MOBILE_NETWORK=$routingNumber}";
 
             $response = $this->parseKPSAResponse($response);
 
@@ -168,7 +171,7 @@ class KpsaOperationService {
      * @param $msisdn
      * @return array
      */
-    private function deleteSubscriberTEKELEC($msisdn){
+    public function deleteSubscriberTEKELEC($msisdn){
 
         $deleteResponse = [];
         $deleteResponse['success'] = -1; // -1 means connection to KPSA failed, false means connection to KPSA ok but STATUS is FAILED, and finally, true means connected to KPSA with STATUS COMPLETED
@@ -179,6 +182,9 @@ class KpsaOperationService {
 
             $response = file_get_contents("https://" . KPSAParams::HOST . ":" . KPSAParams::PORT .
                 "/exec_mcp?MCP={ID=$requestId;ACT=TEKELEC_DELETE_PORT;MSISDN=$msisdn}");
+
+            echo "https://" . KPSAParams::HOST . ":" . KPSAParams::PORT .
+                "/exec_mcp?MCP={ID=$requestId;ACT=TEKELEC_DELETE_PORT;MSISDN=$msisdn}";
 
             $response = $this->parseKPSAResponse($response);
 
@@ -273,10 +279,17 @@ class KpsaOperationService {
 
             $tmp_responses = explode(';', $response);
 
+            $details = explode(',', $tmp_responses[2]);
+
             $responses = [];
 
             foreach ($tmp_responses as $tmp_response){
                 $pieces = explode('=', $tmp_response);
+                $responses[$pieces[0]] = $pieces[1];
+            }
+
+            foreach ($details as $detail){
+                $pieces = explode('=', $detail);
                 $responses[$pieces[0]] = $pieces[1];
             }
 
@@ -290,7 +303,7 @@ class KpsaOperationService {
 
         }catch (Exception $ex){
             $viewResponse['success'] = -1;
-            $viewResponse['message'] = 'FAILED CONNECTING TO KPSA';
+            $viewResponse['message'] = 'FAILED CONNECTING TO KPSA::' . $ex;
         }
 
         return $viewResponse;

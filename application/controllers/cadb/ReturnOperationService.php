@@ -11,10 +11,12 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 require_once "Common.php";
 require_once "Return.php";
 require_once "Fault.php";
+require_once "ProvisionNotification.php";
 require_once APPPATH . "controllers/email/EmailService.php";
 require_once APPPATH . "controllers/bscs/BscsOperationService.php";
 
 use ReturnService\_Return as _Return;
+use \ProvisionService\ProvisionNotification\provisionStateType as provisionStateType;
 
 
 /**
@@ -28,8 +30,8 @@ class ReturnOperationService {
     private $db = null;
     private $Numberreturn_model = null;
     private $FileLog_model = null;
+    private $ProcessNumber_model = null;
     private $Returnrejection_model = null;
-    private $Numberreturnsubmission_model = null;
     private $Numberreturnstateevolution_model = null;
 
     public function __construct()
@@ -41,24 +43,24 @@ class ReturnOperationService {
 
         $CI->load->model('FileLog_model');
         $CI->load->model('Numberreturn_model');
+        $CI->load->model('ProcessNumber_model');
         $CI->load->model('Returnrejection_model');
-        $CI->load->model('Numberreturnsubmission_model');
         $CI->load->model('Numberreturnstateevolution_model');
 
         $this->FileLog_model = $CI->FileLog_model;
         $this->Numberreturn_model = $CI->Numberreturn_model;
+        $this->ProcessNumber_model = $CI->ProcessNumber_model;
         $this->Returnrejection_model = $CI->Returnrejection_model;
-        $this->Numberreturnsubmission_model = $CI->Numberreturnsubmission_model;
         $this->Numberreturnstateevolution_model = $CI->Numberreturnstateevolution_model;
 
-        // Disable wsdl_1_4 cache
+        // Disable wsdl cache
         ini_set("soap.wsdl_cache_enabled", "0");
 
         libxml_disable_entity_loader(false);
 
         // Define soap client object
         $this->client = new SoapClient(__DIR__ . '/wsdl/ReturnOperationService.wsdl', array(
-            "trace" => false,
+            "trace" => true,
             'stream_context' => stream_context_create(array(
                 'http' => array(
                     'header' => 'Authorization: Bearer ' . Auth::CADB_AUTH_BEARER
@@ -100,7 +102,7 @@ class ReturnOperationService {
                 $request->primaryOwnerNrn->networkId = Operator::MTN_NETWORK_ID;
                 $request->primaryOwnerNrn->routingNumber = Operator::MTN_ROUTING_NUMBER;
             }else{
-                // Orange
+                // Nexttel
                 $request->primaryOwnerNrn->networkId = Operator::NEXTTEL_NETWORK_ID;
                 $request->primaryOwnerNrn->routingNumber = Operator::NEXTTEL_ROUTING_NUMBER;
             }
@@ -246,14 +248,10 @@ class ReturnOperationService {
 
                 $response = $this->client->getReturningTransaction($request);
 
-                $this->logRequestResponse('getReturningTransaction');
-
                 $response->success = true;
                 return $response;
 
             }catch (SoapFault $e){
-
-                $this->logRequestResponse('getReturningTransaction');
 
                 $response = new errorResponse();
                 $fault = key($e->detail);
@@ -288,14 +286,10 @@ class ReturnOperationService {
 
                 $response = $this->client->getCurrentReturningTransactions($request);
 
-                $this->logRequestResponse('getReturningTransactions');
-
                 $response->success = true;
                 return $response;
 
             }catch (SoapFault $e){
-
-                $this->logRequestResponse('getReturningTransactions');
 
                 $response = new errorResponse();
                 $fault = key($e->detail);
@@ -336,18 +330,6 @@ class ReturnOperationService {
 
                 $this->db->trans_start();
 
-                // Insert into NR submission table with state OPENED
-
-                $nrsParams = array(
-                    'primaryOwnerNetworkId' => $openResponse->returnTransaction->primaryOwnerNrn->networkId,
-                    'primaryOwnerNetworkNumber' => $openResponse->returnTransaction->primaryOwnerNrn->routingNumber,
-                    'returnMSISDN' => $returnMSISDN,
-                    'submissionState' => \ReturnService\_Return\returnSubmissionStateType::OPENED,
-                    'submissionDateTime' => date('c'),
-                    'userId' => $userId
-                );
-
-                $submissionId = $this->Numberreturnsubmission_model->add_numberreturnsubmission($nrsParams);
                 $returnId = $openResponse->returnTransaction->returnId;
 
                 // Insert into NR table
@@ -359,11 +341,9 @@ class ReturnOperationService {
                     'ownerRoutingNumber' => $openResponse->returnTransaction->ownerNrn->routingNumber,
                     'primaryOwnerNetworkId' => $openResponse->returnTransaction->primaryOwnerNrn->networkId,
                     'primaryOwnerRoutingNumber' => $openResponse->returnTransaction->primaryOwnerNrn->routingNumber,
-                    'returnMSISDN' => $returnMSISDN,
                     'returnNumberState' => \ReturnService\_Return\returnSubmissionStateType::OPENED,
                     'returnNotificationMailSendStatus' => smsState::CLOSED,
-                    'returnNotificationMailSendDateTime' => date('c'),
-                    'numberReturnSubmissionId' => $submissionId,
+                    'returnNotificationMailSendDateTime' => date('c')
                 );
 
                 $this->Numberreturn_model->add_numberreturn($nrParams);
@@ -378,6 +358,24 @@ class ReturnOperationService {
 
                 $this->Numberreturnstateevolution_model->add_numberreturnstateevolution($nrsParams);
 
+                // Fill in Return process numbers
+
+                $returnNumbers = $this->getReturnNumbers($openResponse);
+
+                $processNumberParams = [];
+
+                foreach ($returnNumbers as $returnNumber){
+                    $processNumberParams[] = array(
+                        'processId' => $returnId,
+                        'msisdn' => $returnNumber,
+                        'numberState' => provisionStateType::STARTED,
+                        'pLastChangeDateTime' => date('c'),
+                        'processType' => processType::_RETURN,
+                    );
+                }
+
+                $this->db->insert_batch('processnumber', $processNumberParams);
+
                 $response['success'] = true;
 
                 if ($this->db->trans_status() === FALSE) {
@@ -389,7 +387,7 @@ class ReturnOperationService {
                     $this->fileLogAction($error['code'], 'ReturnOperationService', $error['message']);
 
                     $emailService = new EmailService();
-                    $emailService->adminErrorReport('RETURN_OPENED_BUT_DB_FILLED_INCOMPLETE', $nrParams, processType::_RETURN);
+                    $emailService->adminErrorReport('RETURN OPENED BUT DB FILLED INCOMPLETE', $nrParams, processType::_RETURN);
 
                 }
 
@@ -440,7 +438,7 @@ class ReturnOperationService {
                     default:
                         $nrParams = array(
                             'ownerNetworkId' => Operator::ORANGE_NETWORK_ID,
-                            'returnMSISDN' => $returnMSISDN,
+                            'msisdn' => [$returnMSISDN],
                             'returnId' => '',
                             'returnNumberState' => 'N/A'
                         );
@@ -510,6 +508,14 @@ class ReturnOperationService {
 
                     $this->Numberreturnstateevolution_model->add_numberreturnstateevolution($nrsParams);
 
+                    // Update Number state
+                    $portingNumberParams = array(
+                        'pLastChangeDateTime' => date('c'),
+                        'numberState' => \ReturnService\_Return\returnStateType::ACCEPTED
+                    );
+
+                    $this->ProcessNumber_model->update_processnumber_all($returnId, $portingNumberParams);
+
                     $response['success'] = true;
 
                     if ($this->db->trans_status() === FALSE) {
@@ -524,7 +530,7 @@ class ReturnOperationService {
 
                         $emailService = new EmailService();
 
-                        $emailService->adminErrorReport('RETURN_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', $nrParams, processType::_RETURN);
+                        $emailService->adminErrorReport('RETURN ACCEPTED BUT DB FILLED INCOMPLETE', $nrParams, processType::_RETURN);
 
                     }
 
@@ -641,20 +647,38 @@ class ReturnOperationService {
 
                     $this->Returnrejection_model->add_returnrejection($rrParams);
 
+                    // Update number state
+
+                    $returnNumbers = $this->getReturnNumbers($rejectResponse);
+
+                    foreach ($returnNumbers as $returnNumber){
+
+                        // Update Porting Number table
+
+                        $portingNumberParams = array(
+                            'pLastChangeDateTime' => date('c'),
+                            'numberState' => provisionStateType::TERMINATED,
+                            'terminationReason' => $cause
+                        );
+
+                        $this->ProcessNumber_model->update_processnumber($returnId, $returnNumber, $portingNumberParams);
+
+                    }
+
                     $response['success'] = true;
 
                     if ($this->db->trans_status() === FALSE) {
 
                         $error = $this->db->error();
 
-                        $this->fileLogAction($error['code'], 'ReturnOperationService', "Number Return [$returnId] ACCEPT failed");
+                        $this->fileLogAction($error['code'], 'ReturnOperationService', "Number Return [$returnId] REJECT failed saving");
 
                         $this->fileLogAction($error['code'], 'ReturnOperationService', $error['message']);
 
                         $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
 
                         $emailService = new EmailService();
-                        $emailService->adminErrorReport('RETURN_REJECTED_BUT_DB_FILLED_INCOMPLETE', $nrParams, processType::_RETURN);
+                        $emailService->adminErrorReport('RETURN REJECTED BUT DB FILLED INCOMPLETE', $nrParams, processType::_RETURN);
 
                     }
 
@@ -758,7 +782,7 @@ class ReturnOperationService {
             $data['ownerRoutingNumber'] = $tmpData->ownerNrn->routingNumber;
             $data['primaryOwnerNetworkId'] = $tmpData->primaryOwnerNrn->networkId;
             $data['primaryOwnerRoutingNumber'] = $tmpData->primaryOwnerNrn->routingNumber;
-            $data['returnMSISDN'] = $tmpData->numberRanges->numberRange->startNumber;
+            $data['msisdn'] = $this->getReturnNumbers($getResponse);
             $data['returnNumberState'] = $tmpData->returnNumberState;
 
             $response['data'] = $tmpData;
@@ -838,6 +862,8 @@ class ReturnOperationService {
 
         foreach ($tmpData as $tmpDatum){
 
+            $res = new stdClass();
+            $res->returnTransaction = $tmpDatum;
             $data = array();
 
             $data['returnId'] = $tmpDatum->returnId;
@@ -846,8 +872,7 @@ class ReturnOperationService {
             $data['ownerRoutingNumber'] = $tmpDatum->ownerNrn->routingNumber;
             $data['primaryOwnerNetworkId'] = $tmpDatum->primaryOwnerNrn->networkId;
             $data['primaryOwnerRoutingNumber'] = $tmpDatum->primaryOwnerNrn->routingNumber;
-
-            $data['returnMSISDN'] = $tmpDatum->numberRanges->numberRange->startNumber;
+            $data['$msisdn'] = $this->getReturnNumbers($res);
             $data['returnNumberState'] = $tmpDatum->returnNumberState;
 
             array_push($response['data'], $data);
@@ -861,6 +886,68 @@ class ReturnOperationService {
     private function logRequestResponse($action){
         $this->fileLogAction('', 'ReturnOperationService', $action . ' Request:: ' . $this->client->__getLastRequest());
         $this->fileLogAction('', 'ReturnOperationService', $action . ' Response:: ' . $this->client->__getLastResponse());
+    }
+
+    /**
+     * Returns return MSISDN in process
+     * @param $request
+     * @return array
+     */
+    private function getReturnNumbers($request){
+
+        $numbers = [];
+
+        if(is_array($request->returnTransaction->numberRanges->numberRange)){
+
+            foreach ($request->returnTransaction->numberRanges->numberRange as $numberRange){
+
+                $startMSISDN = $numberRange->startNumber;
+                $endMSISDN = $numberRange->endNumber;
+
+                if(strlen($startMSISDN) == 12){
+                    $startMSISDN = substr($startMSISDN, 3);
+                }
+                if(strlen($endMSISDN) == 12){
+                    $endMSISDN = substr($endMSISDN, 3);
+                }
+
+                $startMSISDN = intval($startMSISDN);
+                $endMSISDN = intval($endMSISDN);
+
+                while ($startMSISDN <= $endMSISDN){
+                    $numbers[] = '237' . $startMSISDN;
+                    $startMSISDN += 1;
+                }
+
+            }
+
+        }
+        else{
+
+            $startMSISDN = $request->returnTransaction->numberRanges->numberRange->startNumber;
+            $endMSISDN = $request->returnTransaction->numberRanges->numberRange->endNumber;
+
+            if(strlen($startMSISDN) == 12){
+                $startMSISDN = substr($startMSISDN, 3);
+            }
+            if(strlen($endMSISDN) == 12){
+                $endMSISDN = substr($endMSISDN, 3);
+            }
+
+            $startMSISDN = intval($startMSISDN);
+            $endMSISDN = intval($endMSISDN);
+
+            while ($startMSISDN <= $endMSISDN){
+                $numbers[] = '237' . $startMSISDN;
+                $startMSISDN += 1;
+            }
+
+        }
+
+        $numbers = array_values(array_unique($numbers));
+
+        return $numbers;
+
     }
 
 }

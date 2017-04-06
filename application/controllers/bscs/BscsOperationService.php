@@ -36,33 +36,20 @@ class BscsOperationService {
 
         $this->BSCS_model = $CI->BSCS_model;
 
-        // Disable wsdl_1_4 cache
+        // Disable wsdl cache
         ini_set("soap.wsdl_cache_enabled", "0");
 
         libxml_disable_entity_loader(false);
 
         // Define soap client object
         $this->contractClient = new SoapClient(__DIR__ . '/ContractManagementEndPoint.xml', array(
-            "trace" => false
+            "trace" => true
         ));
 
         // Define soap client object
         $this->msisdnClient = new SoapClient(__DIR__ . '/MSISDNManagementEndPoint.xml', array(
             "trace" => true
         ));
-
-    }
-
-    public function index(){
-
-        // Create a new soap server in WSDL mode
-        $server = new SoapServer( __DIR__ . '/MSISDNManagementEndPoint.xml');
-
-        // Set the class for the soap server
-        $server->setClass("ServerFunctionalities");
-
-        // Handle soap operations
-        $server->handle();
 
     }
 
@@ -176,6 +163,9 @@ class BscsOperationService {
 
                     $response = $this->msisdnClient->ChangeImportMSISDN($request);
 
+                    var_dump($this->msisdnClient->__getLastRequest());
+                    var_dump($this->msisdnClient->__getLastResponse());
+
                     $response->success = true;
 
                     $this->logoutMSISDN();
@@ -186,6 +176,9 @@ class BscsOperationService {
                 catch (SoapFault $e){
 
                     $response = new errorResponse();
+
+                    var_dump($this->msisdnClient->__getLastRequest());
+                    var_dump($this->msisdnClient->__getLastResponse());
 
                     $fault = key($e->detail);
 
@@ -254,6 +247,9 @@ class BscsOperationService {
 
                     $response = $this->msisdnClient->ImportMSISDN($request);
 
+                    var_dump($this->msisdnClient->__getLastRequest());
+                    var_dump($this->msisdnClient->__getLastResponse());
+
                     $response->success = true;
 
                     $this->logoutMSISDN();
@@ -264,6 +260,9 @@ class BscsOperationService {
                 catch (SoapFault $e){
 
                     $response = new errorResponse();
+
+                    var_dump($this->msisdnClient->__getLastRequest());
+                    var_dump($this->msisdnClient->__getLastResponse());
 
                     $fault = key($e->detail);
 
@@ -331,6 +330,9 @@ class BscsOperationService {
 
                     $response = $this->msisdnClient->ReturnMSISDN($request);
 
+                    var_dump($this->msisdnClient->__getLastRequest());
+                    var_dump($this->msisdnClient->__getLastResponse());
+
                     $response->success = true;
 
                     $this->logoutMSISDN();
@@ -341,6 +343,9 @@ class BscsOperationService {
                 catch (SoapFault $e){
 
                     $response = new errorResponse();
+
+                    var_dump($this->msisdnClient->__getLastRequest());
+                    var_dump($this->msisdnClient->__getLastResponse());
 
                     $fault = key($e->detail);
 
@@ -409,6 +414,9 @@ class BscsOperationService {
 
                     $response = $this->msisdnClient->ExportMSISDN($request);
 
+                    var_dump($this->msisdnClient->__getLastRequest());
+                    var_dump($this->msisdnClient->__getLastResponse());
+
                     $response->success = true;
 
                     $this->logoutMSISDN();
@@ -419,6 +427,9 @@ class BscsOperationService {
                 catch (SoapFault $e){
 
                     $response = new errorResponse();
+
+                    var_dump($this->msisdnClient->__getLastRequest());
+                    var_dump($this->msisdnClient->__getLastResponse());
 
                     $fault = key($e->detail);
 
@@ -512,166 +523,6 @@ class BscsOperationService {
 
     }
 
-    /*public function createContract(){
-
-        if($this->contractClient) {
-
-            // Make createContract request
-            $request = new BscsTypes\createContract();
-
-            try {
-
-                $response = $this->contractClient->createContract($request);
-
-                $response->success = true;
-
-                return $response;
-
-            }catch (SoapFault $e){
-
-                $response = new errorResponse();
-
-                $fault = key($e->detail);
-
-                $response->error = $fault;
-
-                return $response;
-
-            }
-
-        }else{
-            // Client null
-
-            $response = new errorResponse();
-
-            $response->error = Fault::CLIENT_INIT_FAULT;
-
-            return $response;
-
-        }
-
-    }
-
-    public function updateContractStatus(){
-
-        if($this->contractClient) {
-
-            // Make updateContractStatus request
-            $request = new BscsTypes\updateContractStatus();
-
-            try {
-
-                $response = $this->contractClient->updateContractStatus($request);
-
-                $response->success = true;
-
-                return $response;
-
-            }catch (SoapFault $e){
-
-                $response = new errorResponse();
-
-                $fault = key($e->detail);
-
-                $response->error = $fault;
-
-                return $response;
-
-            }
-
-        }else{
-            // Client null
-
-            $response = new errorResponse();
-
-            $response->error = Fault::CLIENT_INIT_FAULT;
-
-            return $response;
-
-        }
-
-    }
-
-    public function transfertContract(){
-
-        if($this->contractClient) {
-
-            // Make transfertContract request
-            $request = new BscsTypes\transfertContract();
-
-            try {
-
-                $response = $this->contractClient->transfertContract($request);
-
-                $response->success = true;
-
-                return $response;
-
-            }catch (SoapFault $e){
-
-                $response = new errorResponse();
-
-                $fault = key($e->detail);
-
-                $response->error = $fault;
-
-                return $response;
-
-            }
-
-        }else{
-            // Client null
-
-            $response = new errorResponse();
-
-            $response->error = Fault::CLIENT_INIT_FAULT;
-
-            return $response;
-
-        }
-
-    }
-
-    public function consultContract(){
-
-        if($this->contractClient) {
-
-            // Make consultContract request
-            $request = new BscsTypes\consultContract();
-
-            try {
-
-                $response = $this->contractClient->consultContract($request);
-
-                $response->success = true;
-
-                return $response;
-
-            }catch (SoapFault $e){
-
-                $response = new errorResponse();
-
-                $fault = key($e->detail);
-
-                $response->error = $fault;
-
-                return $response;
-
-            }
-
-        }else{
-            // Client null
-
-            $response = new errorResponse();
-
-            $response->error = Fault::CLIENT_INIT_FAULT;
-
-            return $response;
-
-        }
-
-    }*/
-
     /**
      * Deletes contract from BSCS
      * @param $contractId
@@ -699,6 +550,9 @@ class BscsOperationService {
 
                     $response = $this->contractClient->deleteContract($request);
 
+                    var_dump($this->contractClient->__getLastRequest());
+                    var_dump($this->contractClient->__getLastResponse());
+
                     $response->success = true;
 
                     $this->logoutContract();
@@ -709,6 +563,9 @@ class BscsOperationService {
                 catch (SoapFault $e){
 
                     $response = new errorResponse();
+
+                    var_dump($this->contractClient->__getLastRequest());
+                    var_dump($this->contractClient->__getLastResponse());
 
                     $fault = key($e->detail);
 
@@ -767,6 +624,9 @@ class BscsOperationService {
 
                     $response = $this->contractClient->updateContractStatus($request);
 
+                    var_dump($this->contractClient->__getLastRequest());
+                    var_dump($this->contractClient->__getLastResponse());
+
                     $response->success = true;
 
                     $this->logoutContract();
@@ -777,6 +637,9 @@ class BscsOperationService {
                 catch (SoapFault $e){
 
                     $response = new errorResponse();
+
+                    var_dump($this->contractClient->__getLastRequest());
+                    var_dump($this->contractClient->__getLastResponse());
 
                     $fault = key($e->detail);
 
@@ -869,180 +732,6 @@ class BscsOperationService {
 
         }
 
-    }
-
-}
-
-class ServerFunctionalities {
-
-    ////////////////////////////////////////// Define Server methods
-
-    /**
-     * @param $ImportMSISDNRequest
-     * @return BscsTypes\ImportMSISDNResponse
-     * @throws ServiceBreakDownFault
-     * @throws SignatureMismatchException
-     * @throws DeniedAccessFault
-     * @throws UnknownCommandFault
-     * @throws InvalidParameterTypeException
-     * @throws ParameterListException
-     * @throws CMSExecutionFault
-     */
-    public function ImportMSISDN($ImportMSISDNRequest){
-        $response = new BscsTypes\ImportMSISDNResponse();
-        return $response;
-    }
-
-    /**
-     * @param $ChangeImportMSISDNRequest
-     * @return BscsTypes\ChangeImportMSISDNResponse
-     * @throws ServiceBreakDownFault
-     * @throws SignatureMismatchException
-     * @throws DeniedAccessFault
-     * @throws UnknownCommandFault
-     * @throws InvalidParameterTypeException
-     * @throws ParameterListException
-     * @throws CMSExecutionFault
-     */
-    public function ChangeImportMSISDN($ChangeImportMSISDNRequest){
-        $response = new BscsTypes\ChangeImportMSISDNResponse();
-        return $response;
-    }
-
-    /**
-     * @param $ReturnMSISDNRequest
-     * @return BscsTypes\ReturnMSISDNResponse
-     * @throws ServiceBreakDownFault
-     * @throws SignatureMismatchException
-     * @throws DeniedAccessFault
-     * @throws UnknownCommandFault
-     * @throws InvalidParameterTypeException
-     * @throws ParameterListException
-     * @throws CMSExecutionFault
-     */
-    public function ReturnMSISDN($ReturnMSISDNRequest){
-        $response = new BscsTypes\ReturnMSISDNResponse();
-        return $response;
-    }
-
-    /**
-     * @param $ExportMSISDNRequest
-     * @return BscsTypes\ExportMSISDNResponse
-     * @throws ServiceBreakDownFault
-     * @throws SignatureMismatchException
-     * @throws DeniedAccessFault
-     * @throws UnknownCommandFault
-     * @throws InvalidParameterTypeException
-     * @throws ParameterListException
-     * @throws CMSExecutionFault
-     */
-    public function ExportMSISDN($ExportMSISDNRequest) {
-        $response = new BscsTypes\ExportMSISDNResponse();
-        return $response;
-    }
-
-    /**
-     * @param $logonRequest
-     * @return BscsTypes\logonResponse
-     * @throws ServiceBreakDownFault
-     * @throws PostConnectInitializationFault
-     * @throws DeniedAccessFault
-     * @throws ServerNotFoundFault
-     */
-    public function logon($logonRequest){
-        $response = new BscsTypes\logonResponse();
-        return $response;
-    }
-
-    /**
-     * @param $logoutRequest
-     * @return BscsTypes\logoutResponse
-     * @throws ServiceBreakDownFault
-     * @throws DeniedAccessFault
-     */
-    public function logout($logoutRequest){
-        $response = new BscsTypes\logoutResponse();
-        return $response;
-    }
-
-    /**
-     * @param $createContractRequest
-     * @return BscsTypes\createContractResponse
-     * @throws ServiceBreakDownFault
-     * @throws SignatureMismatchException
-     * @throws DeniedAccessFault
-     * @throws UnknownCommandFault
-     * @throws InvalidParameterTypeException
-     * @throws ParameterListException
-     * @throws CMSExecutionFault
-     */
-    public function createContract($createContractRequest){
-        $response  = new BscsTypes\createContractResponse();
-        return $response;
-    }
-
-    /**
-     * @param $updateContractStatusRequest
-     * @return BscsTypes\updateContractStatusResponse
-     * @throws ServiceBreakDownFault
-     * @throws SignatureMismatchException
-     * @throws DeniedAccessFault
-     * @throws UnknownCommandFault
-     * @throws InvalidParameterTypeException
-     * @throws ParameterListException
-     * @throws CMSExecutionFault
-     */
-    public function updateContractStatus($updateContractStatusRequest){
-        $response = new BscsTypes\updateContractStatusResponse();
-        return $response;
-    }
-
-    /**
-     * @param $transfertContractRequest
-     * @return BscsTypes\transfertContractResponse
-     * @throws ServiceBreakDownFault
-     * @throws SignatureMismatchException
-     * @throws DeniedAccessFault
-     * @throws UnknownCommandFault
-     * @throws InvalidParameterTypeException
-     * @throws ParameterListException
-     * @throws CMSExecutionFault
-     */
-    public function transfertContract($transfertContractRequest){
-        $response = new BscsTypes\transfertContractResponse();
-        return $response;
-    }
-
-    /**
-     * @param $consultContractRequest
-     * @return BscsTypes\consultContractResponse
-     * @throws ServiceBreakDownFault
-     * @throws SignatureMismatchException
-     * @throws DeniedAccessFault
-     * @throws UnknownCommandFault
-     * @throws InvalidParameterTypeException
-     * @throws ParameterListException
-     * @throws CMSExecutionFault
-     */
-    public function consultContract($consultContractRequest){
-        $response = new BscsTypes\consultContractResponse();
-        return $response;
-    }
-
-    /**
-     * @param $deleteContractRequest
-     * @return BscsTypes\deleteContractResponse
-     * @throws ServiceBreakDownFault
-     * @throws SignatureMismatchException
-     * @throws DeniedAccessFault
-     * @throws UnknownCommandFault
-     * @throws InvalidParameterTypeException
-     * @throws ParameterListException
-     * @throws CMSExecutionFault
-     */
-    public function deleteContract($deleteContractRequest){
-        $response = new BscsTypes\deleteContractResponse();
-        return $response;
     }
 
 }

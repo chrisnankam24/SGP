@@ -19,9 +19,9 @@ class SMS extends CI_Controller {
     // Denomination of various operators to be used in SMS messages
     public static $DENOMINATION_COMMERCIALE_MTN = 'MTN CM';
     public static $DENOMINATION_COMMERCIALE_ORANGE = 'ORANGE CM';
-    public static $DENOMINATION_COMMERCIALE_NEXTTEL = 'NEXTTEL';
+    public static $DENOMINATION_COMMERCIALE_NEXTTEL = 'VIETTEL CM';
 
-    public static $CUSTOMER_SERVICE = '905';
+    public static $CUSTOMER_SERVICE = '950';
 
     public function __construct()
     {
@@ -69,7 +69,7 @@ class SMS extends CI_Controller {
      * @param $start_time
      * @param $end_time
      */
-    public static function OPR_Subscriber_OK($language, $msisdn, $day, $start_time, $end_time){
+    public static function OPR_Subscriber_OK($language, $msisdn, $day, $start_time, $end_time, $sendMsisdn){
 
         // Load template
         if(strtolower($language) == 'en'){
@@ -77,7 +77,6 @@ class SMS extends CI_Controller {
         }else{
             $template = file_get_contents(__DIR__ . '/fr_sms_template_OPR_Subscriber_OK.txt');
         }
-
 
         // Set Subscriber MSISDN
         $template = str_replace('[subs_msisdn]', $msisdn, $template);
@@ -95,7 +94,7 @@ class SMS extends CI_Controller {
         // Set Porting End time
         $message = str_replace('[end_time]', $end_time, $template);
 
-        $response = self::send_response($msisdn, $message);
+        $response = self::send_response($sendMsisdn, $message);
 
         return $response;
     }
@@ -124,7 +123,7 @@ class SMS extends CI_Controller {
      * @param $language
      * @param $msisdn string subscriber MSISDN
      */
-    public static function OPR_Subscriber_KO_Cancel($language, $msisdn, $denom_OPR){
+    public static function OPR_Subscriber_KO_Cancel($language, $msisdn, $denom_OPR, $sendMsisdn){
 
         // Load Message
         if(strtolower($language) == 'en'){
@@ -139,7 +138,7 @@ class SMS extends CI_Controller {
         // Set MSISDN
         $message = str_replace('[subs_msisdn]', $msisdn, $template);
 
-        $response = self::send_response($msisdn, $message);
+        $response = self::send_response($sendMsisdn, $message);
 
         return $response;
     }
@@ -152,7 +151,7 @@ class SMS extends CI_Controller {
      * @param $start_time
      * @param $end_time
      */
-    public static function OPD_Subscriber_Reminder($language, $msisdn, $denom_OPR, $day, $start_time, $end_time){
+    public static function OPD_Subscriber_Reminder($language, $msisdn, $denom_OPR, $day, $start_time, $end_time, $sendMsisdn){
 
         // Load template
         if(strtolower($language) == 'en'){
@@ -177,7 +176,7 @@ class SMS extends CI_Controller {
         // Set Porting End time
         $message = str_replace('[end_time]', $end_time, $template);
 
-        $response = self::send_response($msisdn, $message);
+        $response = self::send_response($sendMsisdn, $message);
 
         return $response;
     }
@@ -187,7 +186,7 @@ class SMS extends CI_Controller {
      * @param $language
      * @param $msisdn
      */
-    public static function OPR_Subscriber_Cancellation($language, $msisdn){
+    public static function OPR_Subscriber_Cancellation($language, $msisdn, $sendMsisdn){
 
         // Load template
         if(strtolower($language) == 'en'){
@@ -202,7 +201,7 @@ class SMS extends CI_Controller {
         // Set Denomination of OPR
         $message = str_replace('[OPR]', SMS::$DENOMINATION_COMMERCIALE_ORANGE, $template);
 
-        $response = self::send_response($msisdn, $message);
+        $response = self::send_response($sendMsisdn, $message);
 
         return $response;
     }
@@ -266,7 +265,7 @@ class SMS extends CI_Controller {
      * @param $start_time
      * @param $end_time
      */
-    public static function OPD_Subscriber_OK($language, $msisdn, $day, $start_time, $end_time){
+    public static function OPD_Subscriber_OK($language, $msisdn, $day, $start_time, $end_time, $sendMsisdn){
 
         // Load template
         if(strtolower($language) == 'en'){
@@ -291,7 +290,7 @@ class SMS extends CI_Controller {
         // Set Porting End time
         $message = str_replace('[end_time]', $end_time, $template);
 
-        $response = self::send_response($msisdn, $message);
+        $response = self::send_response($sendMsisdn, $message);
 
         return $response;
     }
@@ -309,7 +308,6 @@ class SMS extends CI_Controller {
         }else{
             $message = file_get_contents(__DIR__ . '/fr_sms_template_OPR_Subscriber_KO_Rollback.txt');
         }
-
 
         $response = self::send_response($msisdn, $message);
 

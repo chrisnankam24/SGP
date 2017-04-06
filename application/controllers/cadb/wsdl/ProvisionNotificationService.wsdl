@@ -55,7 +55,7 @@
 
 	<service name="ProvisionNotificationService">
 		<port name="ProvisionNotificationServicePort" binding="tns:ProvisionNotificationServiceBinding">
-			<soap:address location="http://localhost/SGP/index.php/cadb/ProvisionNotificationService"/>
+			<soap:address location="http://172.21.75.34/SGP/cadb/ProvisionNotificationService"/>
 		</port>
 	</service>
 

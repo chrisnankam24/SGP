@@ -1,1 +1,1 @@
-Conformément à votre demande, la retour arriere de votre numéro [subs_msisdn] vers [OPD] sera effectuée le [day] entre [start_time] et [end_time] . Il vous est demande de changer votre SIM à [start_time].
+[EN] Conformément à votre demande, la retour arriere de votre numéro [subs_msisdn] vers [OPD] sera effectuée le [day] entre [start_time] et [end_time] . Il vous est demande de changer votre SIM à [start_time].

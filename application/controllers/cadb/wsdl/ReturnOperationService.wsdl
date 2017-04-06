@@ -301,7 +301,7 @@
 
 	<service name="ReturnOperationService">
 		<port name="ReturnOperationServicePort" binding="tns:ReturnOperationServiceBinding">
-			<soap:address location="http://localhost/SGP/index.php/cadb/ReOSServerFunctionalities"/>
+			<soap:address location="http://cameroonmnp.campost.cm/cadb/services/ReturnOperationService/"/>
 		</port>
 	</service>
 

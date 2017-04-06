@@ -185,7 +185,7 @@
 
 	<service name="RollbackNotificationService">
 		<port name="RollbackNotificationServicePort" binding="tns:RollbackNotificationServiceBinding">
-			<soap:address location="http://localhost/SGP/index.php/cadb/RollbackNotificationService"/>
+			<soap:address location="http://172.21.75.34/SGP/cadb/RollbackNotificationService"/>
 		</port>
 	</service>
 

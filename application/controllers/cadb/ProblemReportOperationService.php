@@ -41,7 +41,7 @@ class ProblemReportOperationService {
         $this->Error_model = $CI->Error_model;
         $this->FileLog_model = $CI->FileLog_model;
 
-        // Disable wsdl_1_4 cache
+        // Disable wsdl cache
         ini_set("soap.wsdl_cache_enabled", "0");
 
         // Define soap client object
@@ -134,8 +134,6 @@ class ProblemReportOperationService {
         $reporterNetworkId = Operator::ORANGE_NETWORK_ID;
 
         $prResponse = $this->reportProblem($reporterNetworkId, $cadbNumber, $problem);
-
-        var_dump($prResponse);
 
         // Verify response
 

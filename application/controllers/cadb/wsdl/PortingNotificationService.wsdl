@@ -263,7 +263,7 @@
 
 	<service name="PortingNotificationService">
 		<port name="PortingNotificationServicePort" binding="tns:PortingNotificationServiceBinding">
-			<soap:address location="http://localhost/SGP/index.php/cadb/PortingNotificationService"/>
+			<soap:address location="http://172.21.75.34/SGP/cadb/PortingNotificationService"/>
 		</port>
 	</service>
 

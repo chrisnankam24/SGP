@@ -80,7 +80,7 @@
 
 	<service name="ProvisionOperationService">
 		<port name="ProvisionOperationServicePort" binding="tns:ProvisionOperationServiceBinding">
-			<soap:address location="http://localhost/SGP/index.php/cadb/PvOSServerFunctionalities"/>
+			<soap:address location="http://cameroonmnp.campost.cm/cadb/services/ProvisionOperationService/"/>
 		</port>
 	</service>
 

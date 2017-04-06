@@ -18,7 +18,16 @@ class Portingstateevolution_model extends CI_Model
     {
         return $this->db->get_where('portingstateevolution',array('portingId'=>$portingId))->result_array();
     }
-    
+
+    /*
+    * Get portingstateevolution by portingId
+    */
+    function get_pse($portingId, $state)
+    {
+        return $this->db->get_where('portingstateevolution',array('portingId'=>$portingId, 'portingState' => $state))->row_array();
+    }
+
+
     /*
      * Get all portingstateevolution
      */

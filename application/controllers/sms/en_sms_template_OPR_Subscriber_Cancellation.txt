@@ -1,1 +1,1 @@
-Conformément à votre demande, la portabilité de votre numéro [subs_msisdn] vers [OPR] a été annulée.
+In accordance with your request, the porting of your number [subs_msisdn] to [OPR] has been cancelled.

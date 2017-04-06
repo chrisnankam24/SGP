@@ -18,7 +18,28 @@ class Numberreturn_model extends CI_Model
      */
     function get_numberreturn($returnId)
     {
-        return $this->db->get_where('numberreturn',array('returnId'=>$returnId))->row_array();
+        $response = $this->db->join('processnumber', 'numberreturn.returnId = processnumber.processId')->get_where('numberreturn',array('returnId'=>$returnId))->result_array();
+
+
+        $final_response = null;
+
+        if($response){
+
+            $final_response = $response[0];
+            unset($final_response['processType']);
+            unset($final_response['numberState']);
+            unset($final_response['pLastChangeDateTime']);
+
+            $final_response['msisdn'] = [];
+
+            foreach ($response as $res){
+                $final_response['msisdn'][] = $res['msisdn'];
+            }
+
+        }
+
+        return $final_response;
+
     }
 
     /*
@@ -26,7 +47,7 @@ class Numberreturn_model extends CI_Model
     */
     function search_numberreturn($msisdn)
     {
-        return $this->db->order_by('openDateTime', 'desc')->get_where('numberreturn',array('returnMSISDN'=>$msisdn))->result_array();
+        return $this->db->join('processnumber', 'numberreturn.returnId = processnumber.processId')->order_by('openDateTime', 'desc')->get_where('numberreturn',array('msisdn'=>$msisdn))->result_array();
     }
 
     /*
@@ -34,7 +55,8 @@ class Numberreturn_model extends CI_Model
      */
     function get_all_numberreturn()
     {
-        return $this->db->order_by('openDateTime', 'desc')->get('numberreturn')->result_array();
+        $response = $this->db->order_by('openDateTime', 'desc')->get('numberreturn')->result_array();
+        return $this->loadNumbers($response);
     }
 
     /*
@@ -42,7 +64,9 @@ class Numberreturn_model extends CI_Model
      */
     function get_all_waiting_return()
     {
-        return $this->db->where('returnNumberState', \ReturnService\_Return\returnStateType::OPENED)->where('primaryOwnerNetworkId', Operator::ORANGE_NETWORK_ID)->get_where('numberreturn')->result_array();
+        $response = $this->db->where('returnNumberState', \ReturnService\_Return\returnStateType::OPENED)->where('primaryOwnerNetworkId', Operator::ORANGE_NETWORK_ID)->get_where('numberreturn')->result_array();
+        return $this->loadNumbers($response);
+
     }
 
     /*
@@ -50,7 +74,9 @@ class Numberreturn_model extends CI_Model
      */
     function get_nr_by_state_and_co($nrState, $ownerNetworkId)
     {
-        return $this->db->get_where('numberreturn',array('returnNumberState'=>$nrState, 'ownerNetworkId' => $ownerNetworkId))->result_array();
+        $response = $this->db->get_where('numberreturn',array('returnNumberState'=>$nrState, 'ownerNetworkId' => $ownerNetworkId))->result_array();
+        return $this->loadNumbers($response);
+
     }
 
     /*
@@ -58,7 +84,9 @@ class Numberreturn_model extends CI_Model
      */
     function get_nr_by_state_and_po($nrState, $primaryOwnerNetworkId)
     {
-        return $this->db->get_where('numberreturn',array('returnNumberState'=>$nrState, 'primaryOwnerNetworkId' => $primaryOwnerNetworkId))->result_array();
+        $response = $this->db->get_where('numberreturn',array('returnNumberState'=>$nrState, 'primaryOwnerNetworkId' => $primaryOwnerNetworkId))->result_array();
+        return $this->loadNumbers($response);
+
     }
 
 
@@ -103,4 +131,27 @@ class Numberreturn_model extends CI_Model
             return "Error occuring while deleting numberreturn";
         }
     }
+
+    /**
+     * Loads numbers corresponding to process
+     * @param $response
+     * @return mixed
+     */
+    private function loadNumbers($response){
+
+        foreach ($response as &$res){
+
+            $res['msisdn'] = [];
+
+            $numbers = $this->db->get_where('processnumber',array('processId'=>$res['returnId']))->result_array();
+
+            foreach ($numbers as $number){
+                $res['msisdn'][] = $number['msisdn'];
+            }
+
+        }
+
+        return $response;
+    }
+
 }

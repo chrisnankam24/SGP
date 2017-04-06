@@ -74,7 +74,7 @@ class EmailService {
             $template = str_replace('[recipient_network]', $recipientNetwork, $template);
 
             // Set Porting MSISDN
-            $template = str_replace('[portingMSISDN]', $params['startMSISDN'], $template);
+            $template = str_replace('[portingMSISDN]', implode(', ', $params['msisdn']), $template);
 
             // Set RIO
             $template = str_replace('[rio]', $params['rio'], $template, $count);
@@ -123,7 +123,7 @@ class EmailService {
             $template = str_replace('[owner_network]', $donorNetwork, $template);
 
             // Set MSISDN
-            $template = str_replace('[portingMSISDN]', $params['startMSISDN'], $template);
+            $template = str_replace('[portingMSISDN]', implode(', ', $params['msisdn']), $template);
 
             // Set RIO
             $template = str_replace('[rio]', $params['rio'], $template);
@@ -153,7 +153,7 @@ class EmailService {
             $template = str_replace('[returnId]', $params['returnId'], $template);
 
             // Set Return MSISDN
-            $template = str_replace('[returnMSISDN]', $params['returnMSISDN'], $template);
+            $template = str_replace('[returnMSISDN]', implode(', ', $params['msisdn']), $template);
 
             // Set Return state
             $template = str_replace('[returnState]', $params['returnNumberState'], $template);
@@ -239,7 +239,7 @@ class EmailService {
             $template = str_replace('[portingId]', $params['portingId'], $template);
 
             // Set Porting MSISDN
-            $template = str_replace('[portingMSISDN]', $params['startMSISDN'], $template);
+            $template = str_replace('[portingMSISDN]', implode(', ', $params['msisdn']), $template);
 
             // Set RIO
             $template = str_replace('[rio]', $params['rio'], $template, $count);
@@ -273,7 +273,7 @@ class EmailService {
             $template = str_replace('[rollbackId]', $params['rollbackId'], $template);
 
             // Set Porting MSISDN
-            $template = str_replace('[portingMSISDN]', $params['startMSISDN'], $template);
+            $template = str_replace('[portingMSISDN]', implode(', ', $params['msisdn']), $template);
 
             // Set RIO
             $template = str_replace('[rio]', $params['rio'], $template, $count);
@@ -307,7 +307,7 @@ class EmailService {
             $template = str_replace('[returnId]', $params['returnId'], $template);
 
             // Set return MSISDN
-            $template = str_replace('[returnMSISDN]', $params['returnMSISDN'], $template);
+            $template = str_replace('[returnMSISDN]', implode(', ', $params['msisdn']), $template);
 
             // Set Submission Date
             $submissionDateTime = $params['donorSubmissionDateTime'];
@@ -386,7 +386,7 @@ class EmailService {
         $template = str_replace('[recipient_network]', $recipientNetwork, $template);
 
         // Set Porting MSISDN
-        $template = str_replace('[portingMSISDN]', $params['startMSISDN'], $template);
+        $template = str_replace('[portingMSISDN]', implode(', ', $params['msisdn']), $template);
 
         // Set RIO
         $template = str_replace('[rio]', $params['rio'], $template, $count);
@@ -463,7 +463,7 @@ class EmailService {
         $template = str_replace('[donor_network]', $donorNetwork, $template);
 
         // Set MSISDN
-        $template = str_replace('[rollbackMSISDN]', $params['startMSISDN'], $template);
+        $template = str_replace('[rollbackMSISDN]', implode(', ', $params['msisdn']), $template);
 
         // Set RIO
         $template = str_replace('[rio]', $params['rio'], $template);
@@ -496,7 +496,7 @@ class EmailService {
         $template = str_replace('[portingLocation]', 'SGP/NReturn/detail/' . $params['returnId'], $template);
 
         // Set Return MSISDN
-        $template = str_replace('[returnMSISDN]', $params['returnMSISDN'], $template);
+        $template = str_replace('[returnMSISDN]', implode(', ', $params['msisdn']), $template);
 
         // Set Owner Network
 
@@ -615,7 +615,7 @@ class EmailService {
 
         $this->CI->load->library('email');
 
-        $this->CI->email->from('alpha@orange.com', 'SGP Notification Center');
+        $this->CI->email->from('sgp@orange.com', 'SGP Notification Center');
         $this->CI->email->to($to);
         $this->CI->email->cc($cc);
 

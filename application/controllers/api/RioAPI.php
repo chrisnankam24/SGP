@@ -60,46 +60,6 @@ class RioAPI extends CI_Controller {
             $file_name = $this->input->post('fileName');
             $userId = $this->input->post('userId');
 
-            /*if($file_name != ''){
-                $row = 1;
-
-                if (($handle = fopen(FCPATH . 'uploads/' .$file_name, "r")) !== FALSE) {
-
-                    $msisdns = array();
-
-                    while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
-                        if($row == 1){
-                            // Check if header Ok
-                            if(strtolower($data[0]) != 'msisdn'){
-                                $response['success'] = false;
-                                $response['message'] = 'Invalid file content format. First Column must be name <MSISDN>. If you have difficulties creating file, please contact administrator';
-
-                                $this->send_response($response);
-                                return;
-                            }
-                            $row++;
-                        }else{
-                            $msisdns[] = $data[0]; // MSISDN
-                        }
-                    }
-
-                    fclose($handle);
-
-                    $response['success'] = true;
-                    $response['data'] = RIO::getBulkRio($msisdns);
-
-                }else{
-
-                    $response['success'] = false;
-                    $response['message'] = 'No file name found';
-
-                }
-
-            }else{
-                $response['success'] = false;
-                $response['message'] = 'Failed opening file';
-            }*/
-
             $fileObject = PHPExcel_IOFactory::load(FCPATH . 'uploads/' .$file_name);
 
             if($fileObject){

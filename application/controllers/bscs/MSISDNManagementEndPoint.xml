@@ -717,7 +717,7 @@ Built on Apr 22, 2006 (06:55:48 PDT)-->
 
       <wsdl:port binding="impl:MSISDNManagementEndPointSoapBinding" name="MSISDNManagementEndPoint">
 
-         <wsdlsoap:address location="http://172.21.5.33:9000/commonapi/services/MSISDNManagementEndPoint"/>
+         <wsdlsoap:address location="http://172.21.5.20:9000/commonapi/services/MSISDNManagementEndPoint"/>
 
       </wsdl:port>
 

@@ -17,6 +17,8 @@ require_once "ProvisionOperationService.php";
 require_once APPPATH . "controllers/email/EmailService.php";
 
 use ProvisionService\ProvisionNotification as ProvisionNotification;
+use \ProvisionService\ProvisionNotification\provisionStateType as provisionStateType;
+
 
 /**
  * Class ProvisionNotificationService
@@ -28,13 +30,11 @@ class ProvisionNotificationService  extends CI_Controller {
         parent::__construct();
 
         $this->load->model('Porting_model');
-        $this->load->model('Portingsubmission_model');
         $this->load->model('Portingstateevolution_model');
         $this->load->model('Portingsmsnotification_model');
         $this->load->model('Portingdenyrejectionabandon_model');
 
         $this->load->model('Rollback_model');
-        $this->load->model('Rollbacksubmission_model');
         $this->load->model('Rollbackstateevolution_model');
 
         $this->load->model('Provisioning_model');
@@ -76,6 +76,10 @@ class ProvisionNotificationService  extends CI_Controller {
 
         $processId = $notifyRoutingDataRequest->routingData->processId;
 
+        $this->fileLogAction('9002', 'ProvisionNotificationService', 'Provision Notification received for ID ' . $processId);
+
+        $provisionNumbers =$this->getProvisionNumbers($notifyRoutingDataRequest);
+
         $endNetworkId = $notifyRoutingDataRequest->routingData->nrn->networkId;
 
         $provisionState = ProvisionNotification\provisionStateType::STARTED;
@@ -95,13 +99,27 @@ class ProvisionNotificationService  extends CI_Controller {
             'processId' => $processId,
             'endNetworkId' => $endNetworkId,
             'endRoutingNumber' => $notifyRoutingDataRequest->routingData->nrn->routingNumber,
-            'subscriberMSISDN' => $notifyRoutingDataRequest->numberRanges->numberRange->startNumber,
             'routingChangeDateTime' => $notifyRoutingDataRequest->routingData->routingChangeDateTime,
             'processType' => $processType,
             'provisionState' => $provisionState,
         );
 
         $this->Provisioning_model->add_provisioning($params);
+
+        // Insert into Provision Number table
+
+        $processNumberParams = [];
+
+        foreach ($provisionNumbers as $provisionNumber){
+            $processNumberParams[] = array(
+                'processId' => $processId,
+                'msisdn' => $provisionNumber,
+                'numberState' => $provisionState,
+                'pLastChangeDateTime' => date('c')
+            );
+        }
+
+        $this->db->insert_batch('provisionnumber', $processNumberParams);
 
         if ($this->db->trans_status() === FALSE) {
 
@@ -127,6 +145,8 @@ class ProvisionNotificationService  extends CI_Controller {
 
         }else{
 
+            $this->fileLogAction('9002', 'ProvisionNotificationService', 'Provision Notification saved successfully for ID ' . $processId);
+
             $this->db->trans_complete();
 
             $response = new ProvisionNotification\notifyRoutingDataResponse();
@@ -134,6 +154,68 @@ class ProvisionNotificationService  extends CI_Controller {
             return $response;
 
         }
+
+    }
+
+    /**
+     * Returns provision MSISDN in process
+     * @param $request
+     * @return array
+     */
+    private function getProvisionNumbers($request){
+
+        $numbers = [];
+
+        if(is_array($request->numberRanges->numberRange)){
+
+            foreach ($request->numberRanges->numberRange as $numberRange){
+
+                $startMSISDN = $numberRange->startNumber;
+                $endMSISDN = $numberRange->endNumber;
+
+                if(strlen($startMSISDN) == 12){
+                    $startMSISDN = substr($startMSISDN, 3);
+                }
+                if(strlen($endMSISDN) == 12){
+                    $endMSISDN = substr($endMSISDN, 3);
+                }
+
+                $startMSISDN = intval($startMSISDN);
+                $endMSISDN = intval($endMSISDN);
+
+                while ($startMSISDN <= $endMSISDN){
+                    $numbers[] = '237' . $startMSISDN;
+                    $startMSISDN += 1;
+                }
+
+            }
+
+        }
+        else{
+
+            $startMSISDN = $request->numberRanges->numberRange->startNumber;
+            $endMSISDN = $request->numberRanges->numberRange->endNumber;
+
+            if(strlen($startMSISDN) == 12){
+                $startMSISDN = substr($startMSISDN, 3);
+            }
+            if(strlen($endMSISDN) == 12){
+                $endMSISDN = substr($endMSISDN, 3);
+            }
+
+            $startMSISDN = intval($startMSISDN);
+            $endMSISDN = intval($endMSISDN);
+
+            while ($startMSISDN <= $endMSISDN){
+                $numbers[] = '237' . $startMSISDN;
+                $startMSISDN += 1;
+            }
+
+        }
+
+        $numbers = array_values(array_unique($numbers));
+
+        return $numbers;
 
     }
 

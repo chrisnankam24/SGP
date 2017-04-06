@@ -55,7 +55,7 @@
 
 	<service name="ProblemReportNotificationService">
 		<port name="ProblemReportNotificationServicePort" binding="tns:ProblemReportNotificationServiceBinding">
-			<soap:address location="http://localhost/SGP/index.php/cadb/ProblemReportNotificationService"/>
+			<soap:address location="http://172.21.75.34/SGP/cadb/ProblemReportNotificationService"/>
 		</port>
 	</service>
 

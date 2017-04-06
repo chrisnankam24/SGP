@@ -41,7 +41,7 @@ class ReOSServerFunctionalities extends CI_Controller  {
     public function index(){
 
         // Create a new soap server in WSDL mode
-        $server = new SoapServer(__DIR__ . '/wsdl/ReturnOperationService.wsdl');
+        $server = new SoapServer(__DIR__ . '/wsdl-local/ReturnOperationService.wsdl');
 
         // Set the object for the soap server
         $server->setObject($this);
@@ -87,18 +87,6 @@ class ReOSServerFunctionalities extends CI_Controller  {
         $response->returnTransaction->numberRanges = array($numRange);
         $response->returnTransaction->returnId = date('Ymd') . '-'. $openRequest->primaryOwnerNrn->networkId .'-' . $openRequest->numberRanges->numberRange->startNumber . '-' . $rand;
 
-        // Notify Return to CO
-        $notifyRequest = new \ReturnService\_ReturnNotification\notifyOpenedRequest();
-        $notifyRequest->returnTransaction = new _Return\returnTransactionType();
-        $notifyRequest->returnTransaction->primaryOwnerNrn = $openRequest->ownerNrn;
-        $notifyRequest->returnTransaction->openDateTime = date('c');
-
-        $notifyRequest->returnTransaction->numberRanges = array($numRange);
-        $notifyRequest->returnTransaction->ownerNrn = $openRequest->primaryOwnerNrn;
-        $notifyRequest->returnTransaction->returnId = date('Ymd') . '-'. $openRequest->primaryOwnerNrn->networkId .'-' . $openRequest->numberRanges->numberRange->startNumber . '-' . ($rand+1);
-
-        //$this->client->notifyOpened($notifyRequest);
-
         return $response;
 
         //throw new invalidOperatorFault();
@@ -119,34 +107,6 @@ class ReOSServerFunctionalities extends CI_Controller  {
         $response->returnTransaction = new _Return\returnTransactionType();
 
         $response->returnTransaction->returnId = $acceptRequest->returnId;
-
-        $return = $this->Numberreturn_model->get_numberreturn($acceptRequest->returnId);
-
-        $notifyAcceptRequest = new \ReturnService\_ReturnNotification\notifyAcceptedRequest();
-        $notifyAcceptRequest->returnTransaction = new _Return\returnTransactionType();
-
-        $parts = explode('-', $acceptRequest->returnId);
-        $parts[3] += 1;
-        $notifyAcceptRequest->returnTransaction->returnId = implode('-', $parts);
-
-        $notifyAcceptRequest->returnTransaction->openDateTime = $return['openDateTime'];
-        $notifyAcceptRequest->returnTransaction->returnNumberState = $return['returnNumberState'];
-
-        $numRange = new numberRangeType();
-        $numRange->endNumber = $return['returnMSISDN'];
-        $numRange->startNumber = $return['returnMSISDN'];
-
-        $notifyAcceptRequest->returnTransaction->ownerNrn = new nrnType();
-        $notifyAcceptRequest->returnTransaction->ownerNrn->networkId = $return['ownerNetworkId'];
-        $notifyAcceptRequest->returnTransaction->ownerNrn->routingNumber = $return['ownerRoutingNumber'];
-
-        $notifyAcceptRequest->returnTransaction->primaryOwnerNrn = new nrnType();
-        $notifyAcceptRequest->returnTransaction->primaryOwnerNrn->networkId = $return['primaryOwnerNetworkId'];
-        $notifyAcceptRequest->returnTransaction->primaryOwnerNrn->routingNumber = $return['primaryOwnerRoutingNumber'];
-
-        $notifyAcceptRequest->returnTransaction->numberRanges = array($numRange);
-
-        //$this->client->notifyAccepted($notifyAcceptRequest);
 
         return $response;
 
@@ -172,33 +132,11 @@ class ReOSServerFunctionalities extends CI_Controller  {
 
         $response->returnTransaction->returnId = $rejectRequest->returnId;
 
-        $notifyRejectedRequest = new \ReturnService\_ReturnNotification\notifyRejectedRequest();
-        $notifyRejectedRequest->returnTransaction = new _Return\returnTransactionType();
-
-        $notifyRejectedRequest->cause = $rejectRequest->cause;
-
-        $parts = explode('-', $rejectRequest->returnId);
-        $parts[3] += 1;
-        $notifyRejectedRequest->returnTransaction->returnId = implode('-', $parts);
-
-        $notifyRejectedRequest->returnTransaction->openDateTime = $return['openDateTime'];
-        $notifyRejectedRequest->returnTransaction->returnNumberState = $return['returnNumberState'];
-
         $numRange = new numberRangeType();
-        $numRange->endNumber = $return['returnMSISDN'];
-        $numRange->startNumber = $return['returnMSISDN'];
+        $numRange->endNumber = $return['msisdn'][0];
+        $numRange->startNumber = $return['msisdn'][0];
 
-        $notifyRejectedRequest->returnTransaction->ownerNrn = new nrnType();
-        $notifyRejectedRequest->returnTransaction->ownerNrn->networkId = $return['ownerNetworkId'];
-        $notifyRejectedRequest->returnTransaction->ownerNrn->routingNumber = $return['ownerRoutingNumber'];
-
-        $notifyRejectedRequest->returnTransaction->primaryOwnerNrn = new nrnType();
-        $notifyRejectedRequest->returnTransaction->primaryOwnerNrn->networkId = $return['primaryOwnerNetworkId'];
-        $notifyRejectedRequest->returnTransaction->primaryOwnerNrn->routingNumber = $return['primaryOwnerRoutingNumber'];
-
-        $notifyRejectedRequest->returnTransaction->numberRanges = array($numRange);
-
-        //$this->client->notifyRejected($notifyRejectedRequest);
+        $response->returnTransaction->numberRanges = array($numRange);
 
         return $response;
 

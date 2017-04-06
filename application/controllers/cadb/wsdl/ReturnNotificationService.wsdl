@@ -107,7 +107,7 @@
 
 	<service name="ReturnNotificationService">
 		<port name="ReturnNotificationServicePort" binding="tns:ReturnNotificationServiceBinding">
-			<soap:address location="http://localhost/SGP/index.php/cadb/ReturnNotificationService"/>
+			<soap:address location="http://172.21.75.34/SGP/cadb/ReturnNotificationService"/>
 		</port>
 	</service>
 

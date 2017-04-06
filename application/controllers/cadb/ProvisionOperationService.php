@@ -34,7 +34,7 @@ class ProvisionOperationService {
 
         $this->FileLog_model = $CI->FileLog_model;
 
-        // Disable wsdl_1_4 cache
+        // Disable wsdl cache
         ini_set("soap.wsdl_cache_enabled", "0");
 
         // Define soap client object

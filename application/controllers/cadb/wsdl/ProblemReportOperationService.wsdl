@@ -87,7 +87,7 @@
 
 	<service name="ProblemReportOperationService">
 		<port name="ProblemReportOperationServicePort" binding="tns:ProblemReportOperationServiceBinding">
-			<soap:address location="http://localhost/SGP/index.php/cadb/PrOSServerFunctionalities"/>
+			<soap:address location="http://cameroonmnp.campost.cm/cadb/services/ProblemReportOperationService/"/>
 		</port>
 	</service>
 

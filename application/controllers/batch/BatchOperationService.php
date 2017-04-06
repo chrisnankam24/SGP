@@ -15,13 +15,11 @@ require_once APPPATH . "controllers/cadb/PortingOperationService.php";
 require_once APPPATH . "controllers/cadb/RollbackOperationService.php";
 require_once APPPATH . "controllers/cadb/ReturnOperationService.php";
 require_once APPPATH . "controllers/cadb/ProvisionOperationService.php";
+require_once APPPATH . "controllers/cadb/AuxService.php";
 require_once APPPATH . "controllers/sms/SMS.php";
 
 require_once APPPATH . "third_party/PHPExcel/Classes/PHPExcel/IOFactory.php";
 
-use PortingService\Porting\portingSubmissionStateType as portingSubmissionStateType;
-use \RollbackService\Rollback\rollbackSubmissionStateType as rollbackSubmissionStateType;
-use ReturnService\_Return\returnSubmissionStateType as returnSubmissionStateType;
 use \ProvisionService\ProvisionNotification\provisionStateType as provisionStateType;
 
 use phpseclib\Net\SFTP;
@@ -41,19 +39,17 @@ class BatchOperationService extends CI_Controller {
         // Load models
 
         $this->load->model('Porting_model');
-        $this->load->model('Portingsubmission_model');
+        $this->load->model('ProcessNumber_model');
         $this->load->model('Portingstateevolution_model');
         $this->load->model('Portingsmsnotification_model');
         $this->load->model('Portingdenyrejectionabandon_model');
 
         $this->load->model('Rollback_model');
-        $this->load->model('Rollbacksubmission_model');
         $this->load->model('Rollbacksmsnotification_model');
         $this->load->model('Rollbackstateevolution_model');
 
         $this->load->model('Numberreturn_model');
         $this->load->model('Returnrejection_model');
-        $this->load->model('Numberreturnsubmission_model');
         $this->load->model('Numberreturnstateevolution_model');
 
         $this->load->model('Provisioning_model');
@@ -68,29 +64,11 @@ class BatchOperationService extends CI_Controller {
 
     public function index(){
 
-        /*$fileObject = PHPExcel_IOFactory::load(FCPATH . 'uploads/returnBulkTest.xls');
-
-        $sheetData = $fileObject->getActiveSheet()->toArray();
-
-        libxml_disable_entity_loader(false);
-
-        $client = new SoapClient(APPPATH . 'controllers/cadb/wsdl/ReturnOperationService.wsdl', array(
-            "trace" => false,
-            'stream_context' => stream_context_create(array(
-                'http' => array(
-                    'header' => 'Authorization: Bearer ' . Auth::CADB_AUTH_BEARER
-                ),
-            )),
-        ));
-
-        var_dump($client->__getFunctions());
-
-        var_dump($sheetData);
-
-        unlink(FCPATH . 'uploads/returnBulkTest.xls');*/
-
-        //var_dump(base64_encode('HUAWEI$CADB&MNP' . ':' . '#SGP*2016%ORANGE$CM'));
-        var_dump(hash('sha256', '#SGP*2016%ORANGE$CM'));
+        $ops = new AuxService();
+        //print_r($ops->getOperators());
+        $portngStateEv = $this->Portingstateevolution_model->get_pse("20170324-02-237670998112-371", \PortingService\Porting\portingStateType::CONFIRMED);
+        //print_r($this->exportSynchronizationData('2017-03-30'));
+        print_r($portngStateEv);
 
     }
 
@@ -128,342 +106,374 @@ class BatchOperationService extends CI_Controller {
 
             $portingId = $orderedPort['portingId'];
 
-            $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'Performing APPROVE/DENY for ' . $portingId);
-
-            // Load subscriber data from BSCS using MSISDN
-
-            $subscriberMSISDN = $orderedPort['startMSISDN'];
-
             $recipientNetworkId = $orderedPort['recipientNetworkId'];
 
-            $subscriberInfo = $bscsOperationService->loadNumberInfo($subscriberMSISDN);
+            $language = null;
 
-            $portingDenialReason = null;
-            $cause = null;
+            $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'Performing APPROVE/DENY for ' . $portingId);
 
-            if($subscriberInfo != -1){
+            $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($portingId);
 
-                if($subscriberInfo != null){ // Connection to BSCS successful and User found
+            foreach ($dbPortNumbers as $dbPortNumber){
+
+                $portingNumber = $dbPortNumber['msisdn'];
+
+                $subscriberMSISDN = $portingNumber;
+
+                if($dbPortNumber['numberState'] != provisionStateType::TERMINATED &&
+                    $dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::APPROVED){
+
+                    // Load subscriber data from BSCS using MSISDN
+
+                    $subscriberInfo = $bscsOperationService->loadNumberInfo($subscriberMSISDN);
+
+                    if($subscriberInfo != -1){
+
+                        if($subscriberInfo != null){ // Connection to BSCS successful and User found
+
+                            $language = $subscriberInfo['LANGUE'];
+
+                            // Number Owned by Orange
+
+                            $subscriberRIO = RIO::get_rio($subscriberMSISDN);
+
+                            if($subscriberRIO == $orderedPort['rio']){
+
+                                // Update Porting table
+                                $portingParams = array(
+                                    'language' => $language
+                                );
+
+                                $this->Porting_model->update_porting($portingId, $portingParams);
+
+                                // Subscriber RIO Valid
+
+                                $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'Valid RIO for ' . $portingId . ' :: ' . $subscriberMSISDN);
+
+                                // Update process number in DB
+                                $portingNumberParams = array(
+                                    'pLastChangeDateTime' => date('c'),
+                                    'contractId' => $subscriberInfo['CONTRACT_ID'],
+                                    'numberState' => \PortingService\Porting\portingStateType::APPROVED
+                                );
+
+                                $this->ProcessNumber_model->update_processnumber($portingId, $subscriberMSISDN, $portingNumberParams);
+
+                            }
+
+                            else{
+
+                                $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'Invalid RIO for ' . $portingId . ' :: ' . $subscriberMSISDN . '. Generated RIO is ' . $subscriberRIO);
+
+                                // Subscriber RIO Invalid
+                                $portingDenialReason = \PortingService\Porting\denialReasonType::RIO_NOT_VALID;
+
+                                // Terminate process number in DB
+                                $portingNumberParams = array(
+                                    'pLastChangeDateTime' => date('c'),
+                                    'numberState' => provisionStateType::TERMINATED,
+                                    'terminationReason' => $portingDenialReason
+                                );
+
+                                $this->ProcessNumber_model->update_processnumber($portingId, $subscriberMSISDN, $portingNumberParams);
+
+                            }
+
+                        }
+
+                        else{ // BSCS returns this in case of in existent user
+
+                            $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'Subscriber not found in BSCS for ' . $portingId . ' :: ' . $subscriberMSISDN);
+
+                            // Number not owned by Orange
+                            $portingDenialReason = \PortingService\Porting\denialReasonType::NUMBER_NOT_OWNED_BY_SUBSCRIBER;
+
+                            // Terminate process number in DB
+                            $portingNumberParams = array(
+                                'pLastChangeDateTime' => date('c'),
+                                'numberState' => provisionStateType::TERMINATED,
+                                'terminationReason' => $portingDenialReason
+                            );
+
+                            $this->ProcessNumber_model->update_processnumber($portingId, $subscriberMSISDN, $portingNumberParams);
+
+                        }
+
+                    }
+
+                    else{
+                        // Connection to BSCS failed. Wait and try again later
+                        $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'Connection to BSCS failed for ' . $portingId . ' :: ' . $subscriberMSISDN);
+                    }
+                }
+            }
+
+            // Load all numbers for this port with state
+            $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($portingId);
+
+            $terminationReason = null;
+            $waiting = false;
+
+            foreach ($dbPortNumbers as $dbPortNumber) {
+
+                if($dbPortNumber['numberState'] == provisionStateType::STARTED){
+                    $waiting = true;
+                    break;
+                }
+
+                if($dbPortNumber['numberState'] == provisionStateType::TERMINATED){
+                    $terminationReason = $dbPortNumber['terminationReason'];
+                    break;
+                }
+
+            }
+
+            if($waiting) {
+                $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'Some numbers pending verification for ' . $portingId);
+                break;
+            }
+
+            elseif($terminationReason) {
+
+                $cause = '';
+
+                if($terminationReason == \PortingService\Porting\denialReasonType::NUMBER_NOT_OWNED_BY_SUBSCRIBER){
+                    $cause = 'Number not owned by subscriber';
+                }elseif ($terminationReason == \PortingService\Porting\denialReasonType::RIO_NOT_VALID){
+                    $cause = 'RIO not valid for porting number';
+                }
+
+                // Update process to DENY with all numbers
+                $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'Denying porting for ' . $portingId);
+
+                // Failed Check. Deny Port
+                $denyResponse = $portingOperationService->deny($portingId, $terminationReason, $cause);
+
+                if($denyResponse->success){
+
+                    $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'DENY successful for ' . $portingId);
+
+                    $this->db->trans_start();
+
+                    // Insert into porting Evolution state table
+
+                    $portingEvolutionParams = array(
+                        'lastChangeDateTime' => $denyResponse->portingTransaction->lastChangeDateTime,
+                        'portingState' => \PortingService\Porting\portingStateType::DENIED,
+                        'isAutoReached' => false,
+                        'portingId' => $denyResponse->portingTransaction->portingId,
+                    );
+
+                    $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
 
                     // Update Porting table
 
                     $portingParams = array(
-                        'contractId' => $subscriberInfo['CONTRACT_ID'],
-                        'language' => $subscriberInfo['LANGUE']
+                        'portingDateTime' => $denyResponse->portingTransaction->portingDateTime,
+                        'cadbOrderDateTime' => $denyResponse->portingTransaction->cadbOrderDateTime,
+                        'lastChangeDateTime' => $denyResponse->portingTransaction->lastChangeDateTime,
+                        'portingState' => \PortingService\Porting\portingStateType::DENIED
                     );
 
                     $this->Porting_model->update_porting($portingId, $portingParams);
 
-                    // Number Owned by Orange
+                    // Insert into PortingDenyRejectionAbandoned
 
-                    $subscriberRIO = RIO::get_rio($subscriberMSISDN);
+                    $pdraParams = array(
+                        'denyRejectionReason' => $terminationReason,
+                        'cause' => $cause,
+                        'portingId' => $portingId
+                    );
 
-                    if($subscriberRIO == $orderedPort['rio']){
+                    $this->Portingdenyrejectionabandon_model->add_portingdenyrejectionabandon($pdraParams);
 
-                        // Subscriber RIO Valid
+                    // Update process numbers
 
-                        $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'Valid RIO for ' . $portingId);
+                    foreach ($dbPortNumbers as $dbPortNumber) {
 
-                        // Send SMS to Subscriber
+                        if($dbPortNumber['numberState'] == \PortingService\Porting\portingStateType::APPROVED){
 
-                        if($recipientNetworkId == Operator::MTN_NETWORK_ID){
-
-                            $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_MTN;
-
-                        }elseif($recipientNetworkId == Operator::NEXTTEL_NETWORK_ID){
-
-                            $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_NEXTTEL;
-
-                        }
-
-                        $smsResponse = SMS::OPD_Inform_Subcriber($subscriberInfo['LANGUE'], $subscriberMSISDN, $denom_OPR, $portingId);
-
-                        if($smsResponse['success'] == true){
-
-                            // Insert Porting SMS Notification
-                            $smsNotificationparams = array(
-                                'portingId' => $portingId,
-                                'smsType' => SMSType::OPD_PORTING_INIT,
-                                'message' => $smsResponse['message'],
-                                'msisdn' => $smsResponse['msisdn'],
-                                'creationDateTime' => date('c'),
-                                'status' => smsState::SENT,
-                                'attemptCount' => 1,
-                                'sendDateTime' => date('c')
+                            // Terminate because other number not OK
+                            $portingNumberParams = array(
+                                'pLastChangeDateTime' => $denyResponse->portingTransaction->lastChangeDateTime,
+                                'numberState' => provisionStateType::TERMINATED,
+                                'terminationReason' => 'OTHER_NUMBERS_IN_PORT_NOK'
                             );
 
-                        }else{
-
-                            $smsNotificationparams = array(
-                                'portingId' => $portingId,
-                                'smsType' => SMSType::OPD_PORTING_INIT,
-                                'message' => $smsResponse['message'],
-                                'msisdn' => $smsResponse['msisdn'],
-                                'creationDateTime' => date('c'),
-                                'status' => smsState::PENDING,
-                                'attemptCount' => 1,
-                            );
+                            $this->ProcessNumber_model->update_processnumber($portingId, $dbPortNumber['msisdn'], $portingNumberParams);
                         }
 
-                        $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
-
-                        /*// Check subscriber type
-                        if($orderedPort['physicalPersonFirstName']){
-
-                            // Physical Person
-                            if(strtolower($subscriberInfo['firstName']) == strtolower($orderedPort['physicalPersonFirstName'])){
-
-                                // Valid First Name
-
-                                if(strtolower($subscriberInfo['lastName']) == strtolower($orderedPort['physicalPersonLastName'])){
-
-                                    // Valid Last Name
-                                    if(strtolower($subscriberInfo['idNumber']) == strtolower($orderedPort['physicalPersonIdNumber'])){
-
-                                        // Valid ID Number
-
-                                    }else{
-                                        // Invalid ID Number
-                                        $portingDenialReason = \PortingService\Porting\denialReasonType::SUBSCRIBER_DATA_DISCREPANCY;
-                                        $cause = 'Invalid ID Number';
-                                    }
-
-                                    }else{
-                                    // Invalid Last Name
-                                    $portingDenialReason = \PortingService\Porting\denialReasonType::NUMBER_NOT_OWNED_BY_SUBSCRIBER;
-                                    $cause = 'Invalid Last Name';
-                                }
-
-                                }else{
-                                // Invalid First Name
-                                $portingDenialReason = \PortingService\Porting\denialReasonType::NUMBER_NOT_OWNED_BY_SUBSCRIBER;
-                                $cause = 'Invalid First Name';
-                            }
-
-                        }
-                        else{
-                            // Legal Person
-                            if(strtolower($subscriberInfo['personName']) == strtolower($orderedPort['legalPersonName'])){
-
-                                // Valid Person Name
-
-                                if(strtolower($subscriberInfo['personTIN']) == strtolower($orderedPort['legalPersonTin'])){
-
-                                    // Valid Person TIN
-                                    if(strtolower($subscriberInfo['contactNumber']) == strtolower($orderedPort['contactNumber'])){
-
-                                        // Valid contact Number
-
-                                    }else{
-                                        // Invalid contact Number
-                                        $portingDenialReason = \PortingService\Porting\denialReasonType::SUBSCRIBER_DATA_DISCREPANCY;
-                                        $cause = 'Invalid Contact Number';
-                                    }
-
-                                }else{
-                                    // Invalid Person TIN
-                                    $portingDenialReason = \PortingService\Porting\denialReasonType::NUMBER_NOT_OWNED_BY_SUBSCRIBER;
-                                    $cause = 'Invalid Person TIN';
-                                }
-
-                            }else{
-                                // Invalid Person Name
-                                $portingDenialReason = \PortingService\Porting\denialReasonType::NUMBER_NOT_OWNED_BY_SUBSCRIBER;
-                                $cause = 'Invalid Person Name';
-                            }
-
-                        }*/
-
-                    }else{
-                        $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'Invalid RIO for ' . $portingId . '. Generated RIO is ' . $subscriberRIO);
-                        // Subscriber RIO Invalid
-                        $portingDenialReason = \PortingService\Porting\denialReasonType::RIO_NOT_VALID;
-                        $cause = 'Invalid RIO';
                     }
 
+                    // Notify Agents/Admin
+
+                    if ($this->db->trans_status() === FALSE) {
+
+                        $error = $this->db->error();
+                        $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
+
+                        $portingParams = $this->Porting_model->get_porting($portingId);
+
+                        $emailService = new EmailService();
+                        $emailService->adminErrorReport('PORTING DENIED BUT DB FILLED INCOMPLETE', $portingParams, processType::PORTING);
+
+                    }
+
+                    $this->db->trans_complete();
+
                 }
-                else{ // BSCS returns this in case of in existent user
-                    $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'Subscriber not found in BSCS for ' . $portingId);
-                    // Number not owned by Orange
-                    $portingDenialReason = \PortingService\Porting\denialReasonType::NUMBER_NOT_OWNED_BY_SUBSCRIBER;
-                    $cause = 'Unknown Number';
-                }
 
-                if($portingDenialReason == null) {
-                    // All Checks OK. Approve Port
+                else{
 
-                    $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'Approving porting for ' . $portingId);
+                    $fault = $denyResponse->error;
+                    $message = $denyResponse->message;
 
-                    $approveResponse = $portingOperationService->approve($portingId);
+                    $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'DENY failed for ' . $portingId . ' with ' . $fault . ' :: ' . $message);
 
-                    if($approveResponse->success){
-
-                        $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'APPROVE successful for ' . $portingId);
-
-                        // Insert into porting state evolution table
-
-                        $this->db->trans_start();
-
-                        // Insert into porting Evolution state table
-
-                        $portingEvolutionParams = array(
-                            'lastChangeDateTime' => $approveResponse->portingTransaction->lastChangeDateTime,
-                            'portingState' => \PortingService\Porting\portingStateType::APPROVED,
-                            'isAutoReached' => false,
-                            'portingId' => $approveResponse->portingTransaction->portingId,
-                        );
-
-                        $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
-
-                        // Update Porting table
-
-                        $portingParams = array(
-                            'portingDateTime' => $approveResponse->portingTransaction->portingDateTime,
-                            'cadbOrderDateTime' => $approveResponse->portingTransaction->cadbOrderDateTime,
-                            'lastChangeDateTime' => $approveResponse->portingTransaction->lastChangeDateTime,
-                            'portingState' => \PortingService\Porting\portingStateType::APPROVED
-                        );
-
-                        $this->Porting_model->update_porting($portingId, $portingParams);
-
-                        // Notify Agents/Admin
-
-                        if ($this->db->trans_status() === FALSE) {
-
-                            $error = $this->db->error();
-                            $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
+                    switch ($fault) {
+                        // Terminal Processes
+                        case Fault::INVALID_OPERATOR_FAULT:
+                        case Fault::INVALID_REQUEST_FORMAT:
+                        case Fault::PORTING_ACTION_NOT_AVAILABLE:
+                        case Fault::INVALID_PORTING_ID:
+                        case Fault::CAUSE_MISSING:
+                        default:
 
                             $portingParams = $this->Porting_model->get_porting($portingId);
 
-                            $emailService = new EmailService();
-                            $emailService->adminErrorReport('PORTING APPROVED BUT DB FILLED INCOMPLETE', $portingParams, processType::PORTING);
-
-                        }else{
-
-                        }
-
-                        $this->db->trans_complete();
+                            $emailService->adminErrorReport($fault, $portingParams, processType::PORTING);
 
                     }
+
+                }
+
+            }
+
+            else{
+
+                // All Checks OK. Approve Port
+
+                $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'Approving porting for ' . $portingId);
+
+                $approveResponse = $portingOperationService->approve($portingId);
+
+                if($approveResponse->success){
+
+                    $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'APPROVE successful for ' . $portingId);
+
+                    // Insert into porting state evolution table
+
+                    $this->db->trans_start();
+
+                    // Insert into porting Evolution state table
+
+                    $portingEvolutionParams = array(
+                        'lastChangeDateTime' => $approveResponse->portingTransaction->lastChangeDateTime,
+                        'portingState' => \PortingService\Porting\portingStateType::APPROVED,
+                        'isAutoReached' => false,
+                        'portingId' => $approveResponse->portingTransaction->portingId,
+                    );
+
+                    $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
+
+                    // Update Porting table
+
+                    $portingParams = array(
+                        'portingDateTime' => $approveResponse->portingTransaction->portingDateTime,
+                        'cadbOrderDateTime' => $approveResponse->portingTransaction->cadbOrderDateTime,
+                        'lastChangeDateTime' => $approveResponse->portingTransaction->lastChangeDateTime,
+                        'portingState' => \PortingService\Porting\portingStateType::APPROVED
+                    );
+
+                    $this->Porting_model->update_porting($portingId, $portingParams);
+
+                    // Send SMS to Subscriber
+
+                    if($recipientNetworkId == Operator::MTN_NETWORK_ID){
+
+                        $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_MTN;
+
+                    }elseif($recipientNetworkId == Operator::NEXTTEL_NETWORK_ID){
+
+                        $denom_OPR = SMS::$DENOMINATION_COMMERCIALE_NEXTTEL;
+
+                    }
+
+                    $subscriberMSISDN = $approveResponse->portingTransaction->subscriberInfo->contactNumber;
+
+                    $smsResponse = SMS::OPD_Inform_Subcriber($language, $subscriberMSISDN, $denom_OPR, $portingId);
+
+                    if($smsResponse['success'] == true){
+
+                        // Insert Porting SMS Notification
+                        $smsNotificationparams = array(
+                            'portingId' => $portingId,
+                            'smsType' => SMSType::OPD_PORTING_INIT,
+                            'message' => $smsResponse['message'],
+                            'msisdn' => $smsResponse['msisdn'],
+                            'creationDateTime' => date('c'),
+                            'status' => smsState::SENT,
+                            'attemptCount' => 1,
+                            'sendDateTime' => date('c')
+                        );
+
+                    }
+
                     else{
 
-                        $fault = $approveResponse->error;
-                        $message = $approveResponse->message;
+                        $smsNotificationparams = array(
+                            'portingId' => $portingId,
+                            'smsType' => SMSType::OPD_PORTING_INIT,
+                            'message' => $smsResponse['message'],
+                            'msisdn' => $smsResponse['msisdn'],
+                            'creationDateTime' => date('c'),
+                            'status' => smsState::PENDING,
+                            'attemptCount' => 1,
+                        );
+                    }
 
-                        $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'APPROVE failed for ' . $portingId . ' with ' . $fault . ' :: ' . $message);
+                    $this->Portingsmsnotification_model->add_portingsmsnotification($smsNotificationparams);
 
-                        switch ($fault) {
-                            // Terminal Processes
-                            case Fault::INVALID_OPERATOR_FAULT:
-                            case Fault::INVALID_REQUEST_FORMAT:
-                            case Fault::PORTING_ACTION_NOT_AVAILABLE:
-                            case Fault::INVALID_PORTING_ID:
-                            default:
+                    // Notify Agents/Admin
 
-                                $portingParams = $this->Porting_model->get_porting($portingId);
+                    if ($this->db->trans_status() === FALSE) {
 
-                                $emailService->adminErrorReport($fault, $portingParams, processType::PORTING);
+                        $error = $this->db->error();
+                        $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
-                        }
+                        $portingParams = $this->Porting_model->get_porting($portingId);
+
+                        $emailService = new EmailService();
+                        $emailService->adminErrorReport('PORTING APPROVED BUT DB FILLED INCOMPLETE', $portingParams, processType::PORTING);
 
                     }
+
+                    $this->db->trans_complete();
 
                 }
                 else{
 
-                    $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'Denying porting for ' . $portingId);
+                    $fault = $approveResponse->error;
+                    $message = $approveResponse->message;
 
-                    // Failed Check. Deny Port
-                    $denyResponse = $portingOperationService->deny($portingId, $portingDenialReason, $cause);
+                    $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'APPROVE failed for ' . $portingId . ' with ' . $fault . ' :: ' . $message);
 
-                    if($denyResponse->success){
-
-                        $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'DENY successful for ' . $portingId);
-
-                        // Insert into porting state evolution table
-
-                        $this->db->trans_start();
-
-                        // Insert into porting Evolution state table
-
-                        $portingEvolutionParams = array(
-                            'lastChangeDateTime' => $denyResponse->portingTransaction->lastChangeDateTime,
-                            'portingState' => \PortingService\Porting\portingStateType::DENIED,
-                            'isAutoReached' => false,
-                            'portingId' => $denyResponse->portingTransaction->portingId,
-                        );
-
-                        $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
-
-                        // Update Porting table
-
-                        $portingParams = array(
-                            'portingDateTime' => $denyResponse->portingTransaction->portingDateTime,
-                            'cadbOrderDateTime' => $denyResponse->portingTransaction->cadbOrderDateTime,
-                            'lastChangeDateTime' => $denyResponse->portingTransaction->lastChangeDateTime,
-                            'portingState' => \PortingService\Porting\portingStateType::DENIED
-                        );
-
-                        $this->Porting_model->update_porting($portingId, $portingParams);
-
-                        // Insert into PortingDenyRejectionAbandoned
-
-                        $pdraParams = array(
-                            'denyRejectionReason' => $portingDenialReason,
-                            'cause' => $cause,
-                            'portingId' => $portingId
-                        );
-
-                        $this->Portingdenyrejectionabandon_model->add_portingdenyrejectionabandon($pdraParams);
-
-                        // Notify Agents/Admin
-
-                        if ($this->db->trans_status() === FALSE) {
-
-                            $error = $this->db->error();
-                            $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
+                    switch ($fault) {
+                        // Terminal Processes
+                        case Fault::INVALID_OPERATOR_FAULT:
+                        case Fault::INVALID_REQUEST_FORMAT:
+                        case Fault::PORTING_ACTION_NOT_AVAILABLE:
+                        case Fault::INVALID_PORTING_ID:
+                        default:
 
                             $portingParams = $this->Porting_model->get_porting($portingId);
 
-                            $emailService = new EmailService();
-                            $emailService->adminErrorReport('PORTING DENIED BUT DB FILLED INCOMPLETE', $portingParams, processType::PORTING);
-
-                        }else{
-
-                        }
-
-                        $this->db->trans_complete();
-
-                    }
-                    else{
-
-                        $fault = $denyResponse->error;
-                        $message = $denyResponse->message;
-
-                        $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'DENY failed for ' . $portingId . ' with ' . $fault . ' :: ' . $message);
-
-                        switch ($fault) {
-                            // Terminal Processes
-                            case Fault::INVALID_OPERATOR_FAULT:
-                            case Fault::INVALID_REQUEST_FORMAT:
-                            case Fault::PORTING_ACTION_NOT_AVAILABLE:
-                            case Fault::INVALID_PORTING_ID:
-                            case Fault::CAUSE_MISSING:
-                            default:
-
-                                $portingParams = $this->Porting_model->get_porting($portingId);
-
-                                $emailService->adminErrorReport($fault, $portingParams, processType::PORTING);
-
-                        }
+                            $emailService->adminErrorReport($fault, $portingParams, processType::PORTING);
 
                     }
 
                 }
 
-            }else{
-                // Connection to BSCS failed. Wait and try again later
-                $this->fileLogAction('7002', 'BatchOperationService::portingOrderedToApprovedDenied', 'Connection to BSCS failed for ' . $portingId);
             }
 
         }
@@ -510,69 +520,16 @@ class BatchOperationService extends CI_Controller {
 
                     $this->Porting_model->update_porting($approvedPort['portingId'], $portingParams);
 
-                }else{
-
-                    // Notify by SMS
-
                 }
             }
         }
     }
-
-    /**
-     * TODO: INCOMPLETE
-     * Checks for all enterprise ports in APPROVED state and sends mail for their Acceptance / Rejection
-     */
-    public function portingApprovedToAcceptedRejectedEnterprise(){
-
-        $this->fileLogAction('7004', 'BatchOperationService::portingApprovedToAcceptedRejectedEnterprise', 'portingApprovedToAcceptedRejectedEnterprise STARTED');
-
-        // Load ports in Porting table in APPROVED state in which we are OPD AND Enterprise
-
-        $approvedPorts = $this->Porting_model->get_porting_by_state_and_donor(\PortingService\Porting\portingStateType::APPROVED, Operator::ORANGE_NETWORK_ID, 1);
-
-        $this->fileLogAction('7004', 'BatchOperationService::portingApprovedToAcceptedRejectedEnterprise', 'Preparing Email for ACCEPTANCE/REJECTION of ' . count($approvedPorts) . ' approved enterprise ports');
-
-        $emailService = new EmailService();
-
-        $enterpriseGrouping = array(); // Group ports by enterprise
-
-        foreach ($approvedPorts as $approvedPort){
-
-            $is_added = false;
-
-            foreach ($enterpriseGrouping as &$enterprisePort){
-
-                if($enterprisePort['legalPersonTin'] == $approvedPort['legalPersonTin']){
-                    $is_added = true;
-                    $enterprisePort['portingIds'][] = $approvedPort['portingId'];
-                    $enterprisePort['MSISDNs'][] = $approvedPort['startMSISDN'];
-                    break;
-                }
-
-            }
-
-            if(!$is_added){
-                $tmpPort = $approvedPort;
-                $tmpPort['portingIds'] = [];
-                $tmpPort['portingIds'][] = $approvedPort['portingId'];
-                $tmpPort['MSISDNs'][] = $approvedPort['startMSISDN'];
-                $enterpriseGrouping[] = $tmpPort;
-            }
-
-        }
-
-        foreach ($enterpriseGrouping as $enterprisePort){
-            // Send mail to Back Office with Admin in CC for Acceptance / Rejection
-            $emailService->backOfficePortingAcceptReject($enterprisePort);
-        }
-
-    }
-
+    
     /**
      * Executed as OPD
      * BATCH_004_{A, B, C}
-     * Checks for all ports in ACCEPTED state, if any performs porting to MSISDN_EXPORT_CONFIRMED state after updating status
+     * Checks for all ports in ACCEPTED state, if any performs porting to UPDATE_STATUS_CONFIRMED
+     * Checks for all ports in UPDATE_STATUS_CONFIRMED state, if any performs porting to MSISDN_EXPORT_CONFIRMED
      * Checks for all ports in MSISDN_EXPORT_CONFIRMED state, if any perform porting to CONFIRMED state updating Porting/Provision table
      */
     public function portingOPD(){
@@ -583,7 +540,13 @@ class BatchOperationService extends CI_Controller {
 
         $acceptedPorts = $this->Porting_model->get_porting_by_state_and_donor(\PortingService\Porting\portingStateType::ACCEPTED, Operator::ORANGE_NETWORK_ID);
 
-        $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'Preparing MSISDN EXPORT of ' . count($acceptedPorts) . ' accepted ports');
+        $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'Preparing STATUS-UPDATE of ' . count($acceptedPorts) . ' accepted ports');
+
+        // Load ports in Porting table in UPDATE_STATUS_CONFIRMED state in which we are OPD
+
+        $statusUpdatePorts = $this->Porting_model->get_porting_by_state_and_donor(\PortingService\Porting\portingStateType::UPDATE_STATUS_CONFIRMED, Operator::ORANGE_NETWORK_ID);
+
+        $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'Preparing MSISDN_EXPORT_CONFIRMED of ' . count($statusUpdatePorts) . ' status updated ports.');
 
         // Load ports in Porting table in MSISDN_EXPORT_CONFIRMED state in which we are OPD
 
@@ -608,67 +571,180 @@ class BatchOperationService extends CI_Controller {
 
                 $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'Process provisioned. Performing STATUS UPDATE for ' . $portingId);
 
-                // Porting already provisioned. Start porting moving to STATUS UPDATE state
+                // Load numbers corresponding to port and move each to STATUS UPDATE
+                $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($portingId);
 
-                $contractId = $acceptedPort['contractId'];
+                foreach ($dbPortNumbers as $dbPortNumber) {
 
-                $updateResponse = $bscsOperationService->updateContractStatus($contractId);
+                    $contractId = $dbPortNumber['contractId'];
 
-                if($updateResponse->success){
+                    $subscriberMSISDN = $dbPortNumber['msisdn'];
 
-                    $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'STATUS UPDATED Successful for ' . $portingId);
+                    if($dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::UPDATE_STATUS_CONFIRMED){
 
-                    $portingId = $acceptedPort['portingId'];
+                        $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'Performing STATUS UPDATED for ' . $portingId . ' :: ' . $subscriberMSISDN);
 
-                    $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'Performing MSISDN_EXPORT_CONFIRMED for ' . $portingId);
+                        $updateResponse = $bscsOperationService->updateContractStatus($contractId);
 
-                    // Porting already provisioned. Start porting moving to MSISDN_EXPORT_CONFIRMED state
-                    $subscriberMSISDN = $acceptedPort['startMSISDN'];
-                    $recipientNetworkId = $acceptedPort['recipientNetworkId'];
+                        if($updateResponse->success){
+
+                            $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'STATUS UPDATED Successful for ' . $portingId . ' :: ' . $subscriberMSISDN);
+
+                            $portingId = $acceptedPort['portingId'];
+
+                            // Update process number state
+
+                            $portingNumberParams = array(
+                                'pLastChangeDateTime' => date('c'),
+                                'numberState' => \PortingService\Porting\portingStateType::UPDATE_STATUS_CONFIRMED
+                            );
+
+                            $this->ProcessNumber_model->update_processnumber($portingId, $subscriberMSISDN, $portingNumberParams);
+
+                        }
+                        else{
+
+                            // Notify Admin on failed Export
+                            $faultCode = $updateResponse->error;
+                            $faultReason = $updateResponse->message;
+
+                            $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'UPDATE STATUS failed for ' . $portingId . ' with ' . $faultCode . ' :: ' . $faultReason . ' :: ' . $subscriberMSISDN);
+
+                            switch ($faultCode) {
+                                // Terminal Processes
+                                case Fault::SIGNATURE_MISMATCH_CODE:
+                                    $fault = Fault::SIGNATURE_MISMATCH;
+                                    break;
+                                case Fault::DENIED_ACCESS_CODE:
+                                    $fault = Fault::DENIED_ACCESS;
+                                    break;
+                                case Fault::UNKNOWN_COMMAND_CODE:
+                                    $fault = Fault::UNKNOWN_COMMAND;
+                                    break;
+                                case Fault::INVALID_PARAMETER_TYPE_CODE:
+                                    $fault = Fault::INVALID_PARAMETER_TYPE;
+                                    break;
+
+                                case Fault::PARAMETER_LIST_CODE:
+                                    $fault = Fault::PARAMETER_LIST;
+                                    break;
+
+                                case Fault::CMS_EXECUTION_CODE:
+                                    $fault = Fault::CMS_EXECUTION;
+                                    break;
+
+                                default:
+                                    $fault = $faultCode;
+                            }
+
+                            $tmpPort = $acceptedPort;
+                            $tmpPort['msisdn'] = [$subscriberMSISDN];
+
+                            $emailService->adminErrorReport($fault, $tmpPort, processType::PORTING);
+
+                        }
+
+                    }
+
+                }
+
+                // Load numbers again
+                $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($portingId);
+
+                $waiting = false;
+
+                foreach ($dbPortNumbers as $dbPortNumber) {
+
+                    if($dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::UPDATE_STATUS_CONFIRMED){
+                        $waiting = true;
+                        break;
+                    }
+                }
+
+                if($waiting == false){
+
+                    // All numbers exported. Update process to UPDATE_STATUS_CONFIRMED
+                    $this->db->trans_start();
+
+                    // Insert into porting Evolution state table
+
+                    $portingEvolutionParams = array(
+                        'lastChangeDateTime' => date('c'),
+                        'portingState' => \PortingService\Porting\portingStateType::UPDATE_STATUS_CONFIRMED,
+                        'isAutoReached' => false,
+                        'portingId' => $portingId,
+                    );
+
+                    $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
+
+                    // Update Porting table
+
+                    $portingParams = array(
+                        'lastChangeDateTime' => date('c'),
+                        'portingState' => \PortingService\Porting\portingStateType::UPDATE_STATUS_CONFIRMED
+                    );
+
+                    $this->Porting_model->update_porting($portingId, $portingParams);
+
+                    // Notify Agents/Admin
+
+                    if ($this->db->trans_status() === FALSE) {
+
+                        $error = $this->db->error();
+                        $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
+
+                        $emailService->adminErrorReport('PORTING-STATUS-UPDATE-CONFIRMED BUT DB FILLED INCOMPLETE', $acceptedPort, processType::PORTING);
+
+                    }else{
+
+                    }
+
+                    $this->db->trans_complete();
+
+                }
+
+            }else{
+
+                //Port not yet Provisioned. Do nothing, wait till provision
+
+                $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'Process not yet provisioned for ' . $portingId);
+
+            }
+        }
+
+        foreach ($statusUpdatePorts as $statusUpdatePort){
+
+            $portingId = $statusUpdatePort['portingId'];
+
+            $this->fileLogAction('7005', 'BatchOperationService::portingOPD', ' Performing MSISDN EXPORT CONFIRMED for ' . $portingId);
+
+            // Load numbers corresponding to port and move each to MSISDN EXPORT
+            $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($portingId);
+
+            $recipientNetworkId = $statusUpdatePort['recipientNetworkId'];
+
+            foreach ($dbPortNumbers as $dbPortNumber) {
+
+                $subscriberMSISDN = $dbPortNumber['msisdn'];
+
+                if($dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::MSISDN_EXPORT_CONFIRMED){
+
+                    $this->fileLogAction('7005', 'BatchOperationService::portingOPD', ' Performing MSISDN EXPORT CONFIRMED for ' . $portingId  .' :: ' . $subscriberMSISDN);
 
                     $exportResponse = $bscsOperationService->exportMSISDN($subscriberMSISDN, $recipientNetworkId);
 
                     if($exportResponse->success){
 
-                        $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'MSISDN_EXPORT_CONFIRMED Successful for ' . $portingId);
+                        $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'MSISDN_EXPORT_CONFIRMED Successful for ' . $portingId  .' :: ' . $subscriberMSISDN);
 
-                        $this->db->trans_start();
+                        // Update process number state
 
-                        // Insert into porting Evolution state table
-
-                        $portingEvolutionParams = array(
-                            'lastChangeDateTime' => date('c'),
-                            'portingState' => \PortingService\Porting\portingStateType::MSISDN_EXPORT_CONFIRMED,
-                            'isAutoReached' => false,
-                            'portingId' => $portingId,
+                        $portingNumberParams = array(
+                            'pLastChangeDateTime' => date('c'),
+                            'numberState' => \PortingService\Porting\portingStateType::MSISDN_EXPORT_CONFIRMED
                         );
 
-
-                        $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
-
-                        // Update Porting table
-
-                        $portingParams = array(
-                            'lastChangeDateTime' => date('c'),
-                            'portingState' => \PortingService\Porting\portingStateType::MSISDN_EXPORT_CONFIRMED
-                        );
-
-                        $this->Porting_model->update_porting($portingId, $portingParams);
-
-                        // Notify Agents/Admin
-
-                        if ($this->db->trans_status() === FALSE) {
-
-                            $error = $this->db->error();
-                            $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
-
-                            $emailService->adminErrorReport('PORTING-MSISDN-EXPORTED BUT DB FILLED INCOMPLETE', $acceptedPort, processType::PORTING);
-
-                        }else{
-
-                        }
-
-                        $this->db->trans_complete();
+                        $this->ProcessNumber_model->update_processnumber($portingId, $subscriberMSISDN, $portingNumberParams);
 
                     }
                     else{
@@ -711,57 +787,70 @@ class BatchOperationService extends CI_Controller {
                                 $fault = $faultCode;
                         }
 
-                        $emailService->adminErrorReport($fault, $acceptedPort, processType::PORTING);
+                        $tmpPort = $statusUpdatePort;
+                        $tmpPort['msisdn'] = [$subscriberMSISDN];
+
+                        $emailService->adminErrorReport($fault, $tmpPort, processType::PORTING);
 
                     }
 
                 }
-                else{
-
-                    // Notify Admin on failed Export
-                    $faultCode = $updateResponse->error;
-                    $faultReason = $updateResponse->message;
-
-                    $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'UPDATE STATUS failed for ' . $portingId . ' with ' . $faultCode . ' :: ' . $faultReason);
-
-                    switch ($faultCode) {
-                        // Terminal Processes
-                        case Fault::SIGNATURE_MISMATCH_CODE:
-                            $fault = Fault::SIGNATURE_MISMATCH;
-                            break;
-                        case Fault::DENIED_ACCESS_CODE:
-                            $fault = Fault::DENIED_ACCESS;
-                            break;
-                        case Fault::UNKNOWN_COMMAND_CODE:
-                            $fault = Fault::UNKNOWN_COMMAND;
-                            break;
-                        case Fault::INVALID_PARAMETER_TYPE_CODE:
-                            $fault = Fault::INVALID_PARAMETER_TYPE;
-                            break;
-
-                        case Fault::PARAMETER_LIST_CODE:
-                            $fault = Fault::PARAMETER_LIST;
-                            break;
-
-                        case Fault::CMS_EXECUTION_CODE:
-                            $fault = Fault::CMS_EXECUTION;
-                            break;
-
-                        default:
-                            $fault = $faultCode;
-                    }
-
-                    $emailService->adminErrorReport($fault, $acceptedPort, processType::PORTING);
-
-                }
-
-            }else{
-
-                //Port not yet Provisioned. Do nothing, wait till provision
-
-                $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'Process not yet provisioned for ' . $portingId);
 
             }
+
+            // Load numbers again
+            $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($portingId);
+
+            $waiting = false;
+
+            foreach ($dbPortNumbers as $dbPortNumber) {
+
+                if($dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::MSISDN_EXPORT_CONFIRMED){
+                    $waiting = true;
+                    break;
+                }
+            }
+
+            if($waiting == false){
+
+                // All numbers exported. Update process to MSISDN_EXPORT_CONFIRMED
+                $this->db->trans_start();
+
+                // Insert into porting Evolution state table
+
+                $portingEvolutionParams = array(
+                    'lastChangeDateTime' => date('c'),
+                    'portingState' => \PortingService\Porting\portingStateType::MSISDN_EXPORT_CONFIRMED,
+                    'isAutoReached' => false,
+                    'portingId' => $portingId,
+                );
+
+                $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
+
+                // Update Porting table
+
+                $portingParams = array(
+                    'lastChangeDateTime' => date('c'),
+                    'portingState' => \PortingService\Porting\portingStateType::MSISDN_EXPORT_CONFIRMED
+                );
+
+                $this->Porting_model->update_porting($portingId, $portingParams);
+
+                // Notify Agents/Admin
+
+                if ($this->db->trans_status() === FALSE) {
+
+                    $error = $this->db->error();
+                    $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
+
+                    $emailService->adminErrorReport('PORTING-MSISDN-EXPORTED BUT DB FILLED INCOMPLETE', $statusUpdatePort, processType::PORTING);
+
+                }
+
+                $this->db->trans_complete();
+
+            }
+
         }
 
         foreach ($msisdnExportedPorts as $msisdnExportedPort){
@@ -769,8 +858,6 @@ class BatchOperationService extends CI_Controller {
             $portingId = $msisdnExportedPort['portingId'];
 
             $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'Performing KPSA_OPERATION for ' . $portingId);
-
-            $subscriberMSISDN = $msisdnExportedPort['startMSISDN'];
 
             $fromOperator = $msisdnExportedPort['donorNetworkId'];
 
@@ -780,14 +867,63 @@ class BatchOperationService extends CI_Controller {
 
             $toRoutingNumber = $msisdnExportedPort['recipientRoutingNumber'];
 
-            // Perform KPSA Operation
+            $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($portingId);
 
-            $kpsaOperationService = new KpsaOperationService();
+            foreach ($dbPortNumbers as $dbPortNumber){
 
-            $kpsaResponse = $kpsaOperationService->performKPSAOperation($subscriberMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
+                if($dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::COMPLETED){
 
-            if($kpsaResponse['success']){
+                    $subscriberMSISDN = $dbPortNumber['msisdn'];
 
+                    // Perform KPSA Operation
+
+                    $kpsaOperationService = new KpsaOperationService();
+
+                    $kpsaResponse = $kpsaOperationService->performKPSAOperation($subscriberMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
+
+                    if($kpsaResponse['success']){
+
+                        $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'KPSA_OPERATION successful for ' . $portingId . ' :: ' . $subscriberMSISDN);
+
+                        // Update process number state
+
+                        $portingNumberParams = array(
+                            'pLastChangeDateTime' => date('c'),
+                            'numberState' => \PortingService\Porting\portingStateType::COMPLETED
+                        );
+
+                        $this->ProcessNumber_model->update_processnumber($portingId, $subscriberMSISDN, $portingNumberParams);
+
+                    }
+
+                    else{
+
+                        $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'KPSA_OPERATION failed for ' . $portingId . ' :: ' . $subscriberMSISDN . ' with ' . $kpsaResponse['message']);
+
+                        $emailService->adminKPSAError($kpsaResponse['message']. ' :: ' . $subscriberMSISDN);
+
+                    }
+
+                }
+
+            }
+
+            // Load numbers again
+            $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($portingId);
+
+            $waiting = false;
+
+            foreach ($dbPortNumbers as $dbPortNumber) {
+
+                if($dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::COMPLETED){
+                    $waiting = true;
+                    break;
+                }
+            }
+
+            if($waiting == false){
+
+                // All numbers completed. Perform Update process to COMPLETED
                 $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'KPSA_OPERATION Successful for ' . $portingId);
 
                 // Confirm Routing Data
@@ -830,6 +966,15 @@ class BatchOperationService extends CI_Controller {
 
                     $this->Provisioning_model->update_provisioning($portingId, $prParams);
 
+                    // Update Provisioning numbers states
+
+                    $portingNumberParams = array(
+                        'pLastChangeDateTime' => date('c'),
+                        'numberState' => \PortingService\Porting\portingStateType::COMPLETED
+                    );
+
+                    $this->ProcessNumber_model->update_provisionnumber_all($portingId, $portingNumberParams);
+
                     // Notify Agents/Admin
 
                     if ($this->db->trans_status() === FALSE) {
@@ -851,14 +996,6 @@ class BatchOperationService extends CI_Controller {
                     $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'CONFIRM failed for ' . $portingId);
 
                 }
-
-            }
-
-            else{
-
-                $this->fileLogAction('7005', 'BatchOperationService::portingOPD', 'KPSA_OPERATION failed for ' . $portingId . ' with ' . $kpsaResponse['message']);
-
-                $emailService->adminKPSAError($kpsaResponse['message']. ' :: ' . $subscriberMSISDN);
 
             }
 
@@ -930,14 +1067,100 @@ class BatchOperationService extends CI_Controller {
 
                 $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'Time OK. Performing MSISDN_IMPORT for ' . $portingId);
 
-                // Start porting moving to MSISDN_IMPORT_CONFIRMED state. Import Porting MSISDN into BSCS
-                $subscriberMSISDN = $acceptedPort['startMSISDN'];
+                // Load numbers corresponding to port and move each to STATUS UPDATE
+                $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($portingId);
 
                 $donorNetworkId = $acceptedPort['donorNetworkId'];
 
-                $importResponse = $bscsOperationService->importMSISDN($subscriberMSISDN, $donorNetworkId);
+                foreach ($dbPortNumbers as $dbPortNumber){
 
-                if($importResponse->success){
+                    $subscriberMSISDN = $dbPortNumber['msisdn'];
+
+                    if($dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::MSISDN_IMPORT_CONFIRMED){
+
+                        // Start porting moving to MSISDN_IMPORT_CONFIRMED state. Import Porting MSISDN into BSCS
+
+                        $importResponse = $bscsOperationService->importMSISDN($subscriberMSISDN, $donorNetworkId);
+
+                        if($importResponse->success){
+
+                            $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'MSISDN_IMPORT Successful for ' . $portingId . ' :: ' . $subscriberMSISDN);
+
+                            // Update process number state
+
+                            $portingNumberParams = array(
+                                'pLastChangeDateTime' => date('c'),
+                                'numberState' => \PortingService\Porting\portingStateType::MSISDN_IMPORT_CONFIRMED
+                            );
+
+                            $this->ProcessNumber_model->update_processnumber($portingId, $subscriberMSISDN, $portingNumberParams);
+
+                        }
+                        else{
+
+                            // Notify Admin on failed Import
+                            $faultCode = $importResponse->error;
+                            $faultReason = $importResponse->message;
+
+                            $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'MSISDN_IMPORT failed for ' . $portingId . ' :: ' . $subscriberMSISDN . ' with ' . $faultCode . ' :: ' . $faultReason);
+
+                            $fault = '';
+
+                            switch ($faultCode) {
+                                // Terminal Processes
+                                case Fault::SERVICE_BREAK_DOWN_CODE:
+                                    $fault = Fault::SERVICE_BREAK_DOWN;
+                                    break;
+                                case Fault::SIGNATURE_MISMATCH_CODE:
+                                    $fault = Fault::SIGNATURE_MISMATCH;
+                                    break;
+                                case Fault::DENIED_ACCESS_CODE:
+                                    $fault = Fault::DENIED_ACCESS;
+                                    break;
+                                case Fault::UNKNOWN_COMMAND_CODE:
+                                    $fault = Fault::UNKNOWN_COMMAND;
+                                    break;
+                                case Fault::INVALID_PARAMETER_TYPE_CODE:
+                                    $fault = Fault::INVALID_PARAMETER_TYPE;
+                                    break;
+
+                                case Fault::PARAMETER_LIST_CODE:
+                                    $fault = Fault::PARAMETER_LIST;
+                                    break;
+
+                                case Fault::CMS_EXECUTION_CODE:
+                                    $fault = Fault::CMS_EXECUTION;
+                                    break;
+
+                                default:
+                                    $fault = $faultCode;
+                            }
+
+                            $tmpPort = $acceptedPort;
+                            $tmpPort['msisdn'] = [$subscriberMSISDN];
+
+                            $emailService->adminErrorReport($fault, $tmpPort, processType::PORTING);
+
+                        }
+
+                    }
+
+                }
+
+                // Load numbers again
+                $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($portingId);
+
+                $waiting = false;
+
+                foreach ($dbPortNumbers as $dbPortNumber) {
+
+                    if($dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::MSISDN_IMPORT_CONFIRMED){
+                        $waiting = true;
+                        break;
+                    }
+                }
+
+                if($waiting == false){
 
                     $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'MSISDN_IMPORT Successful for ' . $portingId);
 
@@ -978,48 +1201,6 @@ class BatchOperationService extends CI_Controller {
 
                     $this->db->trans_complete();
 
-                }
-                else{
-
-                    // Notify Admin on failed Import
-                    $faultCode = $importResponse->error;
-                    $faultReason = $importResponse->message;
-
-                    $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'MSISDN_IMPORT failed for ' . $portingId . ' with ' . $faultCode . ' :: ' . $faultReason);
-
-                    $fault = '';
-
-                    switch ($faultCode) {
-                        // Terminal Processes
-                        case Fault::SERVICE_BREAK_DOWN_CODE:
-                            $fault = Fault::SERVICE_BREAK_DOWN;
-                            break;
-                        case Fault::SIGNATURE_MISMATCH_CODE:
-                            $fault = Fault::SIGNATURE_MISMATCH;
-                            break;
-                        case Fault::DENIED_ACCESS_CODE:
-                            $fault = Fault::DENIED_ACCESS;
-                            break;
-                        case Fault::UNKNOWN_COMMAND_CODE:
-                            $fault = Fault::UNKNOWN_COMMAND;
-                            break;
-                        case Fault::INVALID_PARAMETER_TYPE_CODE:
-                            $fault = Fault::INVALID_PARAMETER_TYPE;
-                            break;
-
-                        case Fault::PARAMETER_LIST_CODE:
-                            $fault = Fault::PARAMETER_LIST;
-                            break;
-
-                        case Fault::CMS_EXECUTION_CODE:
-                            $fault = Fault::CMS_EXECUTION;
-                            break;
-
-                        default:
-                            $fault = $faultCode;
-                    }
-
-                    $emailService->adminErrorReport($fault, $acceptedPort, processType::PORTING);
 
                 }
 
@@ -1043,15 +1224,95 @@ class BatchOperationService extends CI_Controller {
 
             $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'Performing MSISDN_CHANGE_IMPORT for ' . $portingId);
 
-            $subscriberInfo = $this->Portingsubmission_model->get_submissionByPortingId($portingId);
+            $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($portingId);
 
-            $subscriberMSISDN = $msisdnConfirmedPort['startMSISDN'];
+            foreach ($dbPortNumbers as $dbPortNumber) {
 
-            $contractId = $msisdnConfirmedPort['contractId'];
+                if($dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::MSISDN_CHANGE_IMPORT_CONFIRMED){
 
-            $changeResponse = $bscsOperationService->changeImportMSISDN($subscriberInfo['temporalMSISDN'], $subscriberMSISDN, $contractId);
+                    $subscriberMSISDN = $dbPortNumber['msisdn'];
 
-            if($changeResponse->success){
+                    $contractId = $dbPortNumber['contractId'];
+
+                    $changeResponse = $bscsOperationService->changeImportMSISDN($dbPortNumber['temporalMsisdn'], $subscriberMSISDN, $contractId);
+
+                    if($changeResponse->success){
+
+                        $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'MSISDN_CHANGE_IMPORT Successful for ' . $portingId);
+
+                        // Update process number state
+
+                        $portingNumberParams = array(
+                            'pLastChangeDateTime' => date('c'),
+                            'numberState' => \PortingService\Porting\portingStateType::MSISDN_CHANGE_IMPORT_CONFIRMED
+                        );
+
+                        $this->ProcessNumber_model->update_processnumber($portingId, $subscriberMSISDN, $portingNumberParams);
+
+                    }
+                    else{
+                        // Notify Admin on failed Import
+                        $faultCode = $changeResponse->error;
+                        $faultReason = $changeResponse->message;
+
+                        $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'MSISDN_CHANGE_IMPORT failed for ' . $portingId . ' :: ' . $subscriberMSISDN . ' with ' . $faultCode . ' :: ' . $faultReason);
+
+                        $fault = '';
+
+                        switch ($faultCode) {
+                            // Terminal Processes
+                            case Fault::SERVICE_BREAK_DOWN_CODE:
+                                $fault = Fault::SERVICE_BREAK_DOWN;
+                                break;
+                            case Fault::SIGNATURE_MISMATCH_CODE:
+                                $fault = Fault::SIGNATURE_MISMATCH;
+                                break;
+                            case Fault::DENIED_ACCESS_CODE:
+                                $fault = Fault::DENIED_ACCESS;
+                                break;
+                            case Fault::UNKNOWN_COMMAND_CODE:
+                                $fault = Fault::UNKNOWN_COMMAND;
+                                break;
+                            case Fault::INVALID_PARAMETER_TYPE_CODE:
+                                $fault = Fault::INVALID_PARAMETER_TYPE;
+                                break;
+
+                            case Fault::PARAMETER_LIST_CODE:
+                                $fault = Fault::PARAMETER_LIST;
+                                break;
+
+                            case Fault::CMS_EXECUTION_CODE:
+                                $fault = Fault::CMS_EXECUTION;
+                                break;
+
+                            default:
+                                $fault = $faultCode;
+                        }
+
+                        $tmpPort = $msisdnConfirmedPort;
+                        $tmpPort['msisdn'] = [$subscriberMSISDN];
+
+                        $emailService->adminErrorReport($fault, $tmpPort, processType::PORTING);
+                    }
+
+                }
+
+            }
+
+            // Load numbers again
+            $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($portingId);
+
+            $waiting = false;
+
+            foreach ($dbPortNumbers as $dbPortNumber) {
+
+                if($dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::MSISDN_CHANGE_IMPORT_CONFIRMED){
+                    $waiting = true;
+                    break;
+                }
+            }
+
+            if($waiting == false){
 
                 $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'MSISDN_CHANGE_IMPORT Successful for ' . $portingId);
 
@@ -1084,53 +1345,11 @@ class BatchOperationService extends CI_Controller {
                     $error = $this->db->error();
                     $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
-                    $emailService->adminErrorReport('PORTING_MSISDN_CHANGED_BUT_DB_FILLED_INCOMPLETE', $msisdnConfirmedPort, processType::PORTING);
+                    $emailService->adminErrorReport('PORTING MSISDN CHANGED BUT DB FILLED INCOMPLETE', $msisdnConfirmedPort, processType::PORTING);
 
                 }
 
                 $this->db->trans_complete();
-
-            }
-            else{
-                // Notify Admin on failed Import
-                $faultCode = $changeResponse->error;
-                $faultReason = $changeResponse->message;
-
-                $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'MSISDN_CHANGE_IMPORT failed for ' . $portingId . ' with ' . $faultCode . ' :: ' . $faultReason);
-
-                $fault = '';
-
-                switch ($faultCode) {
-                    // Terminal Processes
-                    case Fault::SERVICE_BREAK_DOWN_CODE:
-                        $fault = Fault::SERVICE_BREAK_DOWN;
-                        break;
-                    case Fault::SIGNATURE_MISMATCH_CODE:
-                        $fault = Fault::SIGNATURE_MISMATCH;
-                        break;
-                    case Fault::DENIED_ACCESS_CODE:
-                        $fault = Fault::DENIED_ACCESS;
-                        break;
-                    case Fault::UNKNOWN_COMMAND_CODE:
-                        $fault = Fault::UNKNOWN_COMMAND;
-                        break;
-                    case Fault::INVALID_PARAMETER_TYPE_CODE:
-                        $fault = Fault::INVALID_PARAMETER_TYPE;
-                        break;
-
-                    case Fault::PARAMETER_LIST_CODE:
-                        $fault = Fault::PARAMETER_LIST;
-                        break;
-
-                    case Fault::CMS_EXECUTION_CODE:
-                        $fault = Fault::CMS_EXECUTION;
-                        break;
-
-                    default:
-                        $fault = $faultCode;
-                }
-
-                $emailService->adminErrorReport($fault, $msisdnConfirmedPort, processType::PORTING);
             }
 
         }
@@ -1138,9 +1357,10 @@ class BatchOperationService extends CI_Controller {
         foreach ($msisdnChangePorts as $msisdnChangePort){
 
             // Move porting to CONFIRMED state
-            $fromOperator = $msisdnChangePort['donorNetworkId'];
 
-            $subscriberMSISDN = $msisdnChangePort['startMSISDN'];
+            $portingId = $msisdnChangePort['portingId'];
+
+            $fromOperator = $msisdnChangePort['donorNetworkId'];
 
             $toOperator = $msisdnChangePort['recipientNetworkId'];
 
@@ -1148,48 +1368,143 @@ class BatchOperationService extends CI_Controller {
 
             $toRoutingNumber = $msisdnChangePort['recipientRoutingNumber'];
 
-            $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'Performing KPSA_OPERATION for ' . $msisdnChangePort['portingId']);
-
             // Perform KPSA Operation
+            $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($portingId);
 
-            $kpsaOperationService = new KpsaOperationService();
+            foreach ($dbPortNumbers as $dbPortNumber) {
 
-            $kpsaResponse = $kpsaOperationService->performKPSAOperation($subscriberMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
+                $subscriberMSISDN = $dbPortNumber['msisdn'];
 
-            if($kpsaResponse['success']){
+                if($dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::CONFIRMED){
 
-                // Send confirm request
+                    $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'Performing KPSA_OPERATION for ' . $msisdnChangePort['portingId'] . ' :: ' . $subscriberMSISDN);
 
-                $portingId = $msisdnChangePort['portingId'];
+                    $kpsaOperationService = new KpsaOperationService();
 
-                $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'KPSA_OPERATION Successful for ' . $portingId);
+                    $kpsaResponse = $kpsaOperationService->performKPSAOperation($subscriberMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
 
-                $portingDateAndTime = date('c', strtotime('+5 minutes', strtotime(date('c'))));
+                    if($kpsaResponse['success']){
 
-                // Make Confirm Porting Operation
+                        // Update process number state
 
-                $confirmResponse = $portingOperationService->confirm($portingId, $portingDateAndTime);
+                        $portingNumberParams = array(
+                            'pLastChangeDateTime' => date('c'),
+                            'numberState' => \PortingService\Porting\portingStateType::CONFIRMED
+                        );
 
-                // Verify response
+                        $this->ProcessNumber_model->update_processnumber($portingId, $subscriberMSISDN, $portingNumberParams);
 
-                if($confirmResponse->success){
+                    }
 
-                    $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'CONFIRM Successful for ' . $portingId);
+                    else{
 
-                    $this->db->trans_start();
+                        $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'KPSA_OPERATION failed for ' . $msisdnChangePort['portingId'] . ' ::  ' . $subscriberMSISDN .  ' with ' . $kpsaResponse['message']);
 
-                    // Insert into porting Evolution state table
+                        $emailService->adminKPSAError($kpsaResponse['message']. ' :: ' . $subscriberMSISDN);
 
-                    $portingEvolutionParams = array(
-                        'lastChangeDateTime' => date('c'),
-                        'portingState' => \PortingService\Porting\portingStateType::CONFIRMED,
-                        'isAutoReached' => false,
-                        'portingId' => $portingId,
-                    );
+                    }
+                }
 
-                    $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
+            }
 
-                    // Update Porting table
+            // Load numbers again
+            $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($portingId);
+
+            $waiting = false;
+
+            foreach ($dbPortNumbers as $dbPortNumber) {
+
+                if($dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::CONFIRMED){
+                    $waiting = true;
+                    break;
+                }
+            }
+
+            if($waiting == false){
+
+                // Verify that process did not reach auto confirm earlier
+
+                $portngStateEv = $this->Portingstateevolution_model->get_pse($portingId, \PortingService\Porting\portingStateType::CONFIRMED);
+
+                if($portngStateEv == null){
+
+                    // Send confirm request
+
+                    $portingId = $msisdnChangePort['portingId'];
+
+                    $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'KPSA_OPERATION Successful for ' . $portingId);
+
+                    $portingDateAndTime = date('c', strtotime('+5 minutes', strtotime(date('c'))));
+
+                    // Make Confirm Porting Operation
+
+                    $confirmResponse = $portingOperationService->confirm($portingId, $portingDateAndTime);
+
+                    // Verify response
+
+                    if($confirmResponse->success){
+
+                        $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'CONFIRM Successful for ' . $portingId);
+
+                        $this->db->trans_start();
+
+                        // Insert into porting Evolution state table
+
+                        $portingEvolutionParams = array(
+                            'lastChangeDateTime' => date('c'),
+                            'portingState' => \PortingService\Porting\portingStateType::CONFIRMED,
+                            'isAutoReached' => false,
+                            'portingId' => $portingId,
+                        );
+
+                        $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
+
+                        // Update Porting table
+
+                        $portingParams = array(
+                            'lastChangeDateTime' => date('c'),
+                            'portingState' => \PortingService\Porting\portingStateType::CONFIRMED
+                        );
+
+                        $this->Porting_model->update_porting($portingId, $portingParams);
+
+                        // Notify Agents/Admin
+
+                        if ($this->db->trans_status() === FALSE) {
+
+                            $error = $this->db->error();
+                            $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
+
+                            $emailService->adminErrorReport('PORTING COMPLETED BUT DB FILLED INCOMPLETE', $msisdnChangePort, processType::PORTING);
+
+                        }else{
+
+                        }
+
+                        $this->db->trans_complete();
+
+                    }
+                    else{
+
+                        $fault = $confirmResponse->error;
+
+                        $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'CONFIRM failed for ' . $portingId . ' with ' . $fault);
+
+                        switch ($fault) {
+                            // Terminal Processes
+                            case Fault::INVALID_OPERATOR_FAULT:
+                            case Fault::PORTING_ACTION_NOT_AVAILABLE:
+                            case Fault::INVALID_PORTING_ID:
+                            case Fault::INVALID_PORTING_DATE_AND_TIME:
+                            default:
+                                $emailService->adminConfirmReport($fault, $msisdnChangePort, processType::PORTING);
+                        }
+
+                    }
+
+                }else{
+
+                    // Don't send request. Update porting state
 
                     $portingParams = array(
                         'lastChangeDateTime' => date('c'),
@@ -1198,47 +1513,7 @@ class BatchOperationService extends CI_Controller {
 
                     $this->Porting_model->update_porting($portingId, $portingParams);
 
-                    // Notify Agents/Admin
-
-                    if ($this->db->trans_status() === FALSE) {
-
-                        $error = $this->db->error();
-                        $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
-
-                        $emailService->adminErrorReport('PORTING COMPLETED BUT DB FILLED INCOMPLETE', $msisdnChangePort, processType::PORTING);
-
-                    }else{
-
-                    }
-
-                    $this->db->trans_complete();
-
                 }
-                else{
-
-                    $fault = $confirmResponse->error;
-
-                    $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'CONFIRM failed for ' . $portingId . ' with ' . $fault);
-
-                    switch ($fault) {
-                        // Terminal Processes
-                        case Fault::INVALID_OPERATOR_FAULT:
-                        case Fault::PORTING_ACTION_NOT_AVAILABLE:
-                        case Fault::INVALID_PORTING_ID:
-                        case Fault::INVALID_PORTING_DATE_AND_TIME:
-                        default:
-                            $emailService->adminConfirmReport($fault, $msisdnChangePort, processType::PORTING);
-                    }
-
-                }
-
-            }
-
-            else{
-
-                $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'KPSA_OPERATION failed for ' . $msisdnChangePort['portingId'] . ' with ' . $kpsaResponse['message']);
-
-                $emailService->adminKPSAError($kpsaResponse['message']. ' :: ' . $subscriberMSISDN);
 
             }
 
@@ -1290,6 +1565,14 @@ class BatchOperationService extends CI_Controller {
                     );
 
                     $this->Porting_model->update_porting($portingId, $portingParams);
+
+                    // Update Number state
+                    $portingNumberParams = array(
+                        'pLastChangeDateTime' => date('c'),
+                        'numberState' => \PortingService\Porting\portingStateType::COMPLETED
+                    );
+
+                    $this->ProcessNumber_model->update_processnumber_all($portingId, $portingNumberParams);
 
                     // Notify Agents/Admin
 
@@ -1382,8 +1665,9 @@ class BatchOperationService extends CI_Controller {
     /**
      * Executed as OPR
      * BATCH_008_{A, B}
-     * Checks for all ports in ACCEPTED state, if any performs porting to MSISDN_EXPORT_CONFIRMED state after updating status
-     * Checks for all ports in MSISDN_EXPORT_CONFIRMED state, if any perform porting to CONFIRMED state updating Porting/Provision table
+     * Checks for all rollbacks in ACCEPTED state, if any performs rollback to UPDATE_STATUS_CONFIRMED
+     * Checks for all rollbacks in UPDATE_STATUS_CONFIRMED state, if any performs rollback to MSISDN_EXPORT_CONFIRMED
+     * Checks for all rollback in MSISDN_EXPORT_CONFIRMED state, if any perform rollback to CONFIRMED state updating Porting/Provision table
      */
     public function rollbackOPR(){
 
@@ -1393,7 +1677,13 @@ class BatchOperationService extends CI_Controller {
 
         $acceptedRollbacks = $this->Rollback_model->get_rollback_by_state_and_recipient(\RollbackService\Rollback\rollbackStateType::ACCEPTED, Operator::ORANGE_NETWORK_ID);
 
-        $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'Preparing MSISDN-EXPORT of ' . count($acceptedRollbacks) . ' accepted rollbacks');
+        $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'Preparing STATUS-UPDATE of ' . count($acceptedRollbacks) . ' accepted rollbacks');
+
+        // Load rollbacks in Rollback table in UPDATE_STATUS_CONFIRMED state in which we are OPR
+
+        $statusUpdatedRollbacks = $this->Rollback_model->get_rollback_by_state_and_recipient(\RollbackService\Rollback\rollbackStateType::UPDATE_STATUS_CONFIRMED, Operator::ORANGE_NETWORK_ID);
+
+        $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'Preparing MSISDN EXPORT of ' . count($statusUpdatedRollbacks) . ' accepted rollbacks');
 
         // Load rollbacks in Rollback table in MSISDN_EXPORT_CONFIRMED state in which we are OPR
 
@@ -1418,77 +1708,186 @@ class BatchOperationService extends CI_Controller {
 
                 $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'Proccess provisioned. Performing STATUS UPDATE for ' . $rollbackId);
 
-                // Rollback already provisioned. Start rollback moving to STATUS UPDATE state
-                $subscriberMSISDN = $acceptedRollback['startMSISDN'];
+                $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($rollbackId);
 
-                $contractId = $bscsOperationService->getContractId($subscriberMSISDN);
+                foreach ($dbPortNumbers as $dbPortNumber) {
 
-                $updateResponse = $bscsOperationService->updateContractStatus($contractId);
+                    $subscriberMSISDN = $dbPortNumber['msisdn'];
 
-                if($updateResponse->success){
+                    $contractId = $bscsOperationService->getContractId($subscriberMSISDN);
+
+                    if($dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::UPDATE_STATUS_CONFIRMED){
+
+                        $updateResponse = $bscsOperationService->updateContractStatus($contractId);
+
+                        if($updateResponse->success){
+
+                            $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'STATUS UPDATE successful for ' . $rollbackId . ' :: ' . $subscriberMSISDN);
+
+                            // Update process number state
+
+                            $portingNumberParams = array(
+                                'pLastChangeDateTime' => date('c'),
+                                'numberState' => \PortingService\Porting\portingStateType::UPDATE_STATUS_CONFIRMED
+                            );
+
+                            $this->ProcessNumber_model->update_processnumber($rollbackId, $subscriberMSISDN, $portingNumberParams);
+
+                        }
+                        else{
+
+                            // Notify Admin on failed Export
+                            $faultCode = $updateResponse->error;
+                            $faultReason = $updateResponse->message;
+
+                            $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'STATUS UPDATE failed for ' . $rollbackId . ' :: ' . $subscriberMSISDN .  ' with ' . $faultCode . ' :: ' . $faultReason);
+
+                            $fault = '';
+
+                            switch ($faultCode) {
+                                // Terminal Processes
+                                case Fault::SIGNATURE_MISMATCH_CODE:
+                                    $fault = Fault::SIGNATURE_MISMATCH;
+                                    break;
+                                case Fault::DENIED_ACCESS_CODE:
+                                    $fault = Fault::DENIED_ACCESS;
+                                    break;
+                                case Fault::UNKNOWN_COMMAND_CODE:
+                                    $fault = Fault::UNKNOWN_COMMAND;
+                                    break;
+                                case Fault::INVALID_PARAMETER_TYPE_CODE:
+                                    $fault = Fault::INVALID_PARAMETER_TYPE;
+                                    break;
+
+                                case Fault::PARAMETER_LIST_CODE:
+                                    $fault = Fault::PARAMETER_LIST;
+                                    break;
+
+                                case Fault::CMS_EXECUTION_CODE:
+                                    $fault = Fault::CMS_EXECUTION;
+                                    break;
+
+                                default:
+                                    $fault = $faultCode;
+                            }
+
+                            $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
+                            $rollbackParams['msisdn'] = [$subscriberMSISDN];
+
+                            $emailService->adminErrorReport($fault, $rollbackParams, processType::ROLLBACK);
+
+                        }
+
+                    }
+
+                }
+
+                // Load numbers again
+                $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($rollbackId);
+
+                $waiting = false;
+
+                foreach ($dbPortNumbers as $dbPortNumber) {
+
+                    if($dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::UPDATE_STATUS_CONFIRMED){
+                        $waiting = true;
+                        break;
+                    }
+                }
+
+                if($waiting == false){
 
                     $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'STATUS UPDATE successful for ' . $rollbackId);
 
-                    $subscriberMSISDN = $acceptedRollback['startMSISDN'];
+                    $this->db->trans_start();
 
-                    $donorNetworkId = $acceptedRollback['donorNetworkId'];
+                    // Insert into Rollback Evolution state table
 
-                    $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'Performing MSISDN_EXPORT for ' . $rollbackId);
+                    $rollbackEvolutionParams = array(
+                        'lastChangeDateTime' => date('c'),
+                        'rollbackState' => \RollbackService\Rollback\rollbackStateType::UPDATE_STATUS_CONFIRMED,
+                        'isAutoReached' => false,
+                        'rollbackId' => $rollbackId,
+                    );
+
+
+                    $this->Rollbackstateevolution_model->add_rollbackstateevolution($rollbackEvolutionParams);
+
+                    // Update Rollback table
+
+                    $rollbackParams = array(
+                        'lastChangeDateTime' => date('c'),
+                        'rollbackState' => \RollbackService\Rollback\rollbackStateType::UPDATE_STATUS_CONFIRMED
+                    );
+
+                    $this->Rollback_model->update_rollback($rollbackId, $rollbackParams);
+
+                    // Notify Agents/Admin
+
+                    if ($this->db->trans_status() === FALSE) {
+
+                        $error = $this->db->error();
+                        $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
+
+                        $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
+
+                        $emailService->adminErrorReport('ROLLBACK MSISDN STATUS UPDATED BUT DB FILLED INCOMPLETE', $rollbackParams, processType::ROLLBACK);
+
+                    }
+
+                    $this->db->trans_complete();
+
+                }
+
+            }else{
+
+                $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'Provisioning not yet done for ' . $rollbackId);
+
+                //Rollback not yet Provisioned. Do nothing, wait till provision
+
+            }
+        }
+
+        foreach ($statusUpdatedRollbacks as $statusUpdatedRollback){
+
+            $rollbackId = $statusUpdatedRollback['rollbackId'];
+
+            $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'Performing MSISDN EXPORT for ' . $rollbackId);
+
+            $donorNetworkId = $statusUpdatedRollback['donorNetworkId'];
+
+            $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($rollbackId);
+
+            foreach ($dbPortNumbers as $dbPortNumber) {
+
+                $subscriberMSISDN = $dbPortNumber['msisdn'];
+
+                if($dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::MSISDN_EXPORT_CONFIRMED){
 
                     $exportResponse = $bscsOperationService->exportMSISDN($subscriberMSISDN, $donorNetworkId);
 
                     if($exportResponse->success){
 
-                        $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'MSISDN_EXPORT successful for ' . $rollbackId);
+                        $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'MSISDN_EXPORT successful for ' . $rollbackId . ' :: ' . $subscriberMSISDN);
 
-                        $this->db->trans_start();
+                        // Update process number state
 
-                        // Insert into Rollback Evolution state table
-
-                        $rollbackEvolutionParams = array(
-                            'lastChangeDateTime' => date('c'),
-                            'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_EXPORT_CONFIRMED,
-                            'isAutoReached' => false,
-                            'rollbackId' => $rollbackId,
+                        $portingNumberParams = array(
+                            'pLastChangeDateTime' => date('c'),
+                            'numberState' => \PortingService\Porting\portingStateType::MSISDN_EXPORT_CONFIRMED
                         );
 
-
-                        $this->Rollbackstateevolution_model->add_rollbackstateevolution($rollbackEvolutionParams);
-
-                        // Update Rollback table
-
-                        $rollbackParams = array(
-                            'lastChangeDateTime' => date('c'),
-                            'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_EXPORT_CONFIRMED
-                        );
-
-                        $this->Rollback_model->update_rollback($rollbackId, $rollbackParams);
-
-                        // Notify Agents/Admin
-
-                        if ($this->db->trans_status() === FALSE) {
-
-                            $error = $this->db->error();
-                            $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
-
-                            $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
-
-                            $emailService->adminErrorReport('ROLLBACK MSISDN EXPORTED BUT DB FILLED INCOMPLETE', $rollbackParams, processType::ROLLBACK);
-
-                        }else{
-
-                        }
-
-                        $this->db->trans_complete();
+                        $this->ProcessNumber_model->update_processnumber($rollbackId, $subscriberMSISDN, $portingNumberParams);
 
                     }
+
                     else{
 
                         // Notify Admin on failed Export
                         $faultCode = $exportResponse->error;
                         $faultReason = $exportResponse->message;
 
-                        $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'MSISDN_EXPORT failed for ' . $rollbackId . ' with ' . $faultCode . ' :: ' . $faultReason);
+                        $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'MSISDN_EXPORT failed for ' . $rollbackId . ' :: ' . $subscriberMSISDN . ' with ' . $faultCode . ' :: ' . $faultReason);
 
                         $fault = '';
 
@@ -1523,73 +1922,82 @@ class BatchOperationService extends CI_Controller {
                         }
 
                         $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
+                        $rollbackParams['msisdn'] = [$subscriberMSISDN];
 
                         $emailService->adminErrorReport($fault, $rollbackParams, processType::ROLLBACK);
 
                     }
 
                 }
-                else{
 
-                    // Notify Admin on failed Export
-                    $faultCode = $updateResponse->error;
-                    $faultReason = $updateResponse->message;
+            }
 
-                    $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'STATUS UPDATE failed for ' . $rollbackId . ' with ' . $faultCode . ' :: ' . $faultReason);
+            // Load numbers again
+            $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($rollbackId);
 
-                    $fault = '';
+            $waiting = false;
 
-                    switch ($faultCode) {
-                        // Terminal Processes
-                        case Fault::SIGNATURE_MISMATCH_CODE:
-                            $fault = Fault::SIGNATURE_MISMATCH;
-                            break;
-                        case Fault::DENIED_ACCESS_CODE:
-                            $fault = Fault::DENIED_ACCESS;
-                            break;
-                        case Fault::UNKNOWN_COMMAND_CODE:
-                            $fault = Fault::UNKNOWN_COMMAND;
-                            break;
-                        case Fault::INVALID_PARAMETER_TYPE_CODE:
-                            $fault = Fault::INVALID_PARAMETER_TYPE;
-                            break;
+            foreach ($dbPortNumbers as $dbPortNumber) {
 
-                        case Fault::PARAMETER_LIST_CODE:
-                            $fault = Fault::PARAMETER_LIST;
-                            break;
+                if($dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::MSISDN_EXPORT_CONFIRMED){
+                    $waiting = true;
+                    break;
+                }
+            }
 
-                        case Fault::CMS_EXECUTION_CODE:
-                            $fault = Fault::CMS_EXECUTION;
-                            break;
+            if($waiting == false){
 
-                        default:
-                            $fault = $faultCode;
-                    }
+                $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'MSISDN_EXPORT successful for ' . $rollbackId);
+
+                $this->db->trans_start();
+
+                // Insert into Rollback Evolution state table
+
+                $rollbackEvolutionParams = array(
+                    'lastChangeDateTime' => date('c'),
+                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_EXPORT_CONFIRMED,
+                    'isAutoReached' => false,
+                    'rollbackId' => $rollbackId,
+                );
+
+
+                $this->Rollbackstateevolution_model->add_rollbackstateevolution($rollbackEvolutionParams);
+
+                // Update Rollback table
+
+                $rollbackParams = array(
+                    'lastChangeDateTime' => date('c'),
+                    'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_EXPORT_CONFIRMED
+                );
+
+                $this->Rollback_model->update_rollback($rollbackId, $rollbackParams);
+
+                // Notify Agents/Admin
+
+                if ($this->db->trans_status() === FALSE) {
+
+                    $error = $this->db->error();
+                    $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
 
                     $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
 
-                    $emailService->adminErrorReport($fault, $rollbackParams, processType::ROLLBACK);
+                    $emailService->adminErrorReport('ROLLBACK MSISDN EXPORTED BUT DB FILLED INCOMPLETE', $rollbackParams, processType::ROLLBACK);
+
+                }else{
 
                 }
 
-            }else{
-
-                $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'Provisioning not yet done for ' . $rollbackId);
-
-                //Rollback not yet Provisioned. Do nothing, wait till provision
+                $this->db->trans_complete();
 
             }
+
         }
 
         foreach ($msisdnExportedRollbacks as $msisdnExportedRollback){
 
             $rollbackId = $msisdnExportedRollback['rollbackId'];
 
-            $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'Performing KPSA_OPERATION for ' . $rollbackId);
-
             $fromOperator = $msisdnExportedRollback['donorNetworkId'];
-
-            $subscriberMSISDN = $msisdnExportedRollback['startMSISDN'];
 
             $toOperator = $msisdnExportedRollback['recipientNetworkId'];
 
@@ -1597,13 +2005,61 @@ class BatchOperationService extends CI_Controller {
 
             $toRoutingNumber = $msisdnExportedRollback['recipientRoutingNumber'];
 
-            // Perform KPSA Operation
+            $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($rollbackId);
 
-            $kpsaOperationService = new KpsaOperationService();
+            foreach ($dbPortNumbers as $dbPortNumber){
 
-            $kpsaResponse = $kpsaOperationService->performKPSAOperation($subscriberMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
+                $subscriberMSISDN = $dbPortNumber['msisdn'];
 
-            if($kpsaResponse['success']){
+                if($dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::COMPLETED){
+
+                    $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'Performing KPSA_OPERATION for ' . $rollbackId . ' :: ' . $subscriberMSISDN);
+
+                    // Perform KPSA Operation
+
+                    $kpsaOperationService = new KpsaOperationService();
+
+                    $kpsaResponse = $kpsaOperationService->performKPSAOperation($subscriberMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
+
+                    if($kpsaResponse['success']){
+
+                        // Update process number state
+
+                        $portingNumberParams = array(
+                            'pLastChangeDateTime' => date('c'),
+                            'numberState' => \PortingService\Porting\portingStateType::COMPLETED
+                        );
+
+                        $this->ProcessNumber_model->update_processnumber($rollbackId, $subscriberMSISDN, $portingNumberParams);
+
+                    }
+
+                    else{
+
+                        $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'KPSA_OPERATION failed for ' . $rollbackId . ' :: ' . $subscriberMSISDN . ' with ' . $kpsaResponse['message']);
+
+                        $emailService->adminKPSAError($kpsaResponse['message']. ' :: ' . $subscriberMSISDN);
+
+                    }
+
+                }
+
+            }
+
+            // Load numbers again
+            $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($rollbackId);
+
+            $waiting = false;
+
+            foreach ($dbPortNumbers as $dbPortNumber) {
+
+                if($dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::COMPLETED){
+                    $waiting = true;
+                    break;
+                }
+            }
+
+            if($waiting == false){
 
                 $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'KPSA_OPERATION successful for ' . $rollbackId);
 
@@ -1647,6 +2103,15 @@ class BatchOperationService extends CI_Controller {
 
                     $this->Provisioning_model->update_provisioning($rollbackId, $prParams);
 
+                    // Update Provisioning numbers states
+
+                    $portingNumberParams = array(
+                        'pLastChangeDateTime' => date('c'),
+                        'numberState' => \PortingService\Porting\portingStateType::COMPLETED
+                    );
+
+                    $this->ProcessNumber_model->update_provisionnumber_all($rollbackId, $portingNumberParams);
+
                     // Notify Agents/Admin
 
                     if ($this->db->trans_status() === FALSE) {
@@ -1668,15 +2133,6 @@ class BatchOperationService extends CI_Controller {
                     $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'CONFIRM failed for ' . $rollbackId);
 
                 }
-
-
-            }
-
-            else{
-
-                $this->fileLogAction('7009', 'BatchOperationService::rollbackOPR', 'KPSA_OPERATION failed for ' . $rollbackId . ' with ' . $kpsaResponse['message']);
-
-                $emailService->adminKPSAError($kpsaResponse['message']. ' :: ' . $subscriberMSISDN);
 
             }
 
@@ -1749,13 +2205,97 @@ class BatchOperationService extends CI_Controller {
                 $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'Rollback datetime OK. Performing MSISDN_IMPORT for ' . $rollbackId);
 
                 // Start rollback moving to MSISDN_IMPORT_CONFIRMED state. Import rollback MSISDN into BSCS
-                $subscriberMSISDN = $acceptedRollback['startMSISDN'];
+                $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($rollbackId);
 
                 $recipientNetworkId = $acceptedRollback['recipientNetworkId'];
 
-                $importResponse = $bscsOperationService->importMSISDN($subscriberMSISDN, $recipientNetworkId);
+                foreach ($dbPortNumbers as $dbPortNumber) {
 
-                if($importResponse->success){
+                    $subscriberMSISDN = $dbPortNumber['msisdn'];
+
+                    if($dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::MSISDN_IMPORT_CONFIRMED) {
+
+                        $importResponse = $bscsOperationService->importMSISDN($subscriberMSISDN, $recipientNetworkId);
+
+                        if($importResponse->success){
+
+                            $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'MSISDN_IMPORT successful for ' . $rollbackId . ' :: ' . $subscriberMSISDN);
+
+                            // Update process number state
+                            $portingNumberParams = array(
+                                'pLastChangeDateTime' => date('c'),
+                                'numberState' => \PortingService\Porting\portingStateType::MSISDN_IMPORT_CONFIRMED
+                            );
+
+                            $this->ProcessNumber_model->update_processnumber($rollbackId, $subscriberMSISDN, $portingNumberParams);
+
+                        }
+
+                        else{
+
+                            // Notify Admin on failed Import
+                            $faultCode = $importResponse->error;
+                            $faultReason = $importResponse->message;
+
+                            $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'MSISDN_IMPORT failed for ' . $rollbackId . ' :: ' . $subscriberMSISDN . ' with ' . $faultCode . ' :: ' . $faultReason);
+
+                            $fault = '';
+
+                            switch ($faultCode) {
+                                // Terminal Processes
+                                case Fault::SERVICE_BREAK_DOWN_CODE:
+                                    $fault = Fault::SERVICE_BREAK_DOWN;
+                                    break;
+                                case Fault::SIGNATURE_MISMATCH_CODE:
+                                    $fault = Fault::SIGNATURE_MISMATCH;
+                                    break;
+                                case Fault::DENIED_ACCESS_CODE:
+                                    $fault = Fault::DENIED_ACCESS;
+                                    break;
+                                case Fault::UNKNOWN_COMMAND_CODE:
+                                    $fault = Fault::UNKNOWN_COMMAND;
+                                    break;
+                                case Fault::INVALID_PARAMETER_TYPE_CODE:
+                                    $fault = Fault::INVALID_PARAMETER_TYPE;
+                                    break;
+
+                                case Fault::PARAMETER_LIST_CODE:
+                                    $fault = Fault::PARAMETER_LIST;
+                                    break;
+
+                                case Fault::CMS_EXECUTION_CODE:
+                                    $fault = Fault::CMS_EXECUTION;
+                                    break;
+
+                                default:
+                                    $fault = $faultCode;
+                            }
+
+                            $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
+                            $rollbackParams['msisdn'] = [$subscriberMSISDN];
+
+                            $emailService->adminErrorReport($fault, $rollbackParams, processType::ROLLBACK);
+
+                        }
+
+                    }
+
+                }
+
+                // Load numbers again
+                $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($rollbackId);
+
+                $waiting = false;
+
+                foreach ($dbPortNumbers as $dbPortNumber) {
+
+                    if($dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::MSISDN_IMPORT_CONFIRMED){
+                        $waiting = true;
+                        break;
+                    }
+                }
+
+                if($waiting == false){
 
                     $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'MSISDN_IMPORT successful for ' . $rollbackId);
 
@@ -1799,51 +2339,6 @@ class BatchOperationService extends CI_Controller {
                     $this->db->trans_complete();
 
                 }
-                else{
-
-                    // Notify Admin on failed Import
-                    $faultCode = $importResponse->error;
-                    $faultReason = $importResponse->message;
-
-                    $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'MSISDN_IMPORT failed for ' . $rollbackId . ' with ' . $faultCode . ' :: ' . $faultReason);
-
-                    $fault = '';
-
-                    switch ($faultCode) {
-                        // Terminal Processes
-                        case Fault::SERVICE_BREAK_DOWN_CODE:
-                            $fault = Fault::SERVICE_BREAK_DOWN;
-                            break;
-                        case Fault::SIGNATURE_MISMATCH_CODE:
-                            $fault = Fault::SIGNATURE_MISMATCH;
-                            break;
-                        case Fault::DENIED_ACCESS_CODE:
-                            $fault = Fault::DENIED_ACCESS;
-                            break;
-                        case Fault::UNKNOWN_COMMAND_CODE:
-                            $fault = Fault::UNKNOWN_COMMAND;
-                            break;
-                        case Fault::INVALID_PARAMETER_TYPE_CODE:
-                            $fault = Fault::INVALID_PARAMETER_TYPE;
-                            break;
-
-                        case Fault::PARAMETER_LIST_CODE:
-                            $fault = Fault::PARAMETER_LIST;
-                            break;
-
-                        case Fault::CMS_EXECUTION_CODE:
-                            $fault = Fault::CMS_EXECUTION;
-                            break;
-
-                        default:
-                            $fault = $faultCode;
-                    }
-
-                    $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
-
-                    $emailService->adminErrorReport($fault, $rollbackParams, processType::ROLLBACK);
-
-                }
 
             }
 
@@ -1867,15 +2362,97 @@ class BatchOperationService extends CI_Controller {
 
             $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'Performing MSISDN_CHANGE_IMPORT for ' . $rollbackId);
 
-            $subscriberInfo = $this->Rollbacksubmission_model->get_submissionByRollbackId($rollbackId);
+            $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($rollbackId);
 
-            $subscriberMSISDN = $msisdnConfirmedRollback['startMSISDN'];
+            foreach ($dbPortNumbers as $dbPortNumber) {
 
-            $contractId = $msisdnConfirmedRollback['contractId'];
+                if($dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::MSISDN_CHANGE_IMPORT_CONFIRMED){
 
-            $changeResponse = $bscsOperationService->changeImportMSISDN($subscriberInfo['temporalMSISDN'], $subscriberMSISDN, $contractId);
+                    $subscriberMSISDN = $dbPortNumber['msisdn'];
 
-            if($changeResponse->success){
+                    $contractId = $dbPortNumber['contractId'];
+
+                    $changeResponse = $bscsOperationService->changeImportMSISDN($dbPortNumber['temporalMsisdn'], $subscriberMSISDN, $contractId);
+
+                    if($changeResponse->success){
+
+                        $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'MSISDN_CHANGE_IMPORT successful for ' . $rollbackId . ' :: ' . $subscriberMSISDN);
+
+                        // Update process number state
+
+                        $portingNumberParams = array(
+                            'pLastChangeDateTime' => date('c'),
+                            'numberState' => \PortingService\Porting\portingStateType::MSISDN_CHANGE_IMPORT_CONFIRMED
+                        );
+
+                        $this->ProcessNumber_model->update_processnumber($rollbackId, $subscriberMSISDN, $portingNumberParams);
+
+                    }
+                    else{
+
+                        // Notify Admin on failed Import
+                        $faultCode = $changeResponse->error;
+                        $faultReason = $changeResponse->message;
+
+                        $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'MSISDN_CHANGE_IMPORT failed for ' . $rollbackId . ' :: ' . $subscriberMSISDN . ' with ' . $faultCode . ' :: ' . $faultReason);
+
+                        $fault = '';
+
+                        switch ($faultCode) {
+                            // Terminal Processes
+                            case Fault::SERVICE_BREAK_DOWN_CODE:
+                                $fault = Fault::SERVICE_BREAK_DOWN;
+                                break;
+                            case Fault::SIGNATURE_MISMATCH_CODE:
+                                $fault = Fault::SIGNATURE_MISMATCH;
+                                break;
+                            case Fault::DENIED_ACCESS_CODE:
+                                $fault = Fault::DENIED_ACCESS;
+                                break;
+                            case Fault::UNKNOWN_COMMAND_CODE:
+                                $fault = Fault::UNKNOWN_COMMAND;
+                                break;
+                            case Fault::INVALID_PARAMETER_TYPE_CODE:
+                                $fault = Fault::INVALID_PARAMETER_TYPE;
+                                break;
+
+                            case Fault::PARAMETER_LIST_CODE:
+                                $fault = Fault::PARAMETER_LIST;
+                                break;
+
+                            case Fault::CMS_EXECUTION_CODE:
+                                $fault = Fault::CMS_EXECUTION;
+                                break;
+
+                            default:
+                                $fault = $faultCode;
+                        }
+
+                        $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
+                        $rollbackParams['msisdn'] = [$subscriberMSISDN];
+
+                        $emailService->adminErrorReport($fault, $rollbackParams, processType::ROLLBACK);
+
+                    }
+
+                }
+
+            }
+
+            // Load numbers again
+            $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($rollbackId);
+
+            $waiting = false;
+
+            foreach ($dbPortNumbers as $dbPortNumber) {
+
+                if($dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::MSISDN_CHANGE_IMPORT_CONFIRMED){
+                    $waiting = true;
+                    break;
+                }
+            }
+
+            if($waiting == false){
 
                 $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'MSISDN_CHANGE_IMPORT successful for ' . $rollbackId);
 
@@ -1915,62 +2492,16 @@ class BatchOperationService extends CI_Controller {
                 }
 
                 $this->db->trans_complete();
-
-            }else{
-
-                // Notify Admin on failed Import
-                $faultCode = $changeResponse->error;
-                $faultReason = $changeResponse->message;
-
-                $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'MSISDN_CHANGE_IMPORT failed for ' . $rollbackId . ' with ' . $faultCode . ' :: ' . $faultReason);
-
-                $fault = '';
-
-                switch ($faultCode) {
-                    // Terminal Processes
-                    case Fault::SERVICE_BREAK_DOWN_CODE:
-                        $fault = Fault::SERVICE_BREAK_DOWN;
-                        break;
-                    case Fault::SIGNATURE_MISMATCH_CODE:
-                        $fault = Fault::SIGNATURE_MISMATCH;
-                        break;
-                    case Fault::DENIED_ACCESS_CODE:
-                        $fault = Fault::DENIED_ACCESS;
-                        break;
-                    case Fault::UNKNOWN_COMMAND_CODE:
-                        $fault = Fault::UNKNOWN_COMMAND;
-                        break;
-                    case Fault::INVALID_PARAMETER_TYPE_CODE:
-                        $fault = Fault::INVALID_PARAMETER_TYPE;
-                        break;
-
-                    case Fault::PARAMETER_LIST_CODE:
-                        $fault = Fault::PARAMETER_LIST;
-                        break;
-
-                    case Fault::CMS_EXECUTION_CODE:
-                        $fault = Fault::CMS_EXECUTION;
-                        break;
-
-                    default:
-                        $fault = $faultCode;
-                }
-
-                $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
-
-                $emailService->adminErrorReport($fault, $rollbackParams, processType::ROLLBACK);
-
             }
-
 
         }
 
         foreach ($msisdnChangeRollbacks as $msisdnChangeRollback){
 
+            $rollbackId = $msisdnChangeRollback['rollbackId'];
+
             // Move Rollback to CONFIRMED state
             $fromOperator = $msisdnChangeRollback['donorNetworkId'];
-
-            $subscriberMSISDN = $msisdnChangeRollback['startMSISDN'];
 
             $toOperator = $msisdnChangeRollback['recipientNetworkId'];
 
@@ -1978,48 +2509,152 @@ class BatchOperationService extends CI_Controller {
 
             $toRoutingNumber = $msisdnChangeRollback['recipientRoutingNumber'];
 
-            $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'Performing KPSA_OPERATION for ' . $msisdnChangeRollback['rollbackId']);
+            $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($rollbackId);
 
-            // Perform KPSA Operation
+            foreach ($dbPortNumbers as $dbPortNumber) {
 
-            $kpsaOperationService = new KpsaOperationService();
+                $subscriberMSISDN = $dbPortNumber['msisdn'];
 
-            $kpsaResponse = $kpsaOperationService->performKPSAOperation($subscriberMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
+                if($dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::CONFIRMED){
 
-            if($kpsaResponse['success']){
+                    $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'Performing KPSA_OPERATION for ' . $rollbackId . ' :: ' . $subscriberMSISDN);
+
+                    // Perform KPSA Operation
+
+                    $kpsaOperationService = new KpsaOperationService();
+
+                    $kpsaResponse = $kpsaOperationService->performKPSAOperation($subscriberMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
+
+                    if($kpsaResponse['success']){
+
+                        $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'KPSA_OPERATION successful for ' . $msisdnChangeRollback['rollbackId']);
+
+                        // Update process number state
+
+                        $portingNumberParams = array(
+                            'pLastChangeDateTime' => date('c'),
+                            'numberState' => \PortingService\Porting\portingStateType::CONFIRMED
+                        );
+
+                        $this->ProcessNumber_model->update_processnumber($rollbackId, $subscriberMSISDN, $portingNumberParams);
+
+                    }
+
+                    else{
+
+                        $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'KPSA_OPERATION failed for ' . $rollbackId . ' :: ' . $subscriberMSISDN . ' with ' . $kpsaResponse['message']);
+
+                        $emailService->adminKPSAError($kpsaResponse['message']. ' :: ' . $subscriberMSISDN);
+
+                    }
+
+                }
+
+            }
+
+            // Load numbers again
+            $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($rollbackId);
+
+            $waiting = false;
+
+            foreach ($dbPortNumbers as $dbPortNumber) {
+
+                if($dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::CONFIRMED){
+                    $waiting = true;
+                    break;
+                }
+            }
+
+            if($waiting == false){
 
                 $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'KPSA_OPERATION successful for ' . $msisdnChangeRollback['rollbackId']);
 
-                // Send confirm request
+                // Verify that process did not reach auto confirm earlier
 
-                $rollbackId = $msisdnChangeRollback['rollbackId'];
+                $rollbackStateEv = $this->Rollbackstateevolution_model->get_rse($rollbackId, \RollbackService\Rollback\rollbackStateType::CONFIRMED);
 
-                $rollbackDateAndTime = date('c', strtotime('+5 minutes', strtotime(date('c'))));
+                if($rollbackStateEv == null){
 
-                // Make Confirm Rollback Operation
+                    // Send confirm request
 
-                $confirmResponse = $rollbackOperationService->confirm($rollbackId, $rollbackDateAndTime);
+                    $rollbackId = $msisdnChangeRollback['rollbackId'];
 
-                // Verify response
+                    $rollbackDateAndTime = date('c', strtotime('+5 minutes', strtotime(date('c'))));
 
-                if($confirmResponse->success){
+                    // Make Confirm Rollback Operation
 
-                    $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'CONFIRM successful for ' . $msisdnChangeRollback['rollbackId']);
+                    $confirmResponse = $rollbackOperationService->confirm($rollbackId, $rollbackDateAndTime);
 
-                    $this->db->trans_start();
+                    // Verify response
 
-                    // Insert into rollback Evolution state table
+                    if($confirmResponse->success){
 
-                    $rollbackEvolutionParams = array(
-                        'lastChangeDateTime' => date('c'),
-                        'rollbackState' => \RollbackService\Rollback\rollbackStateType::CONFIRMED,
-                        'isAutoReached' => false,
-                        'rollbackId' => $rollbackId,
-                    );
+                        $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'CONFIRM successful for ' . $msisdnChangeRollback['rollbackId']);
 
-                    $this->Rollbackstateevolution_model->add_rollbackstateevolution($rollbackEvolutionParams);
+                        $this->db->trans_start();
 
-                    // Update rollback table
+                        // Insert into rollback Evolution state table
+
+                        $rollbackEvolutionParams = array(
+                            'lastChangeDateTime' => date('c'),
+                            'rollbackState' => \RollbackService\Rollback\rollbackStateType::CONFIRMED,
+                            'isAutoReached' => false,
+                            'rollbackId' => $rollbackId,
+                        );
+
+                        $this->Rollbackstateevolution_model->add_rollbackstateevolution($rollbackEvolutionParams);
+
+                        // Update rollback table
+
+                        $rollbackParams = array(
+                            'lastChangeDateTime' => date('c'),
+                            'rollbackState' => \RollbackService\Rollback\rollbackStateType::CONFIRMED
+                        );
+
+                        $this->Rollback_model->update_rollback($rollbackId, $rollbackParams);
+
+                        // Notify Agents/Admin
+
+                        if ($this->db->trans_status() === FALSE) {
+
+                            $error = $this->db->error();
+                            $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
+
+                            $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
+
+                            $emailService->adminErrorReport('ROLLBACK COMPLETED BUT DB FILLED INCOMPLETE', $rollbackParams, processType::ROLLBACK);
+
+                        }else{
+
+                        }
+
+                        $this->db->trans_complete();
+
+                    }
+                    else{
+
+                        $fault = $confirmResponse->error;
+
+                        $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'CONFIRM failed for ' . $msisdnChangeRollback['rollbackId'] . ' with ' . $fault);
+
+                        switch ($fault) {
+                            // Terminal Processes
+                            case Fault::INVALID_OPERATOR_FAULT:
+                            case Fault::ROLLBACK_ACTION_NOT_AVAILABLE:
+                            case Fault::INVALID_ROLLBACK_ID:
+                            case Fault::INVALID_REQUEST_FORMAT:
+                            default:
+
+                                $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
+                                $emailService->adminConfirmReport($fault, $rollbackParams, processType::ROLLBACK);
+                        }
+
+                    }
+
+                }
+                else{
+
+                    // Don't send request. Update rollback state
 
                     $rollbackParams = array(
                         'lastChangeDateTime' => date('c'),
@@ -2028,51 +2663,7 @@ class BatchOperationService extends CI_Controller {
 
                     $this->Rollback_model->update_rollback($rollbackId, $rollbackParams);
 
-                    // Notify Agents/Admin
-
-                    if ($this->db->trans_status() === FALSE) {
-
-                        $error = $this->db->error();
-                        $this->fileLogAction($error['code'], 'BatchOperationService', $error['message']);
-
-                        $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
-
-                        $emailService->adminErrorReport('ROLLBACK COMPLETED BUT DB FILLED INCOMPLETE', $rollbackParams, processType::ROLLBACK);
-
-                    }else{
-
-                    }
-
-                    $this->db->trans_complete();
-
                 }
-                else{
-
-                    $fault = $confirmResponse->error;
-
-                    $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'CONFIRM failed for ' . $msisdnChangeRollback['rollbackId'] . ' with ' . $fault);
-
-                    switch ($fault) {
-                        // Terminal Processes
-                        case Fault::INVALID_OPERATOR_FAULT:
-                        case Fault::ROLLBACK_ACTION_NOT_AVAILABLE:
-                        case Fault::INVALID_ROLLBACK_ID:
-                        case Fault::INVALID_REQUEST_FORMAT:
-                        default:
-
-                        $rollbackParams = $this->Rollback_model->get_full_rollback($rollbackId);
-                        $emailService->adminConfirmReport($fault, $rollbackParams, processType::ROLLBACK);
-                    }
-
-                }
-
-            }
-
-            else{
-
-                $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'KPSA_OPERATION failed for ' . $msisdnChangeRollback['rollbackId'] . ' with ' . $kpsaResponse['message']);
-
-                $emailService->adminKPSAError($kpsaResponse['message']. ' :: ' . $subscriberMSISDN);
 
             }
 
@@ -2124,6 +2715,14 @@ class BatchOperationService extends CI_Controller {
                     );
 
                     $this->Rollback_model->update_rollback($rollbackId, $rollbackParams);
+
+                    // Update Number state
+                    $portingNumberParams = array(
+                        'pLastChangeDateTime' => date('c'),
+                        'numberState' => \PortingService\Porting\portingStateType::COMPLETED
+                    );
+
+                    $this->ProcessNumber_model->update_processnumber_all($rollbackId, $portingNumberParams);
 
                     // Notify Agents/Admin
 
@@ -2242,15 +2841,98 @@ class BatchOperationService extends CI_Controller {
 
             $returnId = $acceptedReturn['returnId'];
 
-            $this->fileLogAction('7013', 'BatchOperationService::numberReturnCO', 'Performing MSISDN_EXPORT for ' . $returnId);
-
-            $returnMSISDN = $acceptedReturn['returnMSISDN'];
-
             $primaryOwnerNetworkId = $acceptedReturn['primaryOwnerNetworkId'];
 
-            $exportResponse = $bscsOperationService->exportMSISDN($returnMSISDN, $primaryOwnerNetworkId);
+            $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($returnId);
 
-            if($exportResponse->success){
+            foreach ($dbPortNumbers as $dbPortNumber) {
+
+                $returnMSISDN = $dbPortNumber['msisdn'];
+
+                if($dbPortNumber['numberState'] != \ReturnService\_Return\returnStateType::MSISDN_EXPORT_CONFIRMED){
+
+                    $this->fileLogAction('7013', 'BatchOperationService::numberReturnCO', 'Performing MSISDN_EXPORT for ' . $returnId . ' :: ' . $returnMSISDN);
+
+                    $exportResponse = $bscsOperationService->exportMSISDN($returnMSISDN, $primaryOwnerNetworkId);
+
+                    if($exportResponse->success){
+
+                        // Update process number state
+
+                        $portingNumberParams = array(
+                            'pLastChangeDateTime' => date('c'),
+                            'numberState' => \ReturnService\_Return\returnStateType::MSISDN_EXPORT_CONFIRMED
+                        );
+
+                        $this->ProcessNumber_model->update_processnumber($returnId, $returnMSISDN, $portingNumberParams);
+
+
+                    }
+                    else{
+
+                        // Notify Admin on failed Export
+                        $faultCode = $exportResponse->error;
+                        $faultReason = $exportResponse->message;
+
+                        $this->fileLogAction('7013', 'BatchOperationService::numberReturnCO', 'MSISDN_EXPORT failed for ' . $returnId . ' :: ' . $returnMSISDN . ' with ' . $faultCode . ' :: ' . $faultReason);
+
+                        $fault = '';
+
+                        switch ($faultCode) {
+                            // Terminal Processes
+                            case Fault::SERVICE_BREAK_DOWN_CODE:
+                                $fault = Fault::SERVICE_BREAK_DOWN;
+                                break;
+                            case Fault::SIGNATURE_MISMATCH_CODE:
+                                $fault = Fault::SIGNATURE_MISMATCH;
+                                break;
+                            case Fault::DENIED_ACCESS_CODE:
+                                $fault = Fault::DENIED_ACCESS;
+                                break;
+                            case Fault::UNKNOWN_COMMAND_CODE:
+                                $fault = Fault::UNKNOWN_COMMAND;
+                                break;
+                            case Fault::INVALID_PARAMETER_TYPE_CODE:
+                                $fault = Fault::INVALID_PARAMETER_TYPE;
+                                break;
+
+                            case Fault::PARAMETER_LIST_CODE:
+                                $fault = Fault::PARAMETER_LIST;
+                                break;
+
+                            case Fault::CMS_EXECUTION_CODE:
+                                $fault = Fault::CMS_EXECUTION;
+                                break;
+
+                            default:
+                                $fault = $faultCode;
+                        }
+
+                        $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
+                        $nrParams['msisdn'] = [$returnMSISDN];
+
+                        $emailService->adminErrorReport($fault, $nrParams, processType::_RETURN);
+
+                    }
+
+                }
+
+            }
+
+            // Load numbers again
+            $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($returnId);
+
+            $waiting = false;
+
+            foreach ($dbPortNumbers as $dbPortNumber) {
+
+                if($dbPortNumber['numberState'] != \ReturnService\_Return\returnStateType::MSISDN_EXPORT_CONFIRMED){
+                    $waiting = true;
+                    break;
+                }
+            }
+
+            if($waiting == false){
 
                 $this->fileLogAction('7013', 'BatchOperationService::numberReturnCO', 'MSISDN_EXPORT successful for ' . $returnId);
 
@@ -2292,52 +2974,9 @@ class BatchOperationService extends CI_Controller {
 
                 $this->db->trans_complete();
 
-            }
-            else{
-
-                // Notify Admin on failed Export
-                $faultCode = $exportResponse->error;
-                $faultReason = $exportResponse->message;
-
-                $this->fileLogAction('7013', 'BatchOperationService::numberReturnCO', 'MSISDN_EXPORT failed for ' . $returnId . ' with ' . $faultCode . ' :: ' . $faultReason);
-
-                $fault = '';
-
-                switch ($faultCode) {
-                    // Terminal Processes
-                    case Fault::SERVICE_BREAK_DOWN_CODE:
-                        $fault = Fault::SERVICE_BREAK_DOWN;
-                        break;
-                    case Fault::SIGNATURE_MISMATCH_CODE:
-                        $fault = Fault::SIGNATURE_MISMATCH;
-                        break;
-                    case Fault::DENIED_ACCESS_CODE:
-                        $fault = Fault::DENIED_ACCESS;
-                        break;
-                    case Fault::UNKNOWN_COMMAND_CODE:
-                        $fault = Fault::UNKNOWN_COMMAND;
-                        break;
-                    case Fault::INVALID_PARAMETER_TYPE_CODE:
-                        $fault = Fault::INVALID_PARAMETER_TYPE;
-                        break;
-
-                    case Fault::PARAMETER_LIST_CODE:
-                        $fault = Fault::PARAMETER_LIST;
-                        break;
-
-                    case Fault::CMS_EXECUTION_CODE:
-                        $fault = Fault::CMS_EXECUTION;
-                        break;
-
-                    default:
-                        $fault = $faultCode;
-                }
-
-                $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
-
-                $emailService->adminErrorReport($fault, $nrParams, processType::_RETURN);
 
             }
+
         }
 
         foreach ($msisdnConfirmedReturns as $msisdnConfirmedReturn){
@@ -2351,11 +2990,7 @@ class BatchOperationService extends CI_Controller {
 
             if($provisionReturn && $provisionReturn['endNetworkId'] != Operator::ORANGE_NETWORK_ID) {
 
-                $this->fileLogAction('7013', 'BatchOperationService::numberReturnCO', 'Provision OK. Performing KPSA_OPERATION for ' . $returnId);
-
                 $toOperator = $msisdnConfirmedReturn['primaryOwnerNetworkId'];
-
-                $returnMSISDN = $msisdnConfirmedReturn['returnMSISDN'];
 
                 $fromOperator = $msisdnConfirmedReturn['ownerNetworkId'];
 
@@ -2363,15 +2998,65 @@ class BatchOperationService extends CI_Controller {
 
                 $fromRoutingNumber = $msisdnConfirmedReturn['ownerRoutingNumber'];
 
-                // Perform KPSA Operation
+                $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($returnId);
 
-                $kpsaOperationService = new KpsaOperationService();
+                foreach ($dbPortNumbers as $dbPortNumber) {
 
-                $kpsaResponse = $kpsaOperationService->performKPSAOperation($returnMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
+                    $returnMSISDN = $dbPortNumber['msisdn'];
 
-                if($kpsaResponse['success']){
+                    if($dbPortNumber['numberState'] != \ReturnService\_Return\returnStateType::COMPLETED){
 
-                    $this->fileLogAction('7013', 'BatchOperationService::numberReturnCO', 'KPSA_OPERATION successful for ' . $returnId);
+                        // Perform KPSA Operation
+
+                        $this->fileLogAction('7013', 'BatchOperationService::numberReturnCO', 'Provision OK. Performing KPSA_OPERATION for ' . $returnId . ' :: ' . $returnMSISDN);
+
+                        $kpsaOperationService = new KpsaOperationService();
+
+                        $kpsaResponse = $kpsaOperationService->performKPSAOperation($returnMSISDN, $fromOperator, $toOperator, $fromRoutingNumber, $toRoutingNumber);
+
+                        if($kpsaResponse['success']){
+
+                            $this->fileLogAction('7013', 'BatchOperationService::numberReturnCO', 'KPSA_OPERATION successful for ' . $returnId . ' :: ' . $returnMSISDN);
+
+                            // Update process number state
+
+                            $portingNumberParams = array(
+                                'pLastChangeDateTime' => date('c'),
+                                'numberState' => \ReturnService\_Return\returnStateType::COMPLETED
+                            );
+
+                            $this->ProcessNumber_model->update_processnumber($returnId, $returnMSISDN, $portingNumberParams);
+
+                        }
+
+                        else{
+
+                            $this->fileLogAction('7013', 'BatchOperationService::numberReturnCO', 'KPSA_OPERATION failed for ' . $returnId . ' :: ' . $returnMSISDN . ' with ' . $kpsaResponse['message']);
+
+                            $emailService->adminKPSAError($kpsaResponse['message'] . ' :: ' . $returnMSISDN);
+
+                        }
+
+                    }
+
+                }
+
+                // Load numbers again
+                $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($returnId);
+
+                $waiting = false;
+
+                foreach ($dbPortNumbers as $dbPortNumber) {
+
+                    if($dbPortNumber['numberState'] != \ReturnService\_Return\returnStateType::COMPLETED){
+                        $waiting = true;
+                        break;
+                    }
+                }
+
+                if($waiting == false){
+
+                    $this->fileLogAction('7014', 'BatchOperationService::numberReturnCO', 'KPSA_OPERATION successful for ' . $returnId);
 
                     // Confirm Routing Data
                     $provisionOperationService = new ProvisionOperationService();
@@ -2413,6 +3098,15 @@ class BatchOperationService extends CI_Controller {
 
                         $this->Provisioning_model->update_provisioning($returnId, $prParams);
 
+                        // Update provisioning numbers
+
+                        $prParams = array(
+                            'pLastChangeDateTime' => date('c'),
+                            'numberState' => \ProvisionService\ProvisionNotification\provisionStateType::COMPLETED
+                        );
+
+                        $this->ProcessNumber_model->update_provisionnumber_all($returnId, $prParams);
+
                         // Notify Agents/Admin
 
                         if ($this->db->trans_status() === FALSE) {
@@ -2422,7 +3116,7 @@ class BatchOperationService extends CI_Controller {
 
                             $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
 
-                            $emailService->adminErrorReport('RETURN_COMPLETED_BUT_DB_FILLED_INCOMPLETE', $nrParams, processType::_RETURN);
+                            $emailService->adminErrorReport('RETURN COMPLETED BUT DB FILLED INCOMPLETE', $nrParams, processType::_RETURN);
 
                         }else{
 
@@ -2438,14 +3132,6 @@ class BatchOperationService extends CI_Controller {
                         // Who cares, its auto anyway :)
 
                     }
-
-                }
-
-                else{
-
-                    $this->fileLogAction('7013', 'BatchOperationService::numberReturnCO', 'KPSA_OPERATION failed for ' . $returnId . ' with ' . $kpsaResponse['message']);
-
-                    $emailService->adminKPSAError($kpsaResponse['message'] . ' :: ' . $returnMSISDN);
 
                 }
 
@@ -2489,15 +3175,99 @@ class BatchOperationService extends CI_Controller {
 
             $returnId = $acceptedReturn['returnId'];
 
-            $this->fileLogAction('7014', 'BatchOperationService::numberReturnPO', 'Performing MSISDN_RETURN for ' . $returnId);
-
-            $returnMSISDN = $acceptedReturn['returnMSISDN'];
-
             $currentOwnerNetworkId = $acceptedReturn['ownerNetworkId'];
 
-            $returnResponse = $bscsOperationService->returnMSISDN($returnMSISDN, $currentOwnerNetworkId);
+            $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($returnId);
 
-            if($returnResponse->success){
+            foreach ($dbPortNumbers as $dbPortNumber) {
+
+                $returnMSISDN = $dbPortNumber['msisdn'];
+
+                if($dbPortNumber['numberState'] != \ReturnService\_Return\returnStateType::MSISDN_RETURN_CONFIRMED){
+
+                    $this->fileLogAction('7014', 'BatchOperationService::numberReturnPO', 'Performing MSISDN_RETURN for ' . $returnId . ' :: ' . $returnMSISDN);
+
+                    $returnResponse = $bscsOperationService->returnMSISDN($returnMSISDN, $currentOwnerNetworkId);
+
+                    if($returnResponse->success){
+
+                        $this->fileLogAction('7014', 'BatchOperationService::numberReturnPO', 'MSISDN_RETURN successful for ' . $returnId . ' :: ' . $returnMSISDN);
+
+                        // Update process number state
+
+                        $portingNumberParams = array(
+                            'pLastChangeDateTime' => date('c'),
+                            'numberState' => \ReturnService\_Return\returnStateType::MSISDN_RETURN_CONFIRMED
+                        );
+
+                        $this->ProcessNumber_model->update_processnumber($returnId, $returnMSISDN, $portingNumberParams);
+
+                    }
+                    else{
+
+                        // Notify Admin on failed Export
+                        $faultCode = $returnResponse->error;
+                        $faultReason = $returnResponse->message;
+
+                        $this->fileLogAction('7014', 'BatchOperationService::numberReturnPO', 'MSISDN_RETURN failed for ' . $returnId . ' :: ' . $returnMSISDN . ' with ' . $faultCode . ' :: ' . $faultReason);
+
+                        $fault = '';
+
+                        switch ($faultCode) {
+                            // Terminal Processes
+                            case Fault::SERVICE_BREAK_DOWN_CODE:
+                                $fault = Fault::SERVICE_BREAK_DOWN;
+                                break;
+                            case Fault::SIGNATURE_MISMATCH_CODE:
+                                $fault = Fault::SIGNATURE_MISMATCH;
+                                break;
+                            case Fault::DENIED_ACCESS_CODE:
+                                $fault = Fault::DENIED_ACCESS;
+                                break;
+                            case Fault::UNKNOWN_COMMAND_CODE:
+                                $fault = Fault::UNKNOWN_COMMAND;
+                                break;
+                            case Fault::INVALID_PARAMETER_TYPE_CODE:
+                                $fault = Fault::INVALID_PARAMETER_TYPE;
+                                break;
+
+                            case Fault::PARAMETER_LIST_CODE:
+                                $fault = Fault::PARAMETER_LIST;
+                                break;
+
+                            case Fault::CMS_EXECUTION_CODE:
+                                $fault = Fault::CMS_EXECUTION;
+                                break;
+
+                            default:
+                                $fault = $faultCode;
+                        }
+
+                        $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
+                        $nrParams['msisdn'] = [$returnMSISDN];
+
+                        $emailService->adminErrorReport($fault, $nrParams, processType::_RETURN);
+
+                    }
+
+                }
+
+            }
+
+            // Load numbers again
+            $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($returnId);
+
+            $waiting = false;
+
+            foreach ($dbPortNumbers as $dbPortNumber) {
+
+                if($dbPortNumber['numberState'] != \ReturnService\_Return\returnStateType::MSISDN_RETURN_CONFIRMED){
+                    $waiting = true;
+                    break;
+                }
+            }
+
+            if($waiting == false){
 
                 $this->fileLogAction('7014', 'BatchOperationService::numberReturnPO', 'MSISDN_RETURN successful for ' . $returnId);
 
@@ -2538,51 +3308,7 @@ class BatchOperationService extends CI_Controller {
                 $this->db->trans_complete();
 
             }
-            else{
 
-                // Notify Admin on failed Export
-                $faultCode = $returnResponse->error;
-                $faultReason = $returnResponse->message;
-
-                $this->fileLogAction('7014', 'BatchOperationService::numberReturnPO', 'MSISDN_RETURN failed for ' . $returnId . ' with ' . $faultCode . ' :: ' . $faultReason);
-
-                $fault = '';
-
-                switch ($faultCode) {
-                    // Terminal Processes
-                    case Fault::SERVICE_BREAK_DOWN_CODE:
-                        $fault = Fault::SERVICE_BREAK_DOWN;
-                        break;
-                    case Fault::SIGNATURE_MISMATCH_CODE:
-                        $fault = Fault::SIGNATURE_MISMATCH;
-                        break;
-                    case Fault::DENIED_ACCESS_CODE:
-                        $fault = Fault::DENIED_ACCESS;
-                        break;
-                    case Fault::UNKNOWN_COMMAND_CODE:
-                        $fault = Fault::UNKNOWN_COMMAND;
-                        break;
-                    case Fault::INVALID_PARAMETER_TYPE_CODE:
-                        $fault = Fault::INVALID_PARAMETER_TYPE;
-                        break;
-
-                    case Fault::PARAMETER_LIST_CODE:
-                        $fault = Fault::PARAMETER_LIST;
-                        break;
-
-                    case Fault::CMS_EXECUTION_CODE:
-                        $fault = Fault::CMS_EXECUTION;
-                        break;
-
-                    default:
-                        $fault = $faultCode;
-                }
-
-                $nrParams = $this->Numberreturn_model->get_numberreturn($returnId);
-
-                $emailService->adminErrorReport($fault, $nrParams, processType::_RETURN);
-
-            }
         }
 
         foreach ($msisdnConfirmedReturns as $msisdnConfirmedReturn){
@@ -2596,21 +3322,67 @@ class BatchOperationService extends CI_Controller {
 
             if($provisionReturn && $provisionReturn['endNetworkId'] == Operator::ORANGE_NETWORK_ID) {
 
-                $this->fileLogAction('7014', 'BatchOperationService::numberReturnPO', 'Provision OK. Performing KPSA_OPERATION for ' . $returnId);
-
                 $toOperator = $msisdnConfirmedReturn['primaryOwnerNetworkId'];
-
-                $returnMSISDN = $msisdnConfirmedReturn['returnMSISDN'];
 
                 $toRoutingNumber = $msisdnConfirmedReturn['primaryOwnerRoutingNumber'];
 
-                // Perform KPSA Operation
+                $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($returnId);
 
-                $kpsaOperationService = new KpsaOperationService();
+                foreach ($dbPortNumbers as $dbPortNumber) {
 
-                $kpsaResponse = $kpsaOperationService->performKPSAReturnOperation($returnMSISDN, $toOperator, $toRoutingNumber);
+                    $returnMSISDN = $dbPortNumber['msisdn'];
 
-                if($kpsaResponse['success']){
+                    if($dbPortNumber['numberState'] != \ReturnService\_Return\returnStateType::COMPLETED){
+
+                        $this->fileLogAction('7014', 'BatchOperationService::numberReturnPO', 'Provision OK. Performing KPSA_OPERATION for ' . $returnId . ' :: ' . $returnMSISDN);
+
+                        // Perform KPSA Operation
+
+                        $kpsaOperationService = new KpsaOperationService();
+
+                        $kpsaResponse = $kpsaOperationService->performKPSAReturnOperation($returnMSISDN, $toOperator, $toRoutingNumber);
+
+                        if($kpsaResponse['success']){
+
+                            $this->fileLogAction('7014', 'BatchOperationService::numberReturnPO', 'KPSA_OPERATION successful for ' . $returnId);
+
+                            // Update process number state
+
+                            $portingNumberParams = array(
+                                'pLastChangeDateTime' => date('c'),
+                                'numberState' => \ReturnService\_Return\returnStateType::COMPLETED
+                            );
+
+                            $this->ProcessNumber_model->update_processnumber($returnId, $returnMSISDN, $portingNumberParams);
+
+                        }
+
+                        else{
+
+                            $this->fileLogAction('7014', 'BatchOperationService::numberReturnPO', 'KPSA_OPERATION failed for ' . $returnId . ' :: ' . $returnMSISDN . ' with ' . $kpsaResponse['message']);
+
+                            $emailService->adminKPSAError($kpsaResponse['message']. ' :: ' . $returnMSISDN);
+
+                        }
+
+                    }
+
+                }
+
+                // Load numbers again
+                $dbPortNumbers = $this->ProcessNumber_model->get_processnumber($returnId);
+
+                $waiting = false;
+
+                foreach ($dbPortNumbers as $dbPortNumber) {
+
+                    if($dbPortNumber['numberState'] != \ReturnService\_Return\returnStateType::COMPLETED){
+                        $waiting = true;
+                        break;
+                    }
+                }
+
+                if($waiting == false){
 
                     $this->fileLogAction('7014', 'BatchOperationService::numberReturnPO', 'KPSA_OPERATION successful for ' . $returnId);
 
@@ -2652,6 +3424,15 @@ class BatchOperationService extends CI_Controller {
 
                         $this->Provisioning_model->update_provisioning($returnId, $prParams);
 
+                        // Update provisioning numbers
+
+                        $prParams = array(
+                            'pLastChangeDateTime' => date('c'),
+                            'numberState' => \ProvisionService\ProvisionNotification\provisionStateType::COMPLETED
+                        );
+
+                        $this->ProcessNumber_model->update_provisionnumber_all($returnId, $prParams);
+
                         // Notify Agents/Admin
 
                         if ($this->db->trans_status() === FALSE) {
@@ -2677,15 +3458,9 @@ class BatchOperationService extends CI_Controller {
 
                 }
 
-                else{
+            }
 
-                    $this->fileLogAction('7014', 'BatchOperationService::numberReturnPO', 'KPSA_OPERATION failed for ' . $returnId . ' with ' . $kpsaResponse['message']);
-
-                    $emailService->adminKPSAError($kpsaResponse['message']. ' :: ' . $returnMSISDN);
-
-                }
-
-            }else{
+            else{
 
                 $this->fileLogAction('7014', 'BatchOperationService::numberReturnPO', 'Provision not yet performed for ' . $returnId);
 
@@ -2733,20 +3508,66 @@ class BatchOperationService extends CI_Controller {
 
             $processId = $startedProvision['processId'];
 
-            $this->fileLogAction('7015', 'BatchOperationService::provisionOther', 'Performing KPSA_OPERATION for ' . $processId);
-
             $processType = $startedProvision['processType'];
 
             $toOperator = $startedProvision['endNetworkId'];
 
-            $subscriberMSISDN = $startedProvision['subscriberMSISDN'];
-
             $toRoutingNumber = $startedProvision['endRoutingNumber'];
 
-            // Perform KPSA Operation
-            $kpsaResponse = $kpsaOperationService->performKPSAOtherOperation($subscriberMSISDN, $toOperator, $toRoutingNumber);
+            $dbPortNumbers = $this->ProcessNumber_model->get_provisionnumber($processId);
 
-            if($kpsaResponse['success']){
+            foreach ($dbPortNumbers as $dbPortNumber) {
+
+                $subscriberMSISDN = $dbPortNumber['msisdn'];
+
+                if($dbPortNumber['numberState'] == provisionStateType::STARTED){
+
+                    $this->fileLogAction('7015', 'BatchOperationService::provisionOther', 'Performing KPSA_OPERATION for ' . $processId . ' :: ' . $subscriberMSISDN);
+
+                    // Perform KPSA Operation
+                    $kpsaResponse = $kpsaOperationService->performKPSAOtherOperation($subscriberMSISDN, $toOperator, $toRoutingNumber);
+
+                    if($kpsaResponse['success']){
+
+                        $this->fileLogAction('7015', 'BatchOperationService::provisionOther', 'KPSA_OPERATION successful for ' . $processId . ' :: ' . $subscriberMSISDN);
+
+                        // Update process number state
+
+                        $portingNumberParams = array(
+                            'pLastChangeDateTime' => date('c'),
+                            'numberState' => \PortingService\Porting\portingStateType::COMPLETED
+                        );
+
+                        $this->ProcessNumber_model->update_provisionnumber($processId, $subscriberMSISDN, $portingNumberParams);
+
+                    }
+
+                    else{
+
+                        $this->fileLogAction('7015', 'BatchOperationService::provisionOther', 'KPSA_OPERATION failed for ' . $processId . ' :: ' . $subscriberMSISDN . ' with ' . $kpsaResponse['message']);
+
+                        $emailService->adminKPSAError($kpsaResponse['message']. ' :: ' . $subscriberMSISDN);
+
+                    }
+
+                }
+
+            }
+
+            // Load numbers again
+            $dbPortNumbers = $this->ProcessNumber_model->get_provisionnumber($processId);
+
+            $waiting = false;
+
+            foreach ($dbPortNumbers as $dbPortNumber) {
+
+                if($dbPortNumber['numberState'] != \PortingService\Porting\portingStateType::COMPLETED){
+                    $waiting = true;
+                    break;
+                }
+            }
+
+            if($waiting == false){
 
                 $this->fileLogAction('7015', 'BatchOperationService::provisionOther', 'KPSA_OPERATION successful for ' . $processId);
 
@@ -2801,14 +3622,6 @@ class BatchOperationService extends CI_Controller {
                     $this->fileLogAction('7015', 'BatchOperationService::provisionOther', 'CONFIRM failed for ' . $processId);
 
                 }
-
-            }
-
-            else{
-
-                $this->fileLogAction('7015', 'BatchOperationService::provisionOther', 'KPSA_OPERATION failed for ' . $processId . ' with ' . $kpsaResponse['message']);
-
-                $emailService->adminKPSAError($kpsaResponse['message']. ' :: ' . $subscriberMSISDN);
 
             }
 
@@ -2890,54 +3703,51 @@ class BatchOperationService extends CI_Controller {
             $file_name = $syncResponse['fileName'];
 
             if($file_name != ''){
-                $row = 1;
 
                 if (($handle = fopen(FCPATH . 'uploads/cadb/' .$file_name, "r")) !== FALSE) {
 
                     while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
-                        if($row == 1){
-                            $row++;
-                        }else{
 
-                            $cadbId = $data[0]; // CADB_ID
-                            $isdn = $data[1]; // ISDN
-                            $routingNumber = $data[2]; // $routingNumber
-                            $applyTime = $data[3]; // ApplyTime
+                        $cadbId = $data[0]; // CADB_ID
+                        $isdn = $data[1]; // ISDN
+                        $routingNumber = $data[2]; // $routingNumber
+                        $applyTime = $data[3]; // ApplyTime
 
-                            $process = $this->Provisioning_model->get_provisioning($cadbId);
+                        $process = $this->Provisioning_model->get_provisioning($cadbId);
 
-                            if($process && $process['provisionState'] != provisionStateType::COMPLETED) {
+                        if($process && $process['provisionState'] != provisionStateType::COMPLETED) {
 
-                                $eParams = array(
-                                    'errorReportId' => 'N/A',
-                                    'cadbNumber' => '',
-                                    'problem' => 'NB: This is a CADB Synchronization problem',
-                                    'reporterNetworkId' => '',
-                                    'submissionDateTime' => date('c'),
-                                    'processType' => 'CADB Synchronization'
-                                );
+                            $eParams = array(
+                                'errorReportId' => 'N/A',
+                                'cadbNumber' => $isdn,
+                                'problem' => 'NB: This is a CADB Synchronization problem',
+                                'reporterNetworkId' => '',
+                                'submissionDateTime' => date('c'),
+                                'processType' => 'CADB Synchronization'
+                            );
 
-                                $emailService->adminErrorReport("CADB SYNCHRONIZATIONN OFF FOR " . $cadbId, $eParams, processType::ERROR);
+                            $emailService->adminErrorReport("CADB SYNCHRONIZATIONN PROCESS FOUND BUT OFF FOR " . $cadbId, $eParams, processType::ERROR);
 
-                            }else{
+                        }elseif(!$process){
 
-                                $eParams = array(
-                                    'errorReportId' => 'N/A',
-                                    'cadbNumber' => '',
-                                    'problem' => 'NB: This is a CADB Synchronization problem',
-                                    'reporterNetworkId' => '',
-                                    'submissionDateTime' => date('c'),
-                                    'processType' => 'CADB Synchronization'
-                                );
+                            $eParams = array(
+                                'errorReportId' => 'N/A',
+                                'cadbNumber' => $isdn,
+                                'problem' => 'NB: This is a CADB Synchronization problem',
+                                'reporterNetworkId' => '',
+                                'submissionDateTime' => date('c'),
+                                'processType' => 'CADB Synchronization'
+                            );
 
-                                $emailService->adminErrorReport("NO/INCOMPLETE ENTRY IN LDB FOR " . $cadbId, $eParams, processType::ERROR);
+                            $emailService->adminErrorReport("NO ENTRY IN LDB FOR " . $cadbId, $eParams, processType::ERROR);
 
-
-                            }
                         }
+
                     }
 
                     fclose($handle);
+
+                    $this->exportSynchronizationData($day);
 
                 }else{
 
@@ -3008,12 +3818,87 @@ class BatchOperationService extends CI_Controller {
         }else{
 
             $file = 'ported_numbers-report-' . $date . '.csv';
-            $sftp->get($file, FCPATH . 'uploads/cadb/' . $file);
+            $sftp->get(sftpParams::PATH . $file, FCPATH . 'uploads/cadb/' . $file);
             $response['fileName'] = $file;
 
         }
 
         return $response;
+
+    }
+
+    /**
+     * Exports Synchronization data as per other services request
+     * @param $day
+     */
+    private function exportSynchronizationData($day){
+
+        $file_name = 'ported_numbers-report-' . $day . '.csv';
+        $in_file_name = date('Ymd', strtotime($day)) . '_portedin.txt';
+        $out_file_name = date('Ymd', strtotime($day)) . '_portedout.txt';
+
+        $in_file_handle = fopen(FCPATH . 'uploads/cadb/' .$in_file_name, "w");
+        $out_file_handle = fopen(FCPATH . 'uploads/cadb/' .$out_file_name, "w");
+
+        if (($handle = fopen(FCPATH . 'uploads/cadb/' .$file_name, "r")) !== FALSE) {
+
+            while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+
+                $cadbId = $data[0]; // CADB_ID
+                $isdn = $data[1]; // ISDN
+                $routingNumber = $data[2]; // $routingNumber
+                $applyTime = $data[3]; // ApplyTime
+
+                if($routingNumber == Operator::ORANGE_ROUTING_NUMBER){
+                    // This is IN operation. Add tot in file
+                    fwrite($in_file_handle, "237|$isdn\n");
+                }
+                else{
+                    // Check if OCM is donor to process. For that, first check process type.
+                    // If PORTING, load port and check donor
+                    // If ROLLBACK, load rollback and check recipient
+                    // If RETURN, load return and check if owner
+
+                    $process = $this->Provisioning_model->get_provisioning($cadbId);
+
+                    if($process['processType'] == processType::PORTING){
+
+                        $porting = $this->Porting_model->get_porting($process['processId']);
+
+                        if($porting['donorRoutingNumber'] == Operator::ORANGE_ROUTING_NUMBER){
+                            fwrite($out_file_handle, "237|$isdn\n");
+                        }
+
+                    }
+                    else if($process['processType'] == processType::ROLLBACK){
+
+                        $rollback = $this->Rollback_model->get_full_rollback($process['processId']);
+
+                        if($rollback['donorRoutingNumber'] == Operator::ORANGE_ROUTING_NUMBER){
+                            fwrite($out_file_handle, "237|$isdn\n");
+                        }
+
+                    }
+                    else {
+
+                        $return = $this->Numberreturn_model->get_numberreturn($process['processId']);
+
+                        if($return['ownerRoutingNumber'] == Operator::ORANGE_ROUTING_NUMBER){
+                            fwrite($out_file_handle, "237|$isdn\n");
+                        }
+
+                    }
+
+                }
+            }
+
+            fclose($handle);
+            fclose($in_file_handle);
+            fclose($out_file_handle);
+
+        }else{
+
+        }
 
     }
 
@@ -3293,15 +4178,13 @@ class BatchOperationService extends CI_Controller {
             'recipientSubmissionDateTime' => $porting->portingTransaction->recipientSubmissionDateTime,
             'portingDateTime' => $porting->portingTransaction->portingDateTime,
             'rio' =>  $porting->portingTransaction->rio,
-            'startMSISDN' =>  $porting->portingTransaction->numberRanges->numberRange->startNumber,
-            'endMSISDN' =>  $porting->portingTransaction->numberRanges->numberRange->endNumber,
+            'msisdn' =>  $this->getPortingNumbers($porting),
             'cadbOrderDateTime' => $porting->portingTransaction->cadbOrderDateTime,
             'lastChangeDateTime' => $porting->portingTransaction->lastChangeDateTime,
             'portingState' => $porting->portingTransaction->portingState,
-            'contractId' => null,
-            'language' => null,
-            'portingSubmissionId' => null,
         );
+
+        $portingParams['contactNumber'] = $porting->portingTransaction->subscriberInfo->contactNumber;
 
         if(isset($porting->portingTransaction->subscriberInfo->physicalPersonFirstName)) {
             $portingParams['physicalPersonFirstName'] = $porting->portingTransaction->subscriberInfo->physicalPersonFirstName;
@@ -3312,7 +4195,6 @@ class BatchOperationService extends CI_Controller {
         else{
             $portingParams['legalPersonName'] = $porting->portingTransaction->subscriberInfo->legalPersonName;
             $portingParams['legalPersonTin'] = $porting->portingTransaction->subscriberInfo->legalPersonTin;
-            $portingParams['contactNumber'] = $porting->portingTransaction->subscriberInfo->contactNumber;
         }
 
         return $portingParams;
@@ -3329,7 +4211,7 @@ class BatchOperationService extends CI_Controller {
             'cadbOpenDateTime' => $rollback->rollbackTransaction->cadbOpenDateTime,
             'lastChangeDateTime' => $rollback->rollbackTransaction->lastChangeDateTime,
             'rollbackState' => $rollback->rollbackTransaction->rollbackState,
-            'rollbackSubmissionId' => null,
+            'msisdn' => $this->getRollbackNumbers($rollback)
         );
 
         return $rollbackParams;
@@ -3345,103 +4227,184 @@ class BatchOperationService extends CI_Controller {
             'ownerRoutingNumber' => $return->returnTransaction->ownerNrn->routingNumber,
             'primaryOwnerNetworkId' => $return->returnTransaction->primaryOwnerNrn->networkId,
             'primaryOwnerRoutingNumber' => $return->returnTransaction->primaryOwnerNrn->routingNumber,
-            'returnMSISDN' => null,
+            'msisdn' => $this->getReturnNumbers($return),
             'returnNumberState' => $return->returnTransaction->returnNumberState,
-            'numberReturnSubmissionId' => null,
         );
         
         return $nrParams;
     
     }
 
-}
+    //
+    private function getPortingNumbers($request){
 
-class SFTPConnection
-{
-    private $connection;
-    private $sftp;
+        $numbers = [];
 
-    public function __construct($host, $port=22)
-    {
-        $this->connection = ssh2_connect($host, $port);
-        if (! $this->connection)
-            throw new Exception("Could not connect to $host on port $port.");
-    }
+        if(is_array($request->portingTransaction->numberRanges->numberRange)){
 
-    public function login($username, $password)
-    {
-        if (! ssh2_auth_password($this->connection, $username, $password))
-            throw new Exception("Could not authenticate with username $username " .
-                "and password $password.");
+            foreach ($request->portingTransaction->numberRanges->numberRange as $numberRange){
 
-        $this->sftp = ssh2_sftp($this->connection);
-        if (! $this->sftp)
-            throw new Exception("Could not initialize SFTP subsystem.");
-    }
+                $startMSISDN = $numberRange->startNumber;
+                $endMSISDN = $numberRange->endNumber;
 
-    public function uploadFile($local_file, $remote_file) {
-
-        $sftp = $this->sftp;
-
-        $stream = fopen("ssh2.sftp://$sftp$remote_file", 'w');
-
-        if (! $stream)
-            throw new Exception("Could not open file: $remote_file");
-
-        $data_to_send = file_get_contents($local_file);
-
-        if ($data_to_send === false)
-            throw new Exception("Could not open local file: $local_file.");
-
-        if (fwrite($stream, $data_to_send) === false)
-            throw new Exception("Could not send data from file: $local_file.");
-
-        fclose($stream);
-
-    }
-
-    public function downloadFile($remote_file, $local_file)
-    {
-
-        $sftp = $this->sftp;
-
-        $stream = fopen("ssh2.sftp://$sftp$remote_file", 'r');
-
-        if (! $stream)
-            throw new Exception("Could not open file: $remote_file");
-
-        $contents = fread($stream, filesize("ssh2.sftp://$sftp$remote_file"));
-
-        file_put_contents ($local_file, $contents);
-
-        fclose($stream);
-    }
-
-    function scanFilesystem($remote_file) {
-
-        $sftp = $this->sftp;
-        $dir = "ssh2.sftp://$sftp$remote_file";
-        $tempArray = array();
-        $handle = opendir($dir);
-
-        // List all the files
-        while (false !== ($file = readdir($handle))) {
-            if (substr("$file", 0, 1) != "."){
-                if(is_dir($file)){
-//                $tempArray[$file] = $this->scanFilesystem("$dir/$file");
-                } else {
-                    $tempArray[]=$file;
+                if(strlen($startMSISDN) == 12){
+                    $startMSISDN = substr($startMSISDN, 3);
                 }
+                if(strlen($endMSISDN) == 12){
+                    $endMSISDN = substr($endMSISDN, 3);
+                }
+
+                $startMSISDN = intval($startMSISDN);
+                $endMSISDN = intval($endMSISDN);
+
+                while ($startMSISDN <= $endMSISDN){
+                    $numbers[] = '237' . $startMSISDN;
+                    $startMSISDN += 1;
+                }
+
             }
+
+        }
+        else{
+
+            $startMSISDN = $request->portingTransaction->numberRanges->numberRange->startNumber;
+            $endMSISDN = $request->portingTransaction->numberRanges->numberRange->endNumber;
+
+            if(strlen($startMSISDN) == 12){
+                $startMSISDN = substr($startMSISDN, 3);
+            }
+            if(strlen($endMSISDN) == 12){
+                $endMSISDN = substr($endMSISDN, 3);
+            }
+
+            $startMSISDN = intval($startMSISDN);
+            $endMSISDN = intval($endMSISDN);
+
+            while ($startMSISDN <= $endMSISDN){
+                $numbers[] = '237' . $startMSISDN;
+                $startMSISDN += 1;
+            }
+
         }
 
-        closedir($handle);
-        return $tempArray;
-    }
+        $numbers = array_values(array_unique($numbers));
 
-    public function deleteFile($remote_file){
-        $sftp = $this->sftp;
-        unlink("ssh2.sftp://$sftp$remote_file");
+        return $numbers;
+
+    }
+    //
+    private function getReturnNumbers($request){
+
+        $numbers = [];
+
+        if(is_array($request->returnTransaction->numberRanges->numberRange)){
+
+            foreach ($request->returnTransaction->numberRanges->numberRange as $numberRange){
+
+                $startMSISDN = $numberRange->startNumber;
+                $endMSISDN = $numberRange->endNumber;
+
+                if(strlen($startMSISDN) == 12){
+                    $startMSISDN = substr($startMSISDN, 3);
+                }
+                if(strlen($endMSISDN) == 12){
+                    $endMSISDN = substr($endMSISDN, 3);
+                }
+
+                $startMSISDN = intval($startMSISDN);
+                $endMSISDN = intval($endMSISDN);
+
+                while ($startMSISDN <= $endMSISDN){
+                    $numbers[] = '237' . $startMSISDN;
+                    $startMSISDN += 1;
+                }
+
+            }
+
+        }
+        else{
+
+            $startMSISDN = $request->returnTransaction->numberRanges->numberRange->startNumber;
+            $endMSISDN = $request->returnTransaction->numberRanges->numberRange->endNumber;
+
+            if(strlen($startMSISDN) == 12){
+                $startMSISDN = substr($startMSISDN, 3);
+            }
+            if(strlen($endMSISDN) == 12){
+                $endMSISDN = substr($endMSISDN, 3);
+            }
+
+            $startMSISDN = intval($startMSISDN);
+            $endMSISDN = intval($endMSISDN);
+
+            while ($startMSISDN <= $endMSISDN){
+                $numbers[] = '237' . $startMSISDN;
+                $startMSISDN += 1;
+            }
+
+        }
+
+        $numbers = array_values(array_unique($numbers));
+
+        return $numbers;
+
+    }
+    //
+    private function getRollbackNumbers($request){
+
+        $numbers = [];
+
+        if(is_array($request->rollbackTransaction->numberRanges->numberRange)){
+
+            foreach ($request->rollbackTransaction->numberRanges->numberRange as $numberRange){
+
+                $startMSISDN = $numberRange->startNumber;
+                $endMSISDN = $numberRange->endNumber;
+
+                if(strlen($startMSISDN) == 12){
+                    $startMSISDN = substr($startMSISDN, 3);
+                }
+                if(strlen($endMSISDN) == 12){
+                    $endMSISDN = substr($endMSISDN, 3);
+                }
+
+                $startMSISDN = intval($startMSISDN);
+                $endMSISDN = intval($endMSISDN);
+
+                while ($startMSISDN <= $endMSISDN){
+                    $numbers[] = '237' . $startMSISDN;
+                    $startMSISDN += 1;
+                }
+
+            }
+
+        }
+        else{
+
+            $startMSISDN = $request->rollbackTransaction->numberRanges->numberRange->startNumber;
+            $endMSISDN = $request->rollbackTransaction->numberRanges->numberRange->endNumber;
+
+            if(strlen($startMSISDN) == 12){
+                $startMSISDN = substr($startMSISDN, 3);
+            }
+            if(strlen($endMSISDN) == 12){
+                $endMSISDN = substr($endMSISDN, 3);
+            }
+
+            $startMSISDN = intval($startMSISDN);
+            $endMSISDN = intval($endMSISDN);
+
+            while ($startMSISDN <= $endMSISDN){
+                $numbers[] = '237' . $startMSISDN;
+                $startMSISDN += 1;
+            }
+
+        }
+
+        $numbers = array_values(array_unique($numbers));
+
+        return $numbers;
+
     }
 
 }

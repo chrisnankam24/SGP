@@ -25,7 +25,7 @@ class PvOSServerFunctionalities extends CI_Controller  {
         parent::__construct();
 
         // Define soap client object
-        $this->client = new SoapClient(__DIR__ . '/wsdl/ProvisionNotificationService.wsdl', array(
+        $this->client = new SoapClient(__DIR__ . '/wsdl-local/ProvisionNotificationService.wsdl', array(
             "trace" => false,
             'stream_context' => stream_context_create(array(
                 'http' => array(
@@ -39,7 +39,7 @@ class PvOSServerFunctionalities extends CI_Controller  {
     public function index(){
 
         // Create a new soap server in WSDL mode
-        $server = new SoapServer(__DIR__ . '/wsdl/ProvisionOperationService.wsdl');
+        $server = new SoapServer(__DIR__ . '/wsdl-local/ProvisionOperationService.wsdl');
 
         // Set the object for the soap server
         $server->setObject($this);

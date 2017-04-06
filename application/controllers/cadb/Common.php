@@ -22,19 +22,15 @@ Class Auth {
 class Operator {
     const MTN_NETWORK_ID = '01';
     const ORANGE_NETWORK_ID = '02';
-    const NEXTTEL_NETWORK_ID = '04';
-
-    const ORANGE_DUMMY_NETWORK_ID = '92';
+    const NEXTTEL_NETWORK_ID = '03';
 
     const MTN_ROUTING_NUMBER = '1601';
     const ORANGE_ROUTING_NUMBER = '1602';
     const NEXTTEL_ROUTING_NUMBER = '1603';
 
-    const ORANGE_DUMMY_ROUTING_NUMBER = '1692';
-
     const MTN_OPERATOR_NAME = 'MTN Cameroon';
     const ORANGE_OPERATOR_NAME = 'Orange Cameroon';
-    const NEXTTEL_OPERATOR_NAME = 'Nexttel Cameroon';
+    const NEXTTEL_OPERATOR_NAME = 'Viettel Cameroon';
 
     const ORANGE_NETWORK_ID_NUMBER = 2;
 }
@@ -100,7 +96,9 @@ class SMSParams{
  */
 class KPSAParams {
 
-    const HOST = '172.21.75.52';
+    const HOST = '172.21.75.50'; // PROD
+    //const HOST = '172.21.75.52'; // PREPROD
+    //const HOST = '172.21.95.6'; // DR
     const PORT = 13023;
 
 }
@@ -120,12 +118,17 @@ class processType {
     const ERROR = 'ERROR';
 }
 
+class portingSource {
+    const WEB = 'WEB';
+    const MOBILE = 'MOBILE';
+}
+
 // CADB SFTP CONNECTION PARAMS
 class sftpParams{
-    const HOST = 'test.rebex.net';
-    const USERNAME = 'demo';
-    const PASSWORD = 'password';
-    const PATH = '/';
+    const HOST = 'cameroonmnp.campost.cm';
+    const USERNAME = 'orange';
+    const PASSWORD = 'Wai7doh5';
+    const PATH = 'csv/';
 }
 
 class BscsParams {
@@ -134,8 +137,8 @@ class BscsParams {
     const endUserName = 'CMSINT';
 
     const HMCODE = '179';
-    const MTN_PLCODE = '354';
-    const NEXTTEL_PLCODE = '355';
+    const MTN_PLCODE = '356';
+    const NEXTTEL_PLCODE = '357';
 
     const PORTING_OUT_STATUS = 4;
     const PORTING_OUT_REASON = 48;
@@ -147,8 +150,9 @@ class languageParams{
 }
 
 class EmailParams{
-    const TO = 'christian.nankam@orange.com,frank.basseeg@orange.com,sidoin.fometio@orange.com';
-    const NOTIF_TO = 'christian.nankam@orange.com,frank.basseeg@orange.com,sidoin.fometio@orange.com';
+    const TO = 'DSI.Software_Factory@orange.com';
+    //const TO = 'christian.nankam@orange.com';
+    const NOTIF_TO = 'DSI.Software_Factory@orange.com';
     const FROM = '';
     const CC = '';
 }

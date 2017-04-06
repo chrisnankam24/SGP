@@ -5,6 +5,7 @@ require_once "Fault.php";
 require_once "Common.php";
 require_once "Porting.php";
 require_once "PortingNotification.php";
+require_once "ProvisionNotification.php";
 
 require_once APPPATH . "controllers/sms/SMS.php";
 require_once APPPATH . "controllers/email/EmailService.php";
@@ -13,6 +14,7 @@ require_once APPPATH . "controllers/kpsa/KpsaOperationService.php";
 
 
 use PortingService\PortingNotification as PortingNotification;
+use \ProvisionService\ProvisionNotification\provisionStateType as provisionStateType;
 
 /**
  * Created by PhpStorm.
@@ -22,7 +24,7 @@ use PortingService\PortingNotification as PortingNotification;
  */
 
 /**
- * Controller for PortingNotificationService server requests made towards Us operator
+ * Controller for PortingNotificationService server requests made towards us operator
  * Class PortingNotificationService
  */
 class PortingNotificationService extends CI_Controller
@@ -35,7 +37,7 @@ class PortingNotificationService extends CI_Controller
         // Load required models
         $this->load->model('Porting_model');
         $this->load->model('FileLog_model');
-        $this->load->model('Portingsubmission_model');
+        $this->load->model('ProcessNumber_model');
         $this->load->model('Portingstateevolution_model');
         $this->load->model('Portingsmsnotification_model');
         $this->load->model('Portingdenyrejectionabandon_model');
@@ -73,14 +75,11 @@ class PortingNotificationService extends CI_Controller
 
         isAuthorized();
 
-        $rio = $notifyOrderedRequest->portingTransaction->rio;
-
         $portingId = $notifyOrderedRequest->portingTransaction->portingId;
 
-        $this->fileLogAction('8060', 'PortingNotificationService', 'Porting ORDER received for ID ' . $portingId);
+        $portingNumbers = $this->getPortingNumbers($notifyOrderedRequest);
 
-        $startMSISDN = $notifyOrderedRequest->portingTransaction->numberRanges->numberRange->startNumber;
-        $endMSISDN = $notifyOrderedRequest->portingTransaction->numberRanges->numberRange->endNumber;
+        $this->fileLogAction('8060', 'PortingNotificationService', 'Porting ORDER received for ID ' . $portingId);
 
         $this->db->trans_start();
 
@@ -96,13 +95,12 @@ class PortingNotificationService extends CI_Controller
             'portingDateTime' => $notifyOrderedRequest->portingTransaction->portingDateTime,
             'rio' =>  $notifyOrderedRequest->portingTransaction->rio,
             'portingNotificationMailSendStatus' => smsState::PENDING,
-            'startMSISDN' =>  $startMSISDN,
-            'endMSISDN' =>  $endMSISDN
         );
 
         $portingParams['cadbOrderDateTime'] = $notifyOrderedRequest->portingTransaction->cadbOrderDateTime;
         $portingParams['lastChangeDateTime'] = $notifyOrderedRequest->portingTransaction->lastChangeDateTime;
         $portingParams['portingState'] = \PortingService\Porting\portingStateType::ORDERED;
+        $portingParams['contactNumber'] = $notifyOrderedRequest->portingTransaction->subscriberInfo->contactNumber;
 
         if(isset($notifyOrderedRequest->portingTransaction->subscriberInfo->physicalPersonFirstName)) {
             $portingParams['physicalPersonFirstName'] = $notifyOrderedRequest->portingTransaction->subscriberInfo->physicalPersonFirstName;
@@ -113,7 +111,6 @@ class PortingNotificationService extends CI_Controller
         else{
             $portingParams['legalPersonName'] = $notifyOrderedRequest->portingTransaction->subscriberInfo->legalPersonName;
             $portingParams['legalPersonTin'] = $notifyOrderedRequest->portingTransaction->subscriberInfo->legalPersonTin;
-            $portingParams['contactNumber'] = $notifyOrderedRequest->portingTransaction->subscriberInfo->contactNumber;
         }
 
         $this->Porting_model->add_porting($portingParams);
@@ -129,6 +126,21 @@ class PortingNotificationService extends CI_Controller
 
         $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
 
+        // Insert Porting Numbers
+
+        $processNumberParams = [];
+
+        foreach ($portingNumbers as $portingNumber){
+            $processNumberParams[] = array(
+                'processId' => $portingId,
+                'msisdn' => $portingNumber,
+                'numberState' => provisionStateType::STARTED,
+                'pLastChangeDateTime' => date('c'),
+                'processType' => processType::PORTING
+            );
+        }
+
+        $this->db->insert_batch('processnumber', $processNumberParams);
 
         if ($this->db->trans_status() === FALSE) {
 
@@ -139,7 +151,7 @@ class PortingNotificationService extends CI_Controller
             $this->fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
 
             $emailService = new EmailService();
-            $emailService->adminErrorReport('ORDERED_PORTING_RECEIVED_BUT_DB_FILLING_ERROR', $portingParams, processType::PORTING);
+            $emailService->adminErrorReport('ORDERED PORTING RECEIVED BUT DB FILLING ERROR', $portingParams, processType::PORTING);
             $this->db->trans_complete();
             throw new ldbAdministrationServiceFault();
 
@@ -172,6 +184,8 @@ class PortingNotificationService extends CI_Controller
 
         $portingId = $notifyApprovedRequest->portingTransaction->portingId;
 
+        $portingNumbers = $this->getPortingNumbers($notifyApprovedRequest);
+
         $this->fileLogAction('8060', 'PortingNotificationService', 'Porting APPROVE received for ID ' . $portingId);
 
         $portingEvolutionParams = array(
@@ -194,6 +208,14 @@ class PortingNotificationService extends CI_Controller
 
         $this->Porting_model->update_porting($notifyApprovedRequest->portingTransaction->portingId, $portingParams);
 
+        // Update Number state
+        $portingNumberParams = array(
+            'pLastChangeDateTime' => date('c'),
+            'numberState' => \PortingService\Porting\portingStateType::APPROVED
+        );
+
+        $this->ProcessNumber_model->update_processnumber_all($portingId, $portingNumberParams);
+
         if ($this->db->trans_status() === false) {
 
             $error = $this->db->error();
@@ -205,7 +227,7 @@ class PortingNotificationService extends CI_Controller
             $portingParams = $this->Porting_model->get_porting($portingId);
 
             $emailService = new EmailService();
-            $emailService->adminErrorReport('PORTING_APPROVED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
+            $emailService->adminErrorReport('PORTING APPROVED BUT DB FILLED INCOMPLETE', $portingParams, processType::PORTING);
 
             $this->db->trans_complete();
             throw new ldbAdministrationServiceFault();
@@ -239,6 +261,8 @@ class PortingNotificationService extends CI_Controller
 
         $portingId = $notifyAutoApproveRequest->portingTransaction->portingId;
 
+        $portingNumbers = $this->getPortingNumbers($notifyAutoApproveRequest);
+
         $this->fileLogAction('8060', 'PortingNotificationService', 'Porting AUTO APPROVE received for ID ' . $portingId);
 
         $portingEvolutionParams = array(
@@ -261,6 +285,58 @@ class PortingNotificationService extends CI_Controller
 
         $this->Porting_model->update_porting($notifyAutoApproveRequest->portingTransaction->portingId, $portingParams);
 
+        // Update Number state
+        $portingNumberParams = array(
+            'pLastChangeDateTime' => date('c'),
+            'numberState' => \PortingService\Porting\portingStateType::APPROVED
+        );
+
+        $this->ProcessNumber_model->update_processnumber_all($portingId, $portingNumberParams);
+
+        // Update Porting number contract Ids and languages
+
+        $bscsOperationService = new BscsOperationService();
+
+        foreach ($portingNumbers as $portingNumber){
+
+            $subscriberMSISDN = $portingNumber;
+
+            // Load subscriber data from BSCS using MSISDN
+
+            $subscriberInfo = $bscsOperationService->loadNumberInfo($subscriberMSISDN);
+
+            if($subscriberInfo != -1){
+
+                if($subscriberInfo != null){ // Connection to BSCS successful and User found
+
+                    $language = $subscriberInfo['LANGUE'];
+
+                    // Update Porting table
+                    $portingParams = array(
+                        'language' => $language
+                    );
+
+                    $this->Porting_model->update_porting($portingId, $portingParams);
+
+                    // Update process number in DB
+                    $portingNumberParams = array(
+                        'pLastChangeDateTime' => date('c'),
+                        'contractId' => $subscriberInfo['CONTRACT_ID'],
+                        'numberState' => \PortingService\Porting\portingStateType::APPROVED
+                    );
+
+                    $this->ProcessNumber_model->update_processnumber($portingId, $subscriberMSISDN, $portingNumberParams);
+
+                }
+
+            }
+
+            else{
+                // Connection to BSCS failed. Wait and try again later
+                $this->fileLogAction('7002', 'PortingNotificationService::notifyAutoApproved', 'Connection to BSCS failed for ' . $portingId . ' :: ' . $subscriberMSISDN);
+            }
+        }
+
         $emailService = new EmailService();
 
         if ($this->db->trans_status() === FALSE) {
@@ -273,7 +349,7 @@ class PortingNotificationService extends CI_Controller
 
             $portingParams = $this->Porting_model->get_porting($portingId);
 
-            $emailService->adminErrorReport('PORTING_AUTO_APPROVED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
+            $emailService->adminErrorReport('PORTING AUTO APPROVED BUT DB FILLED INCOMPLETE', $portingParams, processType::PORTING);
             $this->db->trans_complete();
             throw new ldbAdministrationServiceFault();
 
@@ -285,7 +361,7 @@ class PortingNotificationService extends CI_Controller
 
             $portingParams = $this->Porting_model->get_porting($portingId);
 
-            $emailService->adminErrorReport('PORTING_REACHED_AUTO_APPROVE', $portingParams, processType::PORTING);
+            $emailService->adminErrorReport('PORTING REACHED AUTO APPROVE', $portingParams, processType::PORTING);
 
             $response = new PortingNotification\notifyAutoApproveResponse();
 
@@ -307,6 +383,8 @@ class PortingNotificationService extends CI_Controller
 
         $portingId = $notifyAcceptedRequest->portingTransaction->portingId;
 
+        $portingNumbers = $this->getPortingNumbers($notifyAcceptedRequest);
+
         $this->fileLogAction('8060', 'PortingNotificationService', 'Porting ACCEPT received for ID ' . $portingId);
 
         // Insert into porting Evolution state table
@@ -317,7 +395,6 @@ class PortingNotificationService extends CI_Controller
             'isAutoReached' => false,
             'portingId' => $notifyAcceptedRequest->portingTransaction->portingId,
         );
-
 
         $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
 
@@ -332,6 +409,14 @@ class PortingNotificationService extends CI_Controller
 
         $this->Porting_model->update_porting($portingId, $portingParams);
 
+        // Update Number state
+        $portingNumberParams = array(
+            'pLastChangeDateTime' => date('c'),
+            'numberState' => \PortingService\Porting\portingStateType::ACCEPTED
+        );
+
+        $this->ProcessNumber_model->update_processnumber_all($portingId, $portingNumberParams);
+
         // Send SMS to Subscriber
 
         // Get porting Info for language
@@ -339,15 +424,20 @@ class PortingNotificationService extends CI_Controller
 
         $language = $portingInfo['language'];
 
-        $subscriberMSISDN = $notifyAcceptedRequest->portingTransaction->numberRanges->numberRange->startNumber;
-
         $portingDateTime = $notifyAcceptedRequest->portingTransaction->portingDateTime;
+
+        $sendMsisdn = $notifyAcceptedRequest->portingTransaction->subscriberInfo->contactNumber;
+        $subscriberMSISDN = implode(', ', $portingNumbers);
+
+        if(strlen($subscriberMSISDN) > 26){
+            $subscriberMSISDN = substr($subscriberMSISDN, 0, 27) . ' ...';
+        }
 
         $day = date('d/m/Y', strtotime($portingDateTime));
         $start_time = date('H:i:s', strtotime($portingDateTime));
         $end_time = date('H:i:s', strtotime('+2 hours', strtotime($portingDateTime)));
 
-        $smsResponse = SMS::OPR_Subscriber_OK($language, $subscriberMSISDN, $day, $start_time, $end_time);
+        $smsResponse = SMS::OPR_Subscriber_OK($language, $subscriberMSISDN, $day, $start_time, $end_time, $sendMsisdn);
 
         if($smsResponse['success']){
 
@@ -395,7 +485,7 @@ class PortingNotificationService extends CI_Controller
             $portingParams = $this->Porting_model->get_porting($portingId);
 
             $emailService = new EmailService();
-            $emailService->adminErrorReport('PORTING_ACCEPTED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
+            $emailService->adminErrorReport('PORTING ACCEPTED BUT DB FILLED INCOMPLETE', $portingParams, processType::PORTING);
             $this->db->trans_complete();
             throw new ldbAdministrationServiceFault();
 
@@ -414,7 +504,6 @@ class PortingNotificationService extends CI_Controller
     }
 
     /**
-     * TODO: OK
      * @param $notifyAutoAcceptRequest
      * @return PortingNotification\notifyAutoAcceptResponse
      * @throws ldbAdministrationServiceFault
@@ -426,6 +515,8 @@ class PortingNotificationService extends CI_Controller
         $this->db->trans_start();
 
         $portingId = $notifyAutoAcceptRequest->portingTransaction->portingId;
+
+        $portingNumbers = $this->getPortingNumbers($notifyAutoAcceptRequest);
 
         $this->fileLogAction('8060', 'PortingNotificationService', 'Porting AUTO ACCEPT received for ID ' . $portingId);
 
@@ -451,22 +542,34 @@ class PortingNotificationService extends CI_Controller
 
         $this->Porting_model->update_porting($portingId, $portingParams);
 
-        // Send SMS to Subscriber
+        // Update Number state
+        $portingNumberParams = array(
+            'pLastChangeDateTime' => date('c'),
+            'numberState' => \PortingService\Porting\portingStateType::ACCEPTED
+        );
 
+        $this->ProcessNumber_model->update_processnumber_all($portingId, $portingNumberParams);
+
+        // Send SMS to Subscriber
         // Get porting Info for language
         $portingInfo = $this->Porting_model->get_porting($portingId);
 
         $language = $portingInfo['language'];
 
-        $subscriberMSISDN = $notifyAutoAcceptRequest->portingTransaction->numberRanges->numberRange->startNumber;
-
         $portingDateTime = $notifyAutoAcceptRequest->portingTransaction->portingDateTime;
+
+        $sendMsisdn = $notifyAutoAcceptRequest->portingTransaction->subscriberInfo->contactNumber;
+        $subscriberMSISDN = implode(', ', $portingNumbers);
+
+        if(strlen($subscriberMSISDN) > 26){
+            $subscriberMSISDN = substr($subscriberMSISDN, 0, 27) . ' ...';
+        }
 
         $day = date('d/m/Y', strtotime($portingDateTime));
         $start_time = date('H:i:s', strtotime($portingDateTime));
         $end_time = date('H:i:s', strtotime('+2 hours', strtotime($portingDateTime)));
 
-        $smsResponse = SMS::OPR_Subscriber_OK($language, $subscriberMSISDN, $day, $start_time, $end_time);
+        $smsResponse = SMS::OPR_Subscriber_OK($language, $subscriberMSISDN, $day, $start_time, $end_time, $sendMsisdn);
 
         if($smsResponse['success']){
 
@@ -544,11 +647,11 @@ class PortingNotificationService extends CI_Controller
 
         $portingId = $notifyAutoConfirmRequest->portingTransaction->portingId;
 
+        $portingNumbers = $this->getPortingNumbers($notifyAutoConfirmRequest);
+
         $this->fileLogAction('8060', 'PortingNotificationService', 'Porting AUTO CONFIRM received for ID ' . $portingId);
 
         $donorNetworkId = $notifyAutoConfirmRequest->portingTransaction->donorNrn->networkId;
-
-        $subscriberMSISDN = $notifyAutoConfirmRequest->portingTransaction->numberRanges->numberRange->startNumber;
 
         $emailService = new EmailService();
 
@@ -557,112 +660,120 @@ class PortingNotificationService extends CI_Controller
         // Alert admin
         $emailService->adminErrorReport('PORTING REACHED AUTO CONFIRM', $dbPortingParams, processType::PORTING);
 
+        // Insert into porting Evolution state table
+
+        $portingEvolutionParams = array(
+            'lastChangeDateTime' => $notifyAutoConfirmRequest->portingTransaction->lastChangeDateTime,
+            'portingState' => \PortingService\Porting\portingStateType::CONFIRMED,
+            'isAutoReached' => true,
+            'portingId' => $notifyAutoConfirmRequest->portingTransaction->portingId,
+        );
+
+        $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
+
         // Start porting process
-        $portingStatedResponse = $this->startPortingOPR($subscriberMSISDN, $donorNetworkId);
 
-        if($portingStatedResponse->success){
+        $portingErrors = [];
 
-            $this->db->trans_start();
+        foreach ($portingNumbers as $portingNumber) {
 
-            // Insert into porting Evolution state table
+            $subscriberMSISDN = $portingNumber;
 
-            $portingEvolutionParams = array(
-                'lastChangeDateTime' => $notifyAutoConfirmRequest->portingTransaction->lastChangeDateTime,
-                'portingState' => \PortingService\Porting\portingStateType::MSISDN_IMPORT_CONFIRMED,
-                'isAutoReached' => true,
-                'portingId' => $notifyAutoConfirmRequest->portingTransaction->portingId,
-            );
+            $portingStatedResponse = $this->startPortingOPR($subscriberMSISDN, $donorNetworkId);
 
-            $this->Portingstateevolution_model->add_portingstateevolution($portingEvolutionParams);
+            if($portingStatedResponse->success){
 
-            // Update Porting table
+                $this->db->trans_start();
 
-            $portingParams = array(
-                'portingDateTime' => $notifyAutoConfirmRequest->portingTransaction->portingDateTime,
-                'cadbOrderDateTime' => $notifyAutoConfirmRequest->portingTransaction->cadbOrderDateTime,
-                'lastChangeDateTime' => $notifyAutoConfirmRequest->portingTransaction->lastChangeDateTime,
-                'portingState' => \PortingService\Porting\portingStateType::MSISDN_IMPORT_CONFIRMED
-            );
+                // Update Porting Number table
 
-            $this->Porting_model->update_porting($portingId, $portingParams);
+                $portingNumberParams = array(
+                    'pLastChangeDateTime' => date('c'),
+                    'numberState' => \PortingService\Porting\portingStateType::MSISDN_IMPORT_CONFIRMED
+                );
 
-            if ($this->db->trans_status() === FALSE) {
+                $this->ProcessNumber_model->update_processnumber($portingId, $subscriberMSISDN, $portingNumberParams);
 
-                $error = $this->db->error();
+                if ($this->db->trans_status() === FALSE) {
 
-                $this->fileLogAction($error['code'], 'PortingNotificationService', 'Porting AUTO CONFIRM saving failed for ID ' . $portingId);
+                    $error = $this->db->error();
 
-                $this->fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
+                    $this->fileLogAction($error['code'], 'PortingNotificationService', 'Porting AUTO CONFIRM saving failed for ID ' . $portingId);
+
+                    $this->fileLogAction($error['code'], 'PortingNotificationService', $error['message']);
+
+                    $portingErrors[] = $subscriberMSISDN;
+
+                    $this->db->trans_complete();
+
+                }else{
+
+                    $this->db->trans_complete();
+
+                    $this->fileLogAction('8060', 'PortingNotificationService', 'Porting AUTO CONFIRM successful for ID ' . $portingId);
+
+                }
+
+            }
+
+            else {
+
+                $faultCode = $portingStatedResponse->error;
+                $message = $portingStatedResponse->message;
+
+                $this->fileLogAction('7005', 'PortingNotificationService::notifyAutoConfirm', 'StartOPR failed for ' . $portingId . ' :: ' . $subscriberMSISDN . ' :: with ' . $faultCode . ' :: ' . $message);
+
+                switch ($faultCode) {
+                    // Terminal Processes
+                    case Fault::SERVICE_BREAK_DOWN_CODE:
+                        $fault = Fault::SERVICE_BREAK_DOWN;
+                        break;
+                    case Fault::SIGNATURE_MISMATCH_CODE:
+                        $fault = Fault::SIGNATURE_MISMATCH;
+                        break;
+                    case Fault::DENIED_ACCESS_CODE:
+                        $fault = Fault::DENIED_ACCESS;
+                        break;
+                    case Fault::UNKNOWN_COMMAND_CODE:
+                        $fault = Fault::UNKNOWN_COMMAND;
+                        break;
+                    case Fault::INVALID_PARAMETER_TYPE_CODE:
+                        $fault = Fault::INVALID_PARAMETER_TYPE;
+                        break;
+
+                    case Fault::PARAMETER_LIST_CODE:
+                        $fault = Fault::PARAMETER_LIST;
+                        break;
+
+                    case Fault::CMS_EXECUTION_CODE:
+                        $fault = Fault::CMS_EXECUTION;
+                        break;
+
+                    default:
+                        $fault = $faultCode;
+                }
 
                 $portingParams = $this->Porting_model->get_porting($portingId);
 
-                $emailService->adminErrorReport('PORTING_AUTO_CONFIRMED AND MSISDN EXPORTED BUT DB FILLED INCOMPLETE', $portingParams, processType::PORTING);
-
-                $this->db->trans_complete();
-
-                throw new ldbAdministrationServiceFault();
-
-            }else{
-
-                $this->db->trans_complete();
-
-                $this->fileLogAction('8060', 'PortingNotificationService', 'Porting AUTO CONFIRM successful for ID ' . $portingId);
-
-                $response = new PortingNotification\notifyAutoConfirmResponse();
-
-                return $response;
+                $emailService->adminErrorReport($fault, $portingParams, processType::PORTING);
 
             }
 
         }
-        else {
 
-            $faultCode = $portingStatedResponse->error;
-            $message = $portingStatedResponse->message;
-
-            $this->fileLogAction('7005', 'PortingNotificationService::notifyAutoConfirm', 'StartOPR failed for ' . $portingId . ' with ' . $faultCode . ' :: ' . $message);
-
-            $fault = '';
-
-            switch ($faultCode) {
-                // Terminal Processes
-                case Fault::SERVICE_BREAK_DOWN_CODE:
-                    $fault = Fault::SERVICE_BREAK_DOWN;
-                    break;
-                case Fault::SIGNATURE_MISMATCH_CODE:
-                    $fault = Fault::SIGNATURE_MISMATCH;
-                    break;
-                case Fault::DENIED_ACCESS_CODE:
-                    $fault = Fault::DENIED_ACCESS;
-                    break;
-                case Fault::UNKNOWN_COMMAND_CODE:
-                    $fault = Fault::UNKNOWN_COMMAND;
-                    break;
-                case Fault::INVALID_PARAMETER_TYPE_CODE:
-                    $fault = Fault::INVALID_PARAMETER_TYPE;
-                    break;
-
-                case Fault::PARAMETER_LIST_CODE:
-                    $fault = Fault::PARAMETER_LIST;
-                    break;
-
-                case Fault::CMS_EXECUTION_CODE:
-                    $fault = Fault::CMS_EXECUTION;
-                    break;
-
-                default:
-                    $fault = $faultCode;
-            }
+        if (count($portingErrors) > 0){
 
             $portingParams = $this->Porting_model->get_porting($portingId);
 
-            $emailService->adminErrorReport($fault, $portingParams, processType::PORTING);
+            $portingParams['msisdn'] = $portingErrors;
 
-            $response = new PortingNotification\notifyAutoConfirmResponse();
-
-            return $response;
-
+            $emailService->adminErrorReport('PORTING_AUTO_CONFIRMED AND MSISDN EXPORTED BUT DB FILLED INCOMPLETE', $portingParams, processType::PORTING);
         }
+
+        $response = new PortingNotification\notifyAutoConfirmResponse();
+
+        return $response;
+
     }
 
     /**
@@ -678,6 +789,8 @@ class PortingNotificationService extends CI_Controller
         $this->db->trans_start();
 
         $portingId = $notifyDeniedRequest->portingTransaction->portingId;
+
+        $portingNumbers = $this->getPortingNumbers($notifyDeniedRequest);
 
         $this->fileLogAction('8060', 'PortingNotificationService', 'Porting DENY received for ID ' . $portingId);
 
@@ -713,6 +826,22 @@ class PortingNotificationService extends CI_Controller
 
         $this->Portingdenyrejectionabandon_model->add_portingdenyrejectionabandon($pdraParams);
 
+        // Update number state
+
+        foreach ($portingNumbers as $portingNumber){
+
+            // Update Porting Number table
+
+            $portingNumberParams = array(
+                'pLastChangeDateTime' => $notifyDeniedRequest->portingTransaction->lastChangeDateTime,
+                'numberState' => provisionStateType::TERMINATED,
+                'terminationReason' => $notifyDeniedRequest->denialReason
+            );
+
+            $this->ProcessNumber_model->update_processnumber($portingId, $portingNumber, $portingNumberParams);
+
+        }
+
         // Send SMS to Subscriber
 
         // Get porting Info for language
@@ -720,7 +849,7 @@ class PortingNotificationService extends CI_Controller
 
         $language = $portingInfo['language'];
 
-        $subscriberMSISDN = $notifyDeniedRequest->portingTransaction->numberRanges->numberRange->startNumber;
+        $subscriberMSISDN = $notifyDeniedRequest->portingTransaction->subscriberInfo->contactNumber;
 
         $smsResponse = SMS::OPR_Subscriber_KO($language, $subscriberMSISDN);
 
@@ -740,7 +869,8 @@ class PortingNotificationService extends CI_Controller
                 'sendDateTime' => date('c')
             );
 
-        }else{
+        }
+        else{
 
             $this->fileLogAction('8060', 'PortingNotificationService', "Porting DENY SMS sent failed for $portingId");
 
@@ -768,11 +898,13 @@ class PortingNotificationService extends CI_Controller
             $portingParams = $this->Porting_model->get_porting($portingId);
 
             $emailService = new EmailService();
-            $emailService->adminErrorReport('PORTING_REJECTED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
+            $emailService->adminErrorReport('PORTING REJECTED BUT DB FILLED INCOMPLETE', $portingParams, processType::PORTING);
             $this->db->trans_complete();
             throw new ldbAdministrationServiceFault();
 
-        }else{
+        }
+
+        else{
 
             $this->db->trans_complete();
 
@@ -796,6 +928,8 @@ class PortingNotificationService extends CI_Controller
         isAuthorized();
 
         $portingId = $notifyRejectedRequest->portingTransaction->portingId;
+
+        $portingNumbers = $this->getPortingNumbers($notifyRejectedRequest);
 
         $this->fileLogAction('8060', 'PortingNotificationService', 'Porting REJECT received for ID ' . $portingId);
 
@@ -833,6 +967,22 @@ class PortingNotificationService extends CI_Controller
 
         $this->Portingdenyrejectionabandon_model->add_portingdenyrejectionabandon($pdraParams);
 
+        // Update number state
+
+        foreach ($portingNumbers as $portingNumber){
+
+            // Update Porting Number table
+
+            $portingNumberParams = array(
+                'pLastChangeDateTime' => $notifyRejectedRequest->portingTransaction->lastChangeDateTime,
+                'numberState' => provisionStateType::TERMINATED,
+                'terminationReason' => $notifyRejectedRequest->rejectionReason
+            );
+
+            $this->ProcessNumber_model->update_processnumber($portingId, $portingNumber, $portingNumberParams);
+
+        }
+
         // Send SMS to Subscriber
 
         // Get porting Info for language
@@ -840,15 +990,20 @@ class PortingNotificationService extends CI_Controller
 
         $language = $portingInfo['language'];
 
-        $subscriberMSISDN = $notifyRejectedRequest->portingTransaction->numberRanges->numberRange->startNumber;
+        $sendMsisdn = $notifyRejectedRequest->portingTransaction->subscriberInfo->contactNumber;
+        $subscriberMSISDN = implode(', ', $portingNumbers);
+
+        if(strlen($subscriberMSISDN) > 26){
+            $subscriberMSISDN = substr($subscriberMSISDN, 0, 27) . ' ...';
+        }
 
         if($notifyRejectedRequest->rejectionReason == \PortingService\Porting\rejectionReasonType::SUBSCRIBER_CANCELLED_PORTING){
 
-            $smsResponse = SMS::OPR_Subscriber_Cancellation($language, $subscriberMSISDN);
+            $smsResponse = SMS::OPR_Subscriber_Cancellation($language, $subscriberMSISDN, $sendMsisdn);
 
         }else{
 
-            $smsResponse = SMS::OPR_Subscriber_KO($language, $subscriberMSISDN);
+            $smsResponse = SMS::OPR_Subscriber_KO($language, $sendMsisdn);
 
         }
 
@@ -906,11 +1061,12 @@ class PortingNotificationService extends CI_Controller
             $portingParams = $this->Porting_model->get_porting($portingId);
 
             $emailService = new EmailService();
-            $emailService->adminErrorReport('PORTING_REJECTED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
+            $emailService->adminErrorReport('PORTING REJECTED BUT DB FILLED INCOMPLETE', $portingParams, processType::PORTING);
             $this->db->trans_complete();
             throw new ldbAdministrationServiceFault();
 
-        }else{
+        }
+        else{
 
             $this->db->trans_complete();
 
@@ -936,6 +1092,8 @@ class PortingNotificationService extends CI_Controller
         $this->db->trans_start();
 
         $portingId = $notifyAbandonedRequest->portingTransaction->portingId;
+
+        $portingNumbers = $this->getPortingNumbers($notifyAbandonedRequest);
 
         $this->fileLogAction('8060', 'PortingNotificationService', 'Porting ABANDON received for ID ' . $portingId);
 
@@ -970,12 +1128,27 @@ class PortingNotificationService extends CI_Controller
 
         $this->Portingdenyrejectionabandon_model->add_portingdenyrejectionabandon($pdraParams);
 
-        // Send SMS to Subscriber
+        // Update number state
+
+        foreach ($portingNumbers as $portingNumber){
+
+            // Update Porting Number table
+
+            $portingNumberParams = array(
+                'pLastChangeDateTime' => $notifyAbandonedRequest->portingTransaction->lastChangeDateTime,
+                'numberState' => provisionStateType::TERMINATED
+            );
+
+            $this->ProcessNumber_model->update_processnumber($portingId, $portingNumber, $portingNumberParams);
+
+        }
+
+        // Send SMS to Subscriber(s)
         $portingInfo = $this->Porting_model->get_porting($portingId);
 
         $language = $portingInfo['language'];
 
-        $subscriberMSISDN = $notifyAbandonedRequest->portingTransaction->numberRanges->numberRange->startNumber;
+        $subscriberMSISDN = $notifyAbandonedRequest->portingTransaction->subscriberInfo->contactNumber;
 
         $smsResponse =  SMS::Subscriber_CADB_Abandoned($language, $subscriberMSISDN);
 
@@ -1025,13 +1198,15 @@ class PortingNotificationService extends CI_Controller
 
             $portingParams = $this->Porting_model->get_porting($portingId);
 
-            $emailService->adminErrorReport('PORTING_ABANDONED_BUT_DB_FILLED_INCOMPLETE', $portingParams, processType::PORTING);
+            $emailService->adminErrorReport('PORTING ABANDONED BUT DB FILLED INCOMPLETE', $portingParams, processType::PORTING);
 
             $this->db->trans_complete();
 
             throw new ldbAdministrationServiceFault();
 
-        }else{
+        }
+
+        else{
 
             $this->db->trans_complete();
 
@@ -1063,6 +1238,68 @@ class PortingNotificationService extends CI_Controller
         $response = $bscsOperationService->importMSISDN($portingNumber, $donorNetworkId);
 
         return $response;
+
+    }
+
+    /**
+     * Returns porting MSISDN in process
+     * @param $request
+     * @return array
+     */
+    private function getPortingNumbers($request){
+
+        $numbers = [];
+
+        if(is_array($request->portingTransaction->numberRanges->numberRange)){
+
+            foreach ($request->portingTransaction->numberRanges->numberRange as $numberRange){
+
+                $startMSISDN = $numberRange->startNumber;
+                $endMSISDN = $numberRange->endNumber;
+
+                if(strlen($startMSISDN) == 12){
+                    $startMSISDN = substr($startMSISDN, 3);
+                }
+                if(strlen($endMSISDN) == 12){
+                    $endMSISDN = substr($endMSISDN, 3);
+                }
+
+                $startMSISDN = intval($startMSISDN);
+                $endMSISDN = intval($endMSISDN);
+
+                while ($startMSISDN <= $endMSISDN){
+                    $numbers[] = '237' . $startMSISDN;
+                    $startMSISDN += 1;
+                }
+
+            }
+
+        }
+        else{
+
+            $startMSISDN = $request->portingTransaction->numberRanges->numberRange->startNumber;
+            $endMSISDN = $request->portingTransaction->numberRanges->numberRange->endNumber;
+
+            if(strlen($startMSISDN) == 12){
+                $startMSISDN = substr($startMSISDN, 3);
+            }
+            if(strlen($endMSISDN) == 12){
+                $endMSISDN = substr($endMSISDN, 3);
+            }
+
+            $startMSISDN = intval($startMSISDN);
+            $endMSISDN = intval($endMSISDN);
+
+            while ($startMSISDN <= $endMSISDN){
+                $numbers[] = '237' . $startMSISDN;
+                $startMSISDN += 1;
+            }
+
+        }
+
+        $numbers = array_values(array_unique($numbers));
+
+        return $numbers;
 
     }
 

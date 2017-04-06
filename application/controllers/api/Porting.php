@@ -58,7 +58,7 @@ class Porting extends CI_Controller
             $portingMsisdn = $this->input->post('portingMsisdn');
             $subscriberType = $this->input->post('subscriberType'); // 0 == Person, 1 == Enterprise
             $rio = $this->input->post('rio');
-            $documentType = $this->input->post('documentType');
+                $documentType = $this->input->post('documentType');
             $physicalPersonFirstName = $this->input->post('physicalPersonFirstName');
             $physicalPersonLastName = $this->input->post('physicalPersonLastName');
             $physicalPersonIdNumber = $this->input->post('physicalPersonIdNumber');
@@ -73,7 +73,10 @@ class Porting extends CI_Controller
 
             // Get subscriber contractId from BSCS with temporal MSISDN
             $bscsOperationService = new BscsOperationService();
-            $contractId = $bscsOperationService->getContractId($temporalNumber);
+
+            $numberDetails = $bscsOperationService->loadTemporalNumberInfo($temporalNumber);
+
+            $contractId = $numberDetails["CONTRACT_ID"];
 
             if($contractId == -1){
 
@@ -85,7 +88,18 @@ class Porting extends CI_Controller
                 $response['success'] = false;
                 $response['message'] = 'Temporal number not found in BSCS. Please verify number has been identified properly and try again';
 
-            }else{
+            }elseif($subscriberType == '0' && $numberDetails['ID_PIECE'] != trim($physicalPersonIdNumber)){
+
+                $response['success'] = false;
+                $response['message'] = 'Temporal number does not belong to subscriber';
+
+            }elseif($subscriberType == '1' && $numberDetails['NUM_REGISTRE'] != trim($legalPersonTin)){
+
+                $response['success'] = false;
+                $response['message'] = 'Temporal number does not belong to subscriber';
+
+            }
+            else{
 
                 $portingOperationService = new PortingOperationService();
 
@@ -120,134 +134,6 @@ class Porting extends CI_Controller
             $file_name = $this->input->post('fileName');
             $portingDateTime = $this->input->post('portingDateTime');
             $userId = $this->input->post('userId');
-
-           /*if($file_name != ''){
-                $row = 1;
-
-                if (($handle = fopen(FCPATH . 'uploads/' .$file_name, "r")) !== FALSE) {
-
-                    $response['success'] = true;
-
-                    $tmpData = [];
-
-                    $portingOperationService = new PortingOperationService();
-
-                    $bscsOperationService = new BscsOperationService();
-
-                    while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
-                        if($row == 1){
-                            // Check if header Ok
-                            $errorFound = false;
-                            if(isset($data[0]) && strtolower($data[0]) != 'donoroperator'){
-                                $errorFound = true;
-                            }
-                            if(isset($data[1]) && strtolower($data[1]) != 'portingmsisdn'){
-                                $errorFound = true;
-                            }
-                            if(isset($data[2]) && strtolower($data[2]) != 'rio'){
-                                $errorFound = true;
-                            }
-                            if(isset($data[3]) && strtolower($data[3]) != 'documenttype'){
-                                $errorFound = true;
-                            }
-                            if(isset($data[4]) && strtolower($data[4]) != 'firstname'){
-                                $errorFound = true;
-                            }
-                            if(isset($data[5]) && strtolower($data[5]) != 'lastname'){
-                                $errorFound = true;
-                            }
-                            if(isset($data[6]) && strtolower($data[6]) != 'idnumber'){
-                                $errorFound = true;
-                            }
-                            if(isset($data[7]) && strtolower($data[7]) != 'temporalnumber'){
-                                $errorFound = true;
-                            }
-                            if(isset($data[8]) && strtolower($data[8]) != 'language'){
-                                $errorFound = true;
-                            }
-                            if($errorFound){
-                                $response['success'] = false;
-                                $response['message'] = 'Invalid file content format. Columns do not match defined template. If you have difficulties creating file, please contact administrator';
-
-                                $this->send_response($response);
-
-                                unlink(FCPATH . 'uploads/' .$file_name);
-
-                                return;
-                            }
-                            $row++;
-                        }
-                        else{
-
-                            $tempResponse = [];
-
-                            $donorOperator = $data[0]; // Donor Operator, either MTN or NEXTTEL
-                            $portingMSISDN = $data[1]; // MSISDN to port
-                            $rio = $data[2]; // RIO
-                            $documentType = $data[3]; // documentType
-                            $physicalPersonFirstName = $data[4]; // FirstName
-                            $physicalPersonLastName = $data[5]; // lastName
-                            $physicalPersonIdNumber = $data[6]; // idNumber
-                            $temporalNumber = $data[7]; // temporalNumber
-                            $language = $data[8]; // language
-
-                            $subscriberType = 0; // Physical person
-
-                            // Get subscriber contractId from BSCS with temporal MSISDN
-                            $contractId = $bscsOperationService->getContractId($temporalNumber);
-
-                            if($contractId == -1){
-
-                                $tempResponse['success'] = false;
-                                $tempResponse['message'] = 'Connection to BSCS Unsuccessful. Please try again later';
-                                $tempResponse['portingMSISDN'] = $portingMSISDN;
-
-                            }elseif($contractId == null){
-
-                                $tempResponse['success'] = false;
-                                $tempResponse['message'] = 'Temporal number not found in BSCS. Please verify number has been identified properly and try again';
-                                $tempResponse['portingMSISDN'] = $portingMSISDN;
-
-                            }else{
-
-                                if(strtolower($donorOperator) == 'mtn'){
-                                    $donorOperator = 0;
-                                }elseif (strtolower($donorOperator) == 'nexttel'){
-                                    $donorOperator = 1;
-                                }else{
-                                    $tempResponse['success'] = false;
-                                    $tempResponse['message'] = "Invalid donor operator. Must be <MTN> or <NEXTTEL>";
-                                    $tempResponse['portingMSISDN'] = $portingMSISDN;
-                                }
-
-                                if($donorOperator == 0 || $donorOperator == 1){
-
-                                    $tempResponse = $portingOperationService->orderPort($donorOperator, $portingMSISDN, $subscriberType, $rio, $documentType, $physicalPersonFirstName,
-                                        $physicalPersonLastName, $physicalPersonIdNumber, null, null,
-                                        null, $temporalNumber, $contractId, $language, $portingDateTime, $userId);
-                                    $tempResponse['portingMSISDN'] = $portingMSISDN;
-                                }
-
-                            }
-
-                            $tmpData[] = $tempResponse;
-
-                        }
-                    }
-
-                    $response['data'] = $tmpData;
-
-                    fclose($handle);
-
-                    unlink(FCPATH . 'uploads/' .$file_name);
-
-                }
-
-            }
-            else{
-                $response['success'] = false;
-                $response['message'] = 'No file name found';
-            }*/
 
             $fileObject = PHPExcel_IOFactory::load(FCPATH . 'uploads/' .$file_name);
 
@@ -290,10 +176,13 @@ class Porting extends CI_Controller
                         if(isset($sheetDatum[6]) && strtolower($sheetDatum[6]) != 'idnumber'){
                             $errorFound = true;
                         }
-                        if(isset($sheetDatum[7]) && strtolower($sheetDatum[7]) != 'temporalnumber'){
+                        if(isset($sheetDatum[7]) && strtolower($sheetDatum[7]) != 'contactnumber'){
                             $errorFound = true;
                         }
-                        if(isset($sheetDatum[8]) && strtolower($sheetDatum[8]) != 'language'){
+                        if(isset($sheetDatum[8]) && strtolower($sheetDatum[8]) != 'temporalnumber'){
+                            $errorFound = true;
+                        }
+                        if(isset($sheetDatum[9]) && strtolower($sheetDatum[9]) != 'language'){
                             $errorFound = true;
                         }
                         if($errorFound){
@@ -320,13 +209,20 @@ class Porting extends CI_Controller
                         $physicalPersonFirstName = $sheetDatum[4]; // FirstName
                         $physicalPersonLastName = $sheetDatum[5]; // lastName
                         $physicalPersonIdNumber = $sheetDatum[6]; // idNumber
-                        $temporalNumber = $sheetDatum[7]; // temporalNumber
-                        $language = $sheetDatum[8]; // language
+                        $contactNumber = $sheetDatum[7]; // contactNumber
+                        $temporalNumber = $sheetDatum[8]; // temporalNumber
+                        $language = $sheetDatum[9]; // language
 
                         $subscriberType = 0; // Physical person
 
+                        if(strlen($portingMSISDN) < 10){
+                            $portingMSISDN = '237' . $portingMSISDN;
+                        }
+
                         // Get subscriber contractId from BSCS with temporal MSISDN
-                        $contractId = $bscsOperationService->getContractId($temporalNumber);
+                        $numberDetails = $bscsOperationService->loadTemporalNumberInfo($temporalNumber);
+
+                        $contractId = $numberDetails["CONTRACT_ID"];
 
                         if($contractId == -1){
 
@@ -340,7 +236,14 @@ class Porting extends CI_Controller
                             $tempResponse['message'] = 'Temporal number not found in BSCS. Please verify number has been identified properly and try again';
                             $tempResponse['portingMSISDN'] = $portingMSISDN;
 
-                        }else{
+                        }elseif($subscriberType == '0' && $numberDetails['ID_PIECE'] != trim($physicalPersonIdNumber)){
+
+                            $response['success'] = false;
+                            $response['message'] = 'Temporal number does not belong to subscriber';
+                            $tempResponse['portingMSISDN'] = $portingMSISDN;
+
+                        }
+                        else{
 
                             if(strtolower($donorOperator) == 'mtn'){
                                 $donorOperator = 0;
@@ -356,7 +259,7 @@ class Porting extends CI_Controller
 
                                 $tempResponse = $portingOperationService->orderPort($donorOperator, $portingMSISDN, $subscriberType, $rio, $documentType, $physicalPersonFirstName,
                                     $physicalPersonLastName, $physicalPersonIdNumber, null, null,
-                                    null, $temporalNumber, $contractId, $language, $portingDateTime, $userId);
+                                    $contactNumber, $temporalNumber, $contractId, $language, $portingDateTime, $userId);
                                 $tempResponse['portingMSISDN'] = $portingMSISDN;
                             }
 
@@ -402,133 +305,6 @@ class Porting extends CI_Controller
             $file_name = $this->input->post('fileName');
             $portingDateTime = $this->input->post('portingDateTime');
             $userId = $this->input->post('userId');
-
-            /*if($file_name != ''){
-                $row = 1;
-
-                if (($handle = fopen(FCPATH . 'uploads/' .$file_name, "r")) !== FALSE) {
-
-                    $response['success'] = true;
-
-                    $tmpData = [];
-
-                    $portingOperationService = new PortingOperationService();
-
-                    while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
-                        if($row == 1){
-                            // Check if header Ok
-                            $errorFound = false;
-                            if(isset($data[0]) && strtolower($data[0]) != 'donoroperator'){
-                                $errorFound = true;
-                            }
-                            if(isset($data[1]) && strtolower($data[1]) != 'portingmsisdn'){
-                                $errorFound = true;
-                            }
-                            if(isset($data[2]) && strtolower($data[2]) != 'rio'){
-                                $errorFound = true;
-                            }
-                            if(isset($data[3]) && strtolower($data[3]) != 'documenttype'){
-                                $errorFound = true;
-                            }
-                            if(isset($data[4]) && strtolower($data[4]) != 'legalname'){
-                                $errorFound = true;
-                            }
-                            if(isset($data[5]) && strtolower($data[5]) != 'legaltin'){
-                                $errorFound = true;
-                            }
-                            if(isset($data[6]) && strtolower($data[6]) != 'contactnumber'){
-                                $errorFound = true;
-                            }
-                            if(isset($data[7]) && strtolower($data[7]) != 'temporalnumber'){
-                                $errorFound = true;
-                            }
-                            if(isset($data[8]) && strtolower($data[8]) != 'language'){
-                                $errorFound = true;
-                            }
-                            if($errorFound){
-                                $response['success'] = false;
-                                $response['message'] = 'Invalid file content format. Columns do not match defined template. If you have difficulties creating file, please contact administrator';
-
-                                $this->send_response($response);
-
-                                unlink(FCPATH . 'uploads/' .$file_name);
-
-                                return;
-                            }
-                            $row++;
-                        }else{
-
-                            $tempResponse = [];
-
-                            $donorOperator = $data[0]; // Donor Operator, either MTN or NEXTTEL
-                            $portingMSISDN = $data[1]; // MSISDN to port
-                            $rio = $data[2]; // RIO
-                            $documentType = $data[3]; // Document Type
-                            $legalPersonName = $data[4]; // legalName
-                            $legalPersonTin = $data[5]; // legalTIN
-                            $contactNumber = $data[6]; // contactNumber
-                            $temporalNumber = $data[7]; // temporalNumber
-                            $language = $data[8]; // language
-
-                            $subscriberType = 1; // legal person
-
-                            // Get subscriber contractId from BSCS with temporal MSISDN
-                            $bscsOperationService = new BscsOperationService();
-                            $contractId = $bscsOperationService->getContractId($temporalNumber);
-
-                            if($contractId == -1){
-
-                                $tempResponse['success'] = false;
-                                $tempResponse['message'] = 'Connection to BSCS Unsuccessful. Please try again later';
-                                $tempResponse['portingMSISDN'] = $portingMSISDN;
-
-                            }elseif($contractId == null){
-
-                                $tempResponse['success'] = false;
-                                $tempResponse['message'] = 'Temporal number not found in BSCS. Please verify number has been identified properly and try again';
-                                $tempResponse['portingMSISDN'] = $portingMSISDN;
-
-                            }else{
-
-                                if(strtolower($donorOperator) == 'mtn'){
-                                    $donorOperator = 0;
-                                }elseif (strtolower($donorOperator) == 'nexttel'){
-                                    $donorOperator = 1;
-                                }else{
-                                    $tempResponse['success'] = false;
-                                    $tempResponse['message'] = "Invalid donor operator. Must be <MTN> or <NEXTTEL>";
-                                    $tempResponse['portingMSISDN'] = $portingMSISDN;
-                                }
-
-                                if($donorOperator == 0 || $donorOperator == 1){
-
-                                    $tempResponse = $portingOperationService->orderPort($donorOperator, $portingMSISDN, $subscriberType, $rio, $documentType, null,
-                                        null, null,$legalPersonName, $legalPersonTin, $contactNumber,
-                                        $temporalNumber, $contractId, $language, $portingDateTime, $userId);
-
-                                    $tempResponse['portingMSISDN'] = $portingMSISDN;
-
-                                }
-
-                            }
-
-                            $tmpData[] = $tempResponse;
-
-                        }
-                    }
-
-                    $response['data'] = $tmpData;
-
-                    fclose($handle);
-
-                    unlink(FCPATH . 'uploads/' .$file_name);
-
-                }
-
-            }else{
-                $response['success'] = false;
-                $response['message'] = 'No file name found';
-            }*/
 
             $fileObject = PHPExcel_IOFactory::load(FCPATH . 'uploads/' .$file_name);
 
@@ -607,7 +383,9 @@ class Porting extends CI_Controller
                         $subscriberType = 1; // legal person
 
                         // Get subscriber contractId from BSCS with temporal MSISDN
-                        $contractId = $bscsOperationService->getContractId($temporalNumber);
+                        $numberDetails = $bscsOperationService->loadTemporalNumberInfo($temporalNumber);
+
+                        $contractId = $numberDetails["CONTRACT_ID"];
 
                         if($contractId == -1){
 
@@ -621,7 +399,14 @@ class Porting extends CI_Controller
                             $tempResponse['message'] = 'Temporal number not found in BSCS. Please verify number has been identified properly and try again';
                             $tempResponse['portingMSISDN'] = $portingMSISDN;
 
-                        }else{
+                        }elseif($subscriberType == '1' && $numberDetails['NUM_REGISTRE'] != trim($legalPersonTin)){
+
+                            $response['success'] = false;
+                            $response['message'] = 'Temporal number does not belong to subscriber';
+                            $tempResponse['portingMSISDN'] = $portingMSISDN;
+
+                        }
+                        else{
 
                             if(strtolower($donorOperator) == 'mtn'){
                                 $donorOperator = 0;
@@ -865,7 +650,8 @@ class Porting extends CI_Controller
             $responseData['type_client'] = $data['TYPE_CLIENT'];
             $responseData['nom'] = $data['NOM'];
             $responseData['prenom'] = $data['PRENOM'];
-            $responseData['id_piece'] = $data['ID_PIECE'];
+            $responseData['id_piece_num'] = $data['ID_PIECE'];
+            $responseData['id_piece'] = null;
 
             $responseData['ste'] = $data['STE'];
             $responseData['num_registre'] = $data['NUM_REGISTRE'];

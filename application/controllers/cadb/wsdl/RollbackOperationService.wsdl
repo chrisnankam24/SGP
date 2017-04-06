@@ -399,7 +399,7 @@
 
 	<service name="RollbackOperationService">
 		<port name="RollbackOperationServicePort" binding="tns:RollbackOperationServiceBinding">
-			<soap:address location="http://localhost/SGP/index.php/cadb/ROSServerFunctionalities"/>
+			<soap:address location="http://cameroonmnp.campost.cm/cadb/services/RollbackOperationService/"/>
 		</port>
 	</service>
 
