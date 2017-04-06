@@ -3930,7 +3930,7 @@ class BatchOperationService extends CI_Controller {
                 // Porting found in the DB and in correct state. Perfect :)
             }else{
 
-                $portingParams = $this->getPortingParams($dbPorting);
+                $portingParams = $dbPorting;
 
                 $this->fileLogAction('9006', 'BatchOperationService::systemAPIUpdater', 'Porting[' . $cadbPorting['portingId'] . '] is '  . $cadbPorting['portingState'] . ' in CADB but ' . $dbPorting['portingState'] . ' in LDB: ' . json_encode($cadbPorting));
 
@@ -3959,7 +3959,7 @@ class BatchOperationService extends CI_Controller {
                 // Rollback found in the DB and in correct state. Perfect :)
             }else{
 
-                $rollbackParams = $this->getRollbackParams($dbRollback);
+                $rollbackParams = $cadbRollback;
 
                 $this->fileLogAction('9006', 'BatchOperationService::systemAPIUpdater', 'Rollback[' . $cadbRollback['rollbackId'] . '] is '  . $cadbRollback['rollbackState'] . ' in CADB but ' . $dbRollback['rollbackState'] . ' in LDB: ' . json_encode($cadbRollback));
 
@@ -3988,7 +3988,7 @@ class BatchOperationService extends CI_Controller {
                 // Rollback found in the DB and in correct state. Perfect :)
             }else{
 
-                $returnParams = $this->getReturnParams($dbReturn);
+                $returnParams = $cadbReturn;
 
                 $this->fileLogAction('9006', 'BatchOperationService::systemAPIUpdater', 'Rollback[' . $cadbReturn['returnId'] . '] is '  . $cadbReturn['rollbackState'] . ' in CADB but ' . $dbReturn['returnNumberState'] . ' in LDB: ' . json_encode($cadbReturn));
 
