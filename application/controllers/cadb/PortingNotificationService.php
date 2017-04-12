@@ -135,7 +135,7 @@ class PortingNotificationService extends CI_Controller
                 'processId' => $portingId,
                 'msisdn' => $portingNumber,
                 'numberState' => provisionStateType::STARTED,
-                'pLastChangeDateTime' => date('c'),
+                'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
                 'processType' => processType::PORTING
             );
         }
@@ -210,7 +210,7 @@ class PortingNotificationService extends CI_Controller
 
         // Update Number state
         $portingNumberParams = array(
-            'pLastChangeDateTime' => date('c'),
+            'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
             'numberState' => \PortingService\Porting\portingStateType::APPROVED
         );
 
@@ -287,7 +287,7 @@ class PortingNotificationService extends CI_Controller
 
         // Update Number state
         $portingNumberParams = array(
-            'pLastChangeDateTime' => date('c'),
+            'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
             'numberState' => \PortingService\Porting\portingStateType::APPROVED
         );
 
@@ -320,7 +320,7 @@ class PortingNotificationService extends CI_Controller
 
                     // Update process number in DB
                     $portingNumberParams = array(
-                        'pLastChangeDateTime' => date('c'),
+                        'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
                         'contractId' => $subscriberInfo['CONTRACT_ID'],
                         'numberState' => \PortingService\Porting\portingStateType::APPROVED
                     );
@@ -411,7 +411,7 @@ class PortingNotificationService extends CI_Controller
 
         // Update Number state
         $portingNumberParams = array(
-            'pLastChangeDateTime' => date('c'),
+            'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
             'numberState' => \PortingService\Porting\portingStateType::ACCEPTED
         );
 
@@ -449,10 +449,10 @@ class PortingNotificationService extends CI_Controller
                 'smsType' => SMSType::OPR_PORTING_OK,
                 'message' => $smsResponse['message'],
                 'msisdn' => $smsResponse['msisdn'],
-                'creationDateTime' => date('c'),
+                'creationDateTime' => date('Y-m-d\TH:i:s'),
                 'status' => smsState::SENT,
                 'attemptCount' => 1,
-                'sendDateTime' => date('c')
+                'sendDateTime' => date('Y-m-d\TH:i:s')
             );
 
         }
@@ -465,7 +465,7 @@ class PortingNotificationService extends CI_Controller
                 'smsType' => SMSType::OPR_PORTING_OK,
                 'message' => $smsResponse['message'],
                 'msisdn' => $smsResponse['msisdn'],
-                'creationDateTime' => date('c'),
+                'creationDateTime' => date('Y-m-d\TH:i:s'),
                 'status' => smsState::PENDING,
                 'attemptCount' => 1,
             );
@@ -544,7 +544,7 @@ class PortingNotificationService extends CI_Controller
 
         // Update Number state
         $portingNumberParams = array(
-            'pLastChangeDateTime' => date('c'),
+            'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
             'numberState' => \PortingService\Porting\portingStateType::ACCEPTED
         );
 
@@ -581,10 +581,10 @@ class PortingNotificationService extends CI_Controller
                 'smsType' => SMSType::OPR_PORTING_OK,
                 'message' => $smsResponse['message'],
                 'msisdn' => $smsResponse['msisdn'],
-                'creationDateTime' => date('c'),
+                'creationDateTime' => date('Y-m-d\TH:i:s'),
                 'status' => smsState::SENT,
                 'attemptCount' => 1,
-                'sendDateTime' => date('c')
+                'sendDateTime' => date('Y-m-d\TH:i:s')
             );
 
         }
@@ -597,7 +597,7 @@ class PortingNotificationService extends CI_Controller
                 'smsType' => SMSType::OPR_PORTING_OK,
                 'message' => $smsResponse['message'],
                 'msisdn' => $smsResponse['msisdn'],
-                'creationDateTime' => date('c'),
+                'creationDateTime' => date('Y-m-d\TH:i:s'),
                 'status' => smsState::PENDING,
                 'attemptCount' => 1,
             );
@@ -688,7 +688,7 @@ class PortingNotificationService extends CI_Controller
                 // Update Porting Number table
 
                 $portingNumberParams = array(
-                    'pLastChangeDateTime' => date('c'),
+                    'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
                     'numberState' => \PortingService\Porting\portingStateType::MSISDN_IMPORT_CONFIRMED
                 );
 
@@ -863,10 +863,10 @@ class PortingNotificationService extends CI_Controller
                 'smsType' => SMSType::OPR_PORTING_KO,
                 'message' => $smsResponse['message'],
                 'msisdn' => $smsResponse['msisdn'],
-                'creationDateTime' => date('c'),
+                'creationDateTime' => date('Y-m-d\TH:i:s'),
                 'status' => smsState::SENT,
                 'attemptCount' => 1,
-                'sendDateTime' => date('c')
+                'sendDateTime' => date('Y-m-d\TH:i:s')
             );
 
         }
@@ -879,7 +879,7 @@ class PortingNotificationService extends CI_Controller
                 'smsType' => SMSType::OPR_PORTING_KO,
                 'message' => $smsResponse['message'],
                 'msisdn' => $smsResponse['msisdn'],
-                'creationDateTime' => date('c'),
+                'creationDateTime' => date('Y-m-d\TH:i:s'),
                 'status' => smsState::PENDING,
                 'attemptCount' => 1,
             );
@@ -1016,10 +1016,10 @@ class PortingNotificationService extends CI_Controller
                 'portingId' => $portingId,
                 'message' => $smsResponse['message'],
                 'msisdn' => $smsResponse['msisdn'],
-                'creationDateTime' => date('c'),
+                'creationDateTime' => date('Y-m-d\TH:i:s'),
                 'status' => smsState::SENT,
                 'attemptCount' => 1,
-                'sendDateTime' => date('c')
+                'sendDateTime' => date('Y-m-d\TH:i:s')
             );
 
             if($notifyRejectedRequest->rejectionReason == \PortingService\Porting\rejectionReasonType::SUBSCRIBER_CANCELLED_PORTING){
@@ -1041,7 +1041,7 @@ class PortingNotificationService extends CI_Controller
                 'smsType' => SMSType::OPR_PORTING_KO,
                 'message' => $smsResponse['message'],
                 'msisdn' => $smsResponse['msisdn'],
-                'creationDateTime' => date('c'),
+                'creationDateTime' => date('Y-m-d\TH:i:s'),
                 'status' => smsState::PENDING,
                 'attemptCount' => 1,
             );
@@ -1162,10 +1162,10 @@ class PortingNotificationService extends CI_Controller
                 'smsType' => SMSType::OPR_PORTING_KO,
                 'message' => $smsResponse['message'],
                 'msisdn' => $smsResponse['msisdn'],
-                'creationDateTime' => date('c'),
+                'creationDateTime' => date('Y-m-d\TH:i:s'),
                 'status' => smsState::SENT,
                 'attemptCount' => 1,
-                'sendDateTime' => date('c')
+                'sendDateTime' => date('Y-m-d\TH:i:s')
             );
 
         } else{
@@ -1177,7 +1177,7 @@ class PortingNotificationService extends CI_Controller
                 'smsType' => SMSType::OPR_PORTING_KO,
                 'message' => $smsResponse['message'],
                 'msisdn' => $smsResponse['msisdn'],
-                'creationDateTime' => date('c'),
+                'creationDateTime' => date('Y-m-d\TH:i:s'),
                 'status' => smsState::PENDING,
                 'attemptCount' => 1,
             );

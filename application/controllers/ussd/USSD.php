@@ -150,11 +150,12 @@ class USSD extends CI_Controller {
 
             $smsNotificationparams = array(
                 'message' => $message,
-                'creationDateTime' => date('c'),
+                'creationDateTime' => date('Y-m-d\TH:i:s'),
                 'status' => smsState::SENT,
                 'msisdn' => '237' . $msisdn,
                 'attemptCount' => 1,
-                'sendDateTime' => date('c')
+                'sendDateTime' => date('Y-m-d\TH:i:s'),
+                'source' => rioSource::USSD
             );
 
         }else{
@@ -165,10 +166,11 @@ class USSD extends CI_Controller {
 
             $smsNotificationparams = array(
                 'message' => $message,
-                'creationDateTime' => date('c'),
+                'creationDateTime' => date('Y-m-d\TH:i:s'),
                 'msisdn' => '237' . $msisdn,
                 'status' => smsState::PENDING,
-                'attemptCount' => 1
+                'attemptCount' => 1,
+                'source' => rioSource::USSD
             );
 
         }

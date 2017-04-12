@@ -115,7 +115,7 @@ class ProvisionNotificationService  extends CI_Controller {
                 'processId' => $processId,
                 'msisdn' => $provisionNumber,
                 'numberState' => $provisionState,
-                'pLastChangeDateTime' => date('c')
+                'pLastChangeDateTime' => date('Y-m-d\TH:i:s')
             );
         }
 
@@ -133,7 +133,7 @@ class ProvisionNotificationService  extends CI_Controller {
                 'cadbNumber' => '',
                 'problem' => 'NB: This is a provisioning problem',
                 'reporterNetworkId' => '',
-                'submissionDateTime' => date('c'),
+                'submissionDateTime' => date('Y-m-d\TH:i:s'),
                 'processType' => $processType
             );
 

@@ -38,4 +38,20 @@ class FileLog_Model extends CI_Model
 
         }
     }
+
+    public function email_list(){
+
+        $file = APPPATH . "/email_list.txt";
+
+        $emailFile = fopen($file, "r");
+
+        $emailList = fread($emailFile, filesize($file));
+
+        $emailList = explode(';', $emailList);
+
+        fclose($emailFile);
+
+        return $emailList;
+
+    }
 }

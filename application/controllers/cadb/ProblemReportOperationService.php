@@ -210,7 +210,7 @@ class ProblemReportOperationService {
                     'cadbNumber' => $cadbNumber,
                     'problem' => $problem,
                     'reporterNetworkId' => Operator::ORANGE_NETWORK_ID,
-                    'submissionDateTime' => date('c'),
+                    'submissionDateTime' => date('Y-m-d\TH:i:s'),
                     'processType' => ''
                 );
 

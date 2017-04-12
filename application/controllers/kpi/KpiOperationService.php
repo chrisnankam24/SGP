@@ -7,31 +7,64 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * Date: 12/14/2016
  * Time: 4:31 PM
  */
-class kpiOperationService extends CI_Controller {
+class kpiOperationService{
 
     const HOURLY = 0;
     const DAILY = 1;
     const WEEKLY = 2;
     const MONTHLY = 3;
     const YEARLY = 4;
+    
+    
+    private $Porting_model = null;
+    private $Rollback_model = null;
+    private $Provisioning_model = null;
+    private $Numberreturn_model = null;
 
     public function __construct()
     {
-        parent::__construct();
 
         // Load models
-
+        /*
+        parent::__construct();
         $this->load->model('Porting_model');
         $this->load->model('Rollback_model');
         $this->load->model('Provisioning_model');
         $this->load->model('Numberreturn_model');
+        */
+        $CI =& get_instance();
+        $this->db = $CI->db;
+
+        $CI->load->model('Porting_model');
+        $CI->load->model('Rollback_model');
+        $CI->load->model('Provisioning_model');
+        $CI->load->model('Numberreturn_model');
+        
+        $this->Porting_model = $CI->Porting_model;
+        $this->Rollback_model = $CI->Rollback_model;
+        $this->Provisioning_model = $CI->Provisioning_model;
+        $this->Numberreturn_model = $CI->Numberreturn_model;
 
     }
-
-    public function index(){
-        $response = $this->msisdnPortCancelled('2017-03-07 18:10:33', '2017-03-11 18:10:33',  kpiOperationService::DAILY);
-        print_r(json_encode($response));
+    
+    public function test(){
+        $response = $this->totalPort('2017-03-06 18:10:33', '2017-04-04 19:40:21',  kpiOperationService::MONTHLY);
+        echo json_encode($response);
     }
+    
+    /*
+    public function in(){
+        $response = $this->totalPortIn('2017-03-06 18:10:33', '2017-04-04 19:40:21',  kpiOperationService::MONTHLY);
+        echo json_encode($response);
+    }
+    public function out(){
+        $response = $this->totalPortOut('2017-03-06 18:10:33', '2017-04-04 19:40:21',  kpiOperationService::MONTHLY);
+        echo json_encode($response);
+    }
+    public function total(){
+        $response = $this->totalPort('2017-03-06 18:10:33', '2017-04-04 19:40:21',  kpiOperationService::MONTHLY);
+        echo json_encode($response);
+    }*/
 
     /**
      * @param $startDateTime
@@ -41,6 +74,7 @@ class kpiOperationService extends CI_Controller {
      */
     public function totalPortOut($startDateTime, $endDateTime, $granularity){
 
+        
         $totalPortsOut = $this->Porting_model->get_total_ports_out($startDateTime,$endDateTime);
 
         $timeInterval = $this->getInterval($startDateTime, $endDateTime, $granularity);

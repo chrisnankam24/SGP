@@ -17,6 +17,7 @@ class Porting extends CI_Controller
         parent::__construct();
 
         // Load required models
+        $this->load->model('Config_model');
 
     }
 
@@ -76,40 +77,54 @@ class Porting extends CI_Controller
 
             $numberDetails = $bscsOperationService->loadTemporalNumberInfo($temporalNumber);
 
-            $contractId = $numberDetails["CONTRACT_ID"];
-
-            if($contractId == -1){
+            if($numberDetails == -1){
 
                 $response['success'] = false;
                 $response['message'] = 'Connection to BSCS Unsuccessful. Please try again later';
 
-            }elseif($contractId == null){
+            }elseif($numberDetails == null){
 
                 $response['success'] = false;
                 $response['message'] = 'Temporal number not found in BSCS. Please verify number has been identified properly and try again';
 
-            }elseif($subscriberType == '0' && $numberDetails['ID_PIECE'] != trim($physicalPersonIdNumber)){
+            }else{
 
-                $response['success'] = false;
-                $response['message'] = 'Temporal number does not belong to subscriber';
+                $contractId = $numberDetails["CONTRACT_ID"];
 
-            }elseif($subscriberType == '1' && $numberDetails['NUM_REGISTRE'] != trim($legalPersonTin)){
+                $activationDate = $numberDetails['ACTIVATION_DATE'];
 
-                $response['success'] = false;
-                $response['message'] = 'Temporal number does not belong to subscriber';
+                $diff = getDiff($activationDate, date('d-M-y'));
 
-            }
-            else{
+                if($subscriberType == '0' && $numberDetails['ID_PIECE'] != trim($physicalPersonIdNumber)){
 
-                $portingOperationService = new PortingOperationService();
+                    $response['success'] = false;
+                    $response['message'] = 'Temporal number does not belong to subscriber';
 
-                $orderResponse = $portingOperationService->orderPort($donorOperator, $portingMsisdn, $subscriberType, $rio, $documentType, $physicalPersonFirstName,
-                    $physicalPersonLastName, $physicalPersonIdNumber, $legalPersonName, $legalPersonTin,
-                    $contactNumber, $temporalNumber, $contractId, $language, $portingDateTime, $userId);
+                }elseif($subscriberType == '1' && $numberDetails['NUM_REGISTRE'] != trim($legalPersonTin)){
 
-                $response = $orderResponse;
+                    $response['success'] = false;
+                    $response['message'] = 'Temporal number does not belong to subscriber';
 
-            }
+                }elseif($diff->y > 0 || $diff->m > 0 || $diff->d > $this->Config_model->get_config('TMP_NUM_MAX_ACTIVATION_DAYS')){
+
+                    $response['success'] = false;
+                    $response['message'] = 'Number activated more than ' .
+                        $this->Config_model->get_config('TMP_NUM_MAX_ACTIVATION_DAYS') . ' days ago';
+
+                }
+                else{
+
+                        $portingOperationService = new PortingOperationService();
+
+                        $orderResponse = $portingOperationService->orderPort($donorOperator, $portingMsisdn, $subscriberType, $rio, $documentType, $physicalPersonFirstName,
+                            $physicalPersonLastName, $physicalPersonIdNumber, $legalPersonName, $legalPersonTin,
+                            $contactNumber, $temporalNumber, $contractId, $language, $portingDateTime, $userId);
+
+                        $response = $orderResponse;
+
+                    }
+
+                }
 
         }else{
 
@@ -149,6 +164,8 @@ class Porting extends CI_Controller
                 $portingOperationService = new PortingOperationService();
 
                 $bscsOperationService = new BscsOperationService();
+
+                $TMP_NUM_MAX_ACTIVATION_DAYS = $this->Config_model->get_config('TMP_NUM_MAX_ACTIVATION_DAYS');
 
                 foreach ($sheetData as $sheetDatum){
 
@@ -222,45 +239,60 @@ class Porting extends CI_Controller
                         // Get subscriber contractId from BSCS with temporal MSISDN
                         $numberDetails = $bscsOperationService->loadTemporalNumberInfo($temporalNumber);
 
-                        $contractId = $numberDetails["CONTRACT_ID"];
-
-                        if($contractId == -1){
+                        if($numberDetails == -1){
 
                             $tempResponse['success'] = false;
                             $tempResponse['message'] = 'Connection to BSCS Unsuccessful. Please try again later';
                             $tempResponse['portingMSISDN'] = $portingMSISDN;
 
-                        }elseif($contractId == null){
+                        }elseif($numberDetails == null){
 
                             $tempResponse['success'] = false;
                             $tempResponse['message'] = 'Temporal number not found in BSCS. Please verify number has been identified properly and try again';
                             $tempResponse['portingMSISDN'] = $portingMSISDN;
 
-                        }elseif($subscriberType == '0' && $numberDetails['ID_PIECE'] != trim($physicalPersonIdNumber)){
+                        }else{
 
-                            $response['success'] = false;
-                            $response['message'] = 'Temporal number does not belong to subscriber';
-                            $tempResponse['portingMSISDN'] = $portingMSISDN;
+                            $contractId = $numberDetails["CONTRACT_ID"];
 
-                        }
-                        else{
+                            $activationDate = $numberDetails['ACTIVATION_DATE'];
 
-                            if(strtolower($donorOperator) == 'mtn'){
-                                $donorOperator = 0;
-                            }elseif (strtolower($donorOperator) == 'nexttel'){
-                                $donorOperator = 1;
-                            }else{
-                                $tempResponse['success'] = false;
-                                $tempResponse['message'] = "Invalid donor operator. Must be <MTN> or <NEXTTEL>";
+                            $diff = getDiff($activationDate, date('d-M-y'));
+
+                            if($subscriberType == '0' && $numberDetails['ID_PIECE'] != trim($physicalPersonIdNumber)){
+
+                                $response['success'] = false;
+                                $response['message'] = 'Temporal number does not belong to subscriber';
                                 $tempResponse['portingMSISDN'] = $portingMSISDN;
+
+                            }elseif($diff->y > 0 || $diff->m > 0 || $diff->d > $TMP_NUM_MAX_ACTIVATION_DAYS){
+
+                                $response['success'] = false;
+                                $response['message'] = 'Number activated more than ' . $TMP_NUM_MAX_ACTIVATION_DAYS . ' days ago';
+                                $tempResponse['portingMSISDN'] = $portingMSISDN;
+
                             }
 
-                            if($donorOperator == 0 || $donorOperator == 1){
+                            else{
 
-                                $tempResponse = $portingOperationService->orderPort($donorOperator, $portingMSISDN, $subscriberType, $rio, $documentType, $physicalPersonFirstName,
-                                    $physicalPersonLastName, $physicalPersonIdNumber, null, null,
-                                    $contactNumber, $temporalNumber, $contractId, $language, $portingDateTime, $userId);
-                                $tempResponse['portingMSISDN'] = $portingMSISDN;
+                                if(strtolower($donorOperator) == 'mtn'){
+                                    $donorOperator = 0;
+                                }elseif (strtolower($donorOperator) == 'nexttel'){
+                                    $donorOperator = 1;
+                                }else{
+                                    $tempResponse['success'] = false;
+                                    $tempResponse['message'] = "Invalid donor operator. Must be <MTN> or <NEXTTEL>";
+                                    $tempResponse['portingMSISDN'] = $portingMSISDN;
+                                }
+
+                                if($donorOperator == 0 || $donorOperator == 1){
+
+                                    $tempResponse = $portingOperationService->orderPort($donorOperator, $portingMSISDN, $subscriberType, $rio, $documentType, $physicalPersonFirstName,
+                                        $physicalPersonLastName, $physicalPersonIdNumber, null, null,
+                                        $contactNumber, $temporalNumber, $contractId, $language, $portingDateTime, $userId);
+                                    $tempResponse['portingMSISDN'] = $portingMSISDN;
+                                }
+
                             }
 
                         }
@@ -320,6 +352,8 @@ class Porting extends CI_Controller
                 $portingOperationService = new PortingOperationService();
 
                 $bscsOperationService = new BscsOperationService();
+
+                $TMP_NUM_MAX_ACTIVATION_DAYS = $this->Config_model->get_config('TMP_NUM_MAX_ACTIVATION_DAYS');
 
                 foreach ($sheetData as $sheetDatum){
 
@@ -385,46 +419,60 @@ class Porting extends CI_Controller
                         // Get subscriber contractId from BSCS with temporal MSISDN
                         $numberDetails = $bscsOperationService->loadTemporalNumberInfo($temporalNumber);
 
-                        $contractId = $numberDetails["CONTRACT_ID"];
-
-                        if($contractId == -1){
+                        if($numberDetails == -1){
 
                             $tempResponse['success'] = false;
                             $tempResponse['message'] = 'Connection to BSCS Unsuccessful. Please try again later';
                             $tempResponse['portingMSISDN'] = $portingMSISDN;
 
-                        }elseif($contractId == null){
+                        }elseif($numberDetails == null){
 
                             $tempResponse['success'] = false;
                             $tempResponse['message'] = 'Temporal number not found in BSCS. Please verify number has been identified properly and try again';
                             $tempResponse['portingMSISDN'] = $portingMSISDN;
 
-                        }elseif($subscriberType == '1' && $numberDetails['NUM_REGISTRE'] != trim($legalPersonTin)){
+                        }else{
 
-                            $response['success'] = false;
-                            $response['message'] = 'Temporal number does not belong to subscriber';
-                            $tempResponse['portingMSISDN'] = $portingMSISDN;
+                            $contractId = $numberDetails["CONTRACT_ID"];
 
-                        }
-                        else{
+                            $activationDate = $numberDetails['ACTIVATION_DATE'];
 
-                            if(strtolower($donorOperator) == 'mtn'){
-                                $donorOperator = 0;
-                            }elseif (strtolower($donorOperator) == 'nexttel'){
-                                $donorOperator = 1;
-                            }else{
-                                $tempResponse['success'] = false;
-                                $tempResponse['message'] = "Invalid donor operator. Must be <MTN> or <NEXTTEL>";
+                            $diff = getDiff($activationDate, date('d-M-y'));
+
+                            if($subscriberType == '1' && $numberDetails['NUM_REGISTRE'] != trim($legalPersonTin)){
+
+                                $response['success'] = false;
+                                $response['message'] = 'Temporal number does not belong to subscriber';
                                 $tempResponse['portingMSISDN'] = $portingMSISDN;
+
+                            }elseif($diff->y > 0 || $diff->m > 0 || $diff->d > $TMP_NUM_MAX_ACTIVATION_DAYS){
+
+                                $response['success'] = false;
+                                $response['message'] = 'Number activated more than ' . $TMP_NUM_MAX_ACTIVATION_DAYS . ' days ago';
+                                $tempResponse['portingMSISDN'] = $portingMSISDN;
+
                             }
+                            else{
 
-                            if($donorOperator == 0 || $donorOperator == 1){
+                                if(strtolower($donorOperator) == 'mtn'){
+                                    $donorOperator = 0;
+                                }elseif (strtolower($donorOperator) == 'nexttel'){
+                                    $donorOperator = 1;
+                                }else{
+                                    $tempResponse['success'] = false;
+                                    $tempResponse['message'] = "Invalid donor operator. Must be <MTN> or <NEXTTEL>";
+                                    $tempResponse['portingMSISDN'] = $portingMSISDN;
+                                }
 
-                                $tempResponse = $portingOperationService->orderPort($donorOperator, $portingMSISDN, $subscriberType, $rio, $documentType, null,
-                                    null, null,$legalPersonName, $legalPersonTin, $contactNumber,
-                                    $temporalNumber, $contractId, $language, $portingDateTime, $userId);
+                                if($donorOperator == 0 || $donorOperator == 1){
 
-                                $tempResponse['portingMSISDN'] = $portingMSISDN;
+                                    $tempResponse = $portingOperationService->orderPort($donorOperator, $portingMSISDN, $subscriberType, $rio, $documentType, null,
+                                        null, null,$legalPersonName, $legalPersonTin, $contactNumber,
+                                        $temporalNumber, $contractId, $language, $portingDateTime, $userId);
+
+                                    $tempResponse['portingMSISDN'] = $portingMSISDN;
+
+                                }
 
                             }
 

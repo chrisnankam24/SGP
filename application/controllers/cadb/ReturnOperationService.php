@@ -343,7 +343,7 @@ class ReturnOperationService {
                     'primaryOwnerRoutingNumber' => $openResponse->returnTransaction->primaryOwnerNrn->routingNumber,
                     'returnNumberState' => \ReturnService\_Return\returnSubmissionStateType::OPENED,
                     'returnNotificationMailSendStatus' => smsState::CLOSED,
-                    'returnNotificationMailSendDateTime' => date('c')
+                    'returnNotificationMailSendDateTime' => date('Y-m-d\TH:i:s')
                 );
 
                 $this->Numberreturn_model->add_numberreturn($nrParams);
@@ -352,7 +352,7 @@ class ReturnOperationService {
 
                 $nrsParams = array(
                     'returnNumberState' => \ReturnService\_Return\returnStateType::OPENED,
-                    'lastChangeDateTime' => date('c'),
+                    'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
                     'returnId' => $openResponse->returnTransaction->returnId,
                 );
 
@@ -369,7 +369,7 @@ class ReturnOperationService {
                         'processId' => $returnId,
                         'msisdn' => $returnNumber,
                         'numberState' => provisionStateType::STARTED,
-                        'pLastChangeDateTime' => date('c'),
+                        'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
                         'processType' => processType::_RETURN,
                     );
                 }
@@ -502,7 +502,7 @@ class ReturnOperationService {
 
                     $nrsParams = array(
                         'returnNumberState' => \ReturnService\_Return\returnStateType::ACCEPTED,
-                        'lastChangeDateTime' => date('c'),
+                        'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
                         'returnId' => $acceptResponse->returnTransaction->returnId,
                     );
 
@@ -510,7 +510,7 @@ class ReturnOperationService {
 
                     // Update Number state
                     $portingNumberParams = array(
-                        'pLastChangeDateTime' => date('c'),
+                        'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
                         'numberState' => \ReturnService\_Return\returnStateType::ACCEPTED
                     );
 
@@ -632,7 +632,7 @@ class ReturnOperationService {
 
                     $nrsParams = array(
                         'returnNumberState' => \ReturnService\_Return\returnStateType::REJECTED,
-                        'lastChangeDateTime' => date('c'),
+                        'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
                         'returnId' => $rejectResponse->returnTransaction->returnId,
                     );
 
@@ -656,7 +656,7 @@ class ReturnOperationService {
                         // Update Porting Number table
 
                         $portingNumberParams = array(
-                            'pLastChangeDateTime' => date('c'),
+                            'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
                             'numberState' => provisionStateType::TERMINATED,
                             'terminationReason' => $cause
                         );

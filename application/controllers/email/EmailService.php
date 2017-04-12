@@ -19,9 +19,15 @@ class EmailService {
     // Declare CI instance
     private $CI = null;
 
+    private $FileLog_model = null;
+
     public function __construct()
     {
         $this->CI =& get_instance();
+
+        $this->CI->load->model('FileLog_model');
+
+        $this->FileLog_model = $this->CI->FileLog_model;
 
     }
 
@@ -350,7 +356,8 @@ class EmailService {
             // Set ID number
             $template = str_replace('[idNumber]', $params['physicalPersonIdNumber'], $template);
 
-        }else{
+        }
+        else{
 
             $template = file_get_contents(__DIR__ . '/templates/indiv-enterprise-porting-acceptance-rejection-template.html');
 
@@ -404,7 +411,7 @@ class EmailService {
         $portingDateTime = date('l, M d Y, H:i:s', strtotime($params['portingDateTime']));
         $message = str_replace('[portingDateTime]', $portingDateTime, $template);
 
-        $to = explode(',', EmailParams::NOTIF_TO);
+        $to =  $this->FileLog_model->email_list();
         $cc = explode(',', EmailParams::CC);
 
         return $this->send_mail($to, $cc, $subject, $message);
@@ -476,7 +483,7 @@ class EmailService {
         $rollbackDateTime = date('l, M d Y, H:i:s', strtotime($params['rollbackDateTime']));
         $message = str_replace('[rollbackDateTime]', $rollbackDateTime, $template);
 
-        $to = explode(',', EmailParams::NOTIF_TO);
+        $to =  $this->FileLog_model->email_list();
         $cc = explode(',', EmailParams::CC);
 
         return $this->send_mail($to, $cc, $subject, $message);
@@ -517,7 +524,7 @@ class EmailService {
 
         $message = str_replace('[submissionDateTime]', $submissionDateTime, $template);
 
-        $to = explode(',', EmailParams::NOTIF_TO);
+        $to =  $this->FileLog_model->email_list();
         $cc = explode(',', EmailParams::CC);
 
         return $this->send_mail($to, $cc, $subject, $message);
@@ -564,7 +571,7 @@ class EmailService {
 
         $message = str_replace('[submissionDateTime]', $submissionDateTime, $template);
 
-        $to = explode(',', EmailParams::NOTIF_TO);
+        $to = $this->FileLog_model->email_list();
         $cc = explode(',', EmailParams::CC);
 
         return $this->send_mail($to, $cc, $subject, $message);

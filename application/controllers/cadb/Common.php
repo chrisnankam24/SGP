@@ -123,6 +123,11 @@ class portingSource {
     const MOBILE = 'MOBILE';
 }
 
+class rioSource {
+    const USSD = 'USSD';
+    const IVR = 'IVR';
+}
+
 // CADB SFTP CONNECTION PARAMS
 class sftpParams{
     const HOST = 'cameroonmnp.campost.cm';
@@ -254,7 +259,7 @@ function getRecipientPortingDateTime(){
 
     // TODO: Generate 2 days from now which are neither weekends or public holidays as found in the restricted days file
 
-    $date = date('c');
+    $date = date('Y-m-d\TH:i:s');
 
     return $date;
 
@@ -316,7 +321,7 @@ function logAction($userId, $actionPerformed){
     $logParams = array(
         'userId' => $userId,
         'actionPerformed' => $actionPerformed,
-        'actionDateTime' => date('c')
+        'actionDateTime' => date('Y-m-d\TH:i:s')
     );
 
     $CI =& get_instance();
@@ -360,6 +365,24 @@ function isAuthorized(){
         throw new ldbAdministrationServiceFault('No Token Found');
 
     }
+
+}
+
+/**
+ * Returns difference between two dates
+ * @param $startDate
+ * @param $endDate
+ * @return DateInterval|false
+ */
+function getDiff($startDate, $endDate){
+
+    $startDate = date('y-d-m', strtotime($startDate));
+    $endDate = date('y-d-m', strtotime($endDate));
+
+    $startDate = date_create_from_format('y-d-m', $startDate);
+    $endDate = date_create_from_format('y-d-m', $endDate);
+
+    return date_diff($startDate, $endDate);
 
 }
 

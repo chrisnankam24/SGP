@@ -92,7 +92,7 @@ class ReturnNotificationService extends CI_Controller {
 
         $nrsParams = array(
             'returnNumberState' => \ReturnService\_Return\returnStateType::OPENED,
-            'lastChangeDateTime' => date('c'),
+            'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
             'returnId' => $notifyOpenedRequest->returnTransaction->returnId,
         );
 
@@ -107,7 +107,7 @@ class ReturnNotificationService extends CI_Controller {
                 'processId' => $returnId,
                 'msisdn' => $returnNumber,
                 'numberState' => provisionStateType::STARTED,
-                'pLastChangeDateTime' => date('c'),
+                'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
                 'processType' => processType::_RETURN
             );
         }
@@ -165,7 +165,7 @@ class ReturnNotificationService extends CI_Controller {
 
         $nrsParams = array(
             'returnNumberState' => \ReturnService\_Return\returnStateType::ACCEPTED,
-            'lastChangeDateTime' => date('c'),
+            'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
             'returnId' => $returnId,
         );
 
@@ -173,7 +173,7 @@ class ReturnNotificationService extends CI_Controller {
 
         // Update Number state
         $portingNumberParams = array(
-            'pLastChangeDateTime' => date('c'),
+            'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
             'numberState' => \ReturnService\_Return\returnStateType::ACCEPTED
         );
 
@@ -236,7 +236,7 @@ class ReturnNotificationService extends CI_Controller {
 
         $nrsParams = array(
             'returnNumberState' => \ReturnService\_Return\returnStateType::REJECTED,
-            'lastChangeDateTime' => date('c'),
+            'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
             'returnId' => $returnId,
         );
 
@@ -258,7 +258,7 @@ class ReturnNotificationService extends CI_Controller {
             // Update return Number table
 
             $returnNumberParams = array(
-                'pLastChangeDateTime' => date('c'),
+                'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
                 'numberState' => provisionStateType::TERMINATED,
                 'terminationReason' => $notifyRejectedRequest->cause
             );

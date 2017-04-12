@@ -2,6 +2,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once APPPATH . '/controllers/rio/RIO.php';
+require_once APPPATH . "controllers/cadb/Common.php";
 
 /**
  * Created by PhpStorm.
@@ -21,6 +22,7 @@ class SVI extends CI_Controller {
         parent::__construct();
 
         $this->load->model('FileLog_model');
+        $this->load->model('Ussdsmsnotification_model');
 
     }
 
@@ -80,6 +82,18 @@ class SVI extends CI_Controller {
             if($rioWithInfo['language'] != '' ){
                 $response->return->langue = $rioWithInfo['language'];
             }
+
+            $smsNotificationparams = array(
+                'message' => $rioWithInfo['rio'],
+                'creationDateTime' => date('Y-m-d\TH:i:s'),
+                'status' => smsState::SENT,
+                'msisdn' => '237' . $msisdn,
+                'attemptCount' => 1,
+                'sendDateTime' => date('Y-m-d\TH:i:s'),
+                'source' => rioSource::IVR
+            );
+
+            $this->Ussdsmsnotification_model->add_ussdsmsnotification($smsNotificationparams);
 
         }else{
 

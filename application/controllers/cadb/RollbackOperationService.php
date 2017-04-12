@@ -28,6 +28,7 @@ class RollbackOperationService {
     private $Porting_model = null;
     private $FileLog_model = null;
     private $Rollback_model = null;
+    private $Config_model = null;
     private $ProcessNumber_model = null;
     private $Rollbackstateevolution_model = null;
     private $Rollbackrejectionabandon_model = null;
@@ -42,12 +43,14 @@ class RollbackOperationService {
         $CI->load->model('Porting_model');
         $CI->load->model('FileLog_model');
         $CI->load->model('Rollback_model');
+        $CI->load->model('Config_model');
         $CI->load->model('ProcessNumber_model');
         $CI->load->model('Rollbackstateevolution_model');
         $CI->load->model('Rollbackrejectionabandon_model');
 
         $this->Porting_model = $CI->Porting_model;
         $this->FileLog_model = $CI->FileLog_model;
+        $this->Config_model = $CI->Config_model;
         $this->Rollback_model = $CI->Rollback_model;
         $this->ProcessNumber_model = $CI->ProcessNumber_model;
         $this->Rollbackstateevolution_model = $CI->Rollbackstateevolution_model;
@@ -506,14 +509,12 @@ class RollbackOperationService {
 
         $numberDetails = $bscsOperationService->loadTemporalNumberInfo($temporalNumber);
 
-        $contractId = $numberDetails["CONTRACT_ID"];
-
-        if($contractId == -1){
+        if($numberDetails == -1){
 
             $response['success'] = false;
             $response['message'] = 'Connection to BSCS Unsuccessful. Please try again later';
 
-        }elseif($contractId == null){
+        }elseif($numberDetails == null){
 
             $response['success'] = false;
             $response['message'] = 'Temporal number not found in BSCS. Please verify number has been identified properly and try again';
@@ -521,166 +522,184 @@ class RollbackOperationService {
         }
         else{
 
-            $donorSubmissionDateTime = date('c');
-            $rollbackDateTime = date('c', strtotime('+2 hours', strtotime(date('c'))));
+            $contractId = $numberDetails["CONTRACT_ID"];
 
-            $portingDetails = $this->Porting_model->get_porting($originalPortingId);
+            $activationDate = $numberDetails['ACTIVATION_DATE'];
 
-            if($portingDetails){
+            $diff = getDiff($activationDate, date('d-M-y'));
 
-                if($portingDetails['physicalPersonFirstName'] != null && $numberDetails['ID_PIECE'] != trim($portingDetails['physicalPersonIdNumber'])){
+            if($diff->y > 0 || $diff->m > 0 || $diff->d > $this->Config_model->get_config('TMP_NUM_MAX_ACTIVATION_DAYS')){
 
-                    $response['success'] = false;
-                    $response['message'] = 'Temporal number does not belong to subscriber';
+                $response['success'] = false;
+                $response['message'] = 'Number activated more than ' .
+                    $this->Config_model->get_config('TMP_NUM_MAX_ACTIVATION_DAYS') . ' days ago';
 
-                }elseif($portingDetails['legalPersonName'] != null && $numberDetails['NUM_REGISTRE'] != trim($portingDetails['legalPersonTin'])){
+            }
 
-                    $response['success'] = false;
-                    $response['message'] = 'Temporal number does not belong to subscriber';
+            else{
 
-                }else{
+                $donorSubmissionDateTime = date('Y-m-d\TH:i:s');
+                $rollbackDateTime = date('Y-m-d\TH:i:s', strtotime('+2 hours', strtotime(date('Y-m-d\TH:i:s'))));
 
-                    // Make Open Rollback Operation
+                $portingDetails = $this->Porting_model->get_porting($originalPortingId);
 
-                    $openResponse = $this->open($originalPortingId, $donorSubmissionDateTime, $rollbackDateTime);
+                if($portingDetails){
 
-                    // Verify response
-
-                    if($openResponse->success){
-
-                        $this->db->trans_start();
-
-                        $rollbackId = $openResponse->rollbackTransaction->rollbackId;
-                        $originalPortingId = $openResponse->rollbackTransaction->originalPortingId;
-
-                        // Insert into Rollback table
-
-                        $rollbackParams = array(
-                            'rollbackId' => $rollbackId,
-                            'originalPortingId' => $originalPortingId,
-                            'donorSubmissionDateTime' => $openResponse->rollbackTransaction->donorSubmissionDateTime,
-                            'rollbackDateTime' => $openResponse->rollbackTransaction->rollbackDateTime,
-                            'cadbOpenDateTime' => $openResponse->rollbackTransaction->cadbOpenDateTime,
-                            'lastChangeDateTime' => $openResponse->rollbackTransaction->lastChangeDateTime,
-                            'rollbackState' => \RollbackService\Rollback\rollbackStateType::OPENED,
-                            'rollbackNotificationMailSendStatus' => smsState::CLOSED,
-                            'rollbackNotificationMailSendDateTime' => date('c')
-                        );
-
-                        $this->Rollback_model->add_rollback($rollbackParams);
-
-                        // Insert into Rollback State Evolution table
-
-                        $seParams = array(
-                            'rollbackState' => \RollbackService\Rollback\rollbackStateType::OPENED,
-                            'lastChangeDateTime' => $openResponse->rollbackTransaction->lastChangeDateTime,
-                            'isAutoReached' => false,
-                            'rollbackId' => $openResponse->rollbackTransaction->rollbackId,
-                        );
-
-                        $this->Rollbackstateevolution_model->add_rollbackstateevolution($seParams);
-
-                        // Fill in Rollback process numbers
-
-                        $portingNumbers = $this->getRollbackNumbers($openResponse);
-
-                        $processNumberParams = [];
-
-                        foreach ($portingNumbers as $portingNumber){
-                            $processNumberParams[] = array(
-                                'processId' => $rollbackId,
-                                'msisdn' => $portingNumber,
-                                'numberState' => provisionStateType::STARTED,
-                                'pLastChangeDateTime' => date('c'),
-                                'processType' => processType::ROLLBACK,
-                                'contractId' => $contractId,
-                                'temporalMsisdn' => $temporalNumber
-                            );
-                        }
-
-                        $this->db->insert_batch('processnumber', $processNumberParams);
-
-                        $response['success'] = true;
-
-                        if ($this->db->trans_status() === FALSE) {
-
-                            $error = $this->db->error();
-
-                            $this->fileLogAction($error['code'], 'RollbackOperationService', "Rollback OPEN save failed for $rollbackId");
-
-                            $this->fileLogAction($error['code'], 'RollbackOperationService', $error['message']);
-
-                            $portingParams = $this->Porting_model->get_porting($originalPortingId);
-
-                            $rollbackParams = array_merge($rollbackParams, $portingParams);
-
-                            $emailService = new EmailService();
-
-                            $emailService->adminErrorReport('ROLLBACK OPENED BUT DB FILLED INCOMPLETE', $rollbackParams, processType::ROLLBACK);
-
-                        }
-
-                        $this->db->trans_complete();
-
-                        logAction($userId, "Rollback [$rollbackId] Opened Successfully");
-
-                        $this->fileLogAction('8040', 'RollbackOperationService', "Rollback OPEN successful for $rollbackId");
-
-                        $response['message'] = 'Rollback has been OPENED successfully!';
-
-                    }
-
-                    else{
-
-                        $fault = $openResponse->error;
-
-                        $this->fileLogAction('8040', 'RollbackOperationService', "Rollback OPEN failed with $fault");
-
-                        $emailService = new EmailService();
+                    if($portingDetails['physicalPersonFirstName'] != null && $numberDetails['ID_PIECE'] != trim($portingDetails['physicalPersonIdNumber'])){
 
                         $response['success'] = false;
+                        $response['message'] = 'Temporal number does not belong to subscriber';
 
-                        switch ($fault) {
+                    }elseif($portingDetails['legalPersonName'] != null && $numberDetails['NUM_REGISTRE'] != trim($portingDetails['legalPersonTin'])){
 
-                            // Terminal Error Processes
-                            case Fault::ROLLBACK_NOT_ALLOWED:
-                                $response['message'] = 'Rollback period of 4 hours has expired';
-                                break;
+                        $response['success'] = false;
+                        $response['message'] = 'Temporal number does not belong to subscriber';
 
-                            case Fault::UNKNOWN_PORTING_ID:
-                                $response['message'] = 'Cannot match ID of the original Porting to any transaction';
-                                break;
+                    }else{
 
-                            case Fault::INVALID_OPERATOR_FAULT:
-                            case Fault::INVALID_REQUEST_FORMAT:
-                            case Fault::ACTION_NOT_AUTHORIZED:
-                            default:
+                        // Make Open Rollback Operation
+
+                        $openResponse = $this->open($originalPortingId, $donorSubmissionDateTime, $rollbackDateTime);
+
+                        // Verify response
+
+                        if($openResponse->success){
+
+                            $this->db->trans_start();
+
+                            $rollbackId = $openResponse->rollbackTransaction->rollbackId;
+                            $originalPortingId = $openResponse->rollbackTransaction->originalPortingId;
+
+                            // Insert into Rollback table
+
+                            $rollbackParams = array(
+                                'rollbackId' => $rollbackId,
+                                'originalPortingId' => $originalPortingId,
+                                'donorSubmissionDateTime' => $openResponse->rollbackTransaction->donorSubmissionDateTime,
+                                'rollbackDateTime' => $openResponse->rollbackTransaction->rollbackDateTime,
+                                'cadbOpenDateTime' => $openResponse->rollbackTransaction->cadbOpenDateTime,
+                                'lastChangeDateTime' => $openResponse->rollbackTransaction->lastChangeDateTime,
+                                'rollbackState' => \RollbackService\Rollback\rollbackStateType::OPENED,
+                                'rollbackNotificationMailSendStatus' => smsState::CLOSED,
+                                'rollbackNotificationMailSendDateTime' => date('Y-m-d\TH:i:s')
+                            );
+
+                            $this->Rollback_model->add_rollback($rollbackParams);
+
+                            // Insert into Rollback State Evolution table
+
+                            $seParams = array(
+                                'rollbackState' => \RollbackService\Rollback\rollbackStateType::OPENED,
+                                'lastChangeDateTime' => $openResponse->rollbackTransaction->lastChangeDateTime,
+                                'isAutoReached' => false,
+                                'rollbackId' => $openResponse->rollbackTransaction->rollbackId,
+                            );
+
+                            $this->Rollbackstateevolution_model->add_rollbackstateevolution($seParams);
+
+                            // Fill in Rollback process numbers
+
+                            $portingNumbers = $this->getRollbackNumbers($openResponse);
+
+                            $processNumberParams = [];
+
+                            foreach ($portingNumbers as $portingNumber){
+                                $processNumberParams[] = array(
+                                    'processId' => $rollbackId,
+                                    'msisdn' => $portingNumber,
+                                    'numberState' => provisionStateType::STARTED,
+                                    'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                                    'processType' => processType::ROLLBACK,
+                                    'contractId' => $contractId,
+                                    'temporalMsisdn' => $temporalNumber
+                                );
+                            }
+
+                            $this->db->insert_batch('processnumber', $processNumberParams);
+
+                            $response['success'] = true;
+
+                            if ($this->db->trans_status() === FALSE) {
+
+                                $error = $this->db->error();
+
+                                $this->fileLogAction($error['code'], 'RollbackOperationService', "Rollback OPEN save failed for $rollbackId");
+
+                                $this->fileLogAction($error['code'], 'RollbackOperationService', $error['message']);
 
                                 $portingParams = $this->Porting_model->get_porting($originalPortingId);
 
-                                $submissionParams = array(
-                                    'originalPortingId' => $originalPortingId,
-                                    'rollbackId' => '',
-                                    'donorSubmissionDateTime' => date('c'),
-                                    'rollbackState' => 'NA'
-                                );
+                                $rollbackParams = array_merge($rollbackParams, $portingParams);
 
-                                $rollbackParams = array_merge($submissionParams, $portingParams);
+                                $emailService = new EmailService();
 
-                                $emailService->adminErrorReport($fault, $rollbackParams, processType::ROLLBACK);
-                                $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
+                                $emailService->adminErrorReport('ROLLBACK OPENED BUT DB FILLED INCOMPLETE', $rollbackParams, processType::ROLLBACK);
+
+                            }
+
+                            $this->db->trans_complete();
+
+                            logAction($userId, "Rollback [$rollbackId] Opened Successfully");
+
+                            $this->fileLogAction('8040', 'RollbackOperationService', "Rollback OPEN successful for $rollbackId");
+
+                            $response['message'] = 'Rollback has been OPENED successfully!';
+
                         }
 
-                        logAction($userId, "Rollback Open Failed with [$fault] Fault");
+                        else{
+
+                            $fault = $openResponse->error;
+
+                            $this->fileLogAction('8040', 'RollbackOperationService', "Rollback OPEN failed with $fault");
+
+                            $emailService = new EmailService();
+
+                            $response['success'] = false;
+
+                            switch ($fault) {
+
+                                // Terminal Error Processes
+                                case Fault::ROLLBACK_NOT_ALLOWED:
+                                    $response['message'] = 'Rollback period of 4 hours has expired';
+                                    break;
+
+                                case Fault::UNKNOWN_PORTING_ID:
+                                    $response['message'] = 'Cannot match ID of the original Porting to any transaction';
+                                    break;
+
+                                case Fault::INVALID_OPERATOR_FAULT:
+                                case Fault::INVALID_REQUEST_FORMAT:
+                                case Fault::ACTION_NOT_AUTHORIZED:
+                                default:
+
+                                    $portingParams = $this->Porting_model->get_porting($originalPortingId);
+
+                                    $submissionParams = array(
+                                        'originalPortingId' => $originalPortingId,
+                                        'rollbackId' => '',
+                                        'donorSubmissionDateTime' => date('Y-m-d\TH:i:s'),
+                                        'rollbackState' => 'NA'
+                                    );
+
+                                    $rollbackParams = array_merge($submissionParams, $portingParams);
+
+                                    $emailService->adminErrorReport($fault, $rollbackParams, processType::ROLLBACK);
+                                    $response['message'] = 'Fatal Error Encountered. Please contact Back Office';
+                            }
+
+                            logAction($userId, "Rollback Open Failed with [$fault] Fault");
+
+                        }
 
                     }
 
+                }else{
+                    // Port not found in DB
+                    $response['success'] = false;
+                    $response['message'] = 'Original Porting process not found';
                 }
 
-            }else{
-                // Port not found in DB
-                $response['success'] = false;
-                $response['message'] = 'Original Porting process not found';
             }
 
         }
@@ -737,7 +756,7 @@ class RollbackOperationService {
 
                     // Update Number state
                     $portingNumberParams = array(
-                        'pLastChangeDateTime' => date('c'),
+                        'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
                         'numberState' => \RollbackService\Rollback\rollbackStateType::ACCEPTED
                     );
 
@@ -885,7 +904,7 @@ class RollbackOperationService {
 
                         // Update Number state
                         $portingNumberParams = array(
-                            'pLastChangeDateTime' => date('c'),
+                            'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
                             'numberState' => provisionStateType::TERMINATED,
                             'terminationReason' => $cause
                         );
