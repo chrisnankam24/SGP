@@ -41,6 +41,7 @@ class error_model extends CI_Model
      */
     function add_error($params)
     {
+        $params = $this->reformatDates($params);
         $this->db->insert('error',$params);
         return $this->db->insert_id();
     }
@@ -50,6 +51,7 @@ class error_model extends CI_Model
      */
     function update_error($errorReportId,$params)
     {
+        $params = $this->reformatDates($params);
         $this->db->where('errorReportId',$errorReportId);
         $response = $this->db->update('error',$params);
         if($response)
@@ -77,4 +79,23 @@ class error_model extends CI_Model
             return "error occuring while deleting error";
         }
     }
+
+    private function reformatDates($params){
+
+        // Error
+        if(isset($params['submissionDateTime'])){
+            $params['submissionDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['submissionDateTime']));
+        }
+        if(isset($params['routingChangeDateTime'])){
+            $params['routingChangeDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['routingChangeDateTime']));
+        }
+        if(isset($params['errorNotificationMailSendDateTime'])){
+            $params['errorNotificationMailSendDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['errorNotificationMailSendDateTime']));
+        }
+
+        return $params;
+
+    }
+
+
 }

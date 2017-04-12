@@ -32,6 +32,8 @@ class User_model extends CI_Model
      */
     function add_user($params)
     {
+
+        $params = $this->reformatDates($params);
         $this->db->insert('users',$params);
         return $this->db->insert_id();
     }
@@ -41,6 +43,7 @@ class User_model extends CI_Model
      */
     function update_user($userId,$params)
     {
+        $params = $this->reformatDates($params);
         $this->db->where('userId',$userId);
         $response = $this->db->update('users',$params);
         return $response;
@@ -60,5 +63,19 @@ class User_model extends CI_Model
         {
             return "Error occuring while deleting user";
         }
+    }
+
+    private function reformatDates($params){
+
+        // Users
+        if(isset($params['creationDateTime'])){
+            $params['creationDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['creationDateTime']));
+        }
+        if(isset($params['lastModifiedDateTime'])){
+            $params['lastModifiedDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['lastModifiedDateTime']));
+        }
+
+        return $params;
+
     }
 }

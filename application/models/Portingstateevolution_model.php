@@ -41,6 +41,7 @@ class Portingstateevolution_model extends CI_Model
      */
     function add_portingstateevolution($params)
     {
+        $params = $this->reformatDates($params);
         $this->db->insert('portingstateevolution',$params);
         return $this->db->insert_id();
     }
@@ -50,6 +51,7 @@ class Portingstateevolution_model extends CI_Model
      */
     function update_portingstateevolution($portingId,$params)
     {
+        $params = $this->reformatDates($params);
         $this->db->where('portingId',$portingId);
         $response = $this->db->update('portingstateevolution',$params);
         if($response)
@@ -77,4 +79,16 @@ class Portingstateevolution_model extends CI_Model
             return "Error occuring while deleting portingstateevolution";
         }
     }
+
+    private function reformatDates($params){
+        
+        // Porting state Evolution
+        if(isset($params['lastChangeDateTime'])){
+            $params['lastChangeDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['lastChangeDateTime']));
+        }
+
+        return $params;
+
+    }
+
 }

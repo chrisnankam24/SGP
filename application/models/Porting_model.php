@@ -235,6 +235,7 @@ class Porting_model extends CI_Model
      */
     function add_porting($params)
     {
+        $params = $this->reformatDates($params);
         $this->db->insert('porting',$params);
         return $this->db->insert_id();
     }
@@ -244,6 +245,8 @@ class Porting_model extends CI_Model
      */
     function update_porting($portingId,$params)
     {
+
+        $params = $this->reformatDates($params);
         $this->db->where('portingId',$portingId);
         $response = $this->db->update('porting',$params);
         if($response)
@@ -293,5 +296,29 @@ class Porting_model extends CI_Model
 
         return $response;
     }
+
+    private function reformatDates($params){
+
+        // Porting
+        if(isset($params['recipientSubmissionDateTime'])){
+            $params['recipientSubmissionDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['recipientSubmissionDateTime']));
+        }
+        if(isset($params['portingDateTime'])){
+            $params['portingDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['portingDateTime']));
+        }
+        if(isset($params['cadbOrderDateTime'])){
+            $params['cadbOrderDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['cadbOrderDateTime']));
+        }
+        if(isset($params['lastChangeDateTime'])){
+            $params['lastChangeDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['lastChangeDateTime']));
+        }
+        if(isset($params['portingNotificationMailSendDateTime'])){
+            $params['portingNotificationMailSendDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['portingNotificationMailSendDateTime']));
+        }
+
+        return $params;
+
+    }
+
 
 }

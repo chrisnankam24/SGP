@@ -41,6 +41,7 @@ class Portingsmsnotification_model extends CI_Model
      */
     function add_portingsmsnotification($params)
     {
+        $params = $this->reformatDates($params);
         $this->db->insert('portingsmsnotification',$params);
         return $this->db->insert_id();
     }
@@ -50,6 +51,7 @@ class Portingsmsnotification_model extends CI_Model
      */
     function update_portingsmsnotification($portingSmsNotificationId,$params)
     {
+        $params = $this->reformatDates($params);
         $this->db->where('portingSmsNotificationId',$portingSmsNotificationId);
         $response = $this->db->update('portingsmsnotification',$params);
         if($response)
@@ -77,4 +79,19 @@ class Portingsmsnotification_model extends CI_Model
             return "Error occuring while deleting portingsmsnotification";
         }
     }
+
+    private function reformatDates($params){
+
+        // Porting SMS Notification
+        if(isset($params['creationDateTime'])){
+            $params['creationDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['creationDateTime']));
+        }
+        if(isset($params['sendDateTime'])){
+            $params['sendDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['sendDateTime']));
+        }
+
+        return $params;
+
+    }
+
 }

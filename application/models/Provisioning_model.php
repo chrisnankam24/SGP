@@ -150,6 +150,7 @@ class provisioning_model extends CI_Model
      */
     function add_provisioning($params)
     {
+        $params = $this->reformatDates($params);
         $this->db->insert('provisioning',$params);
         return $this->db->insert_id();
     }
@@ -159,6 +160,7 @@ class provisioning_model extends CI_Model
      */
     function update_provisioning($proccessId,$params)
     {
+        $params = $this->reformatDates($params);
         $this->db->where('processId',$proccessId);
         $response = $this->db->update('provisioning',$params);
         if($response)
@@ -208,4 +210,17 @@ class provisioning_model extends CI_Model
 
         return $response;
     }
+
+    private function reformatDates($params){
+
+        // Provisioning
+        if(isset($params['routingChangeDateTime'])){
+            $params['routingChangeDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['routingChangeDateTime']));
+        }
+
+        return $params;
+
+    }
+
+
 }

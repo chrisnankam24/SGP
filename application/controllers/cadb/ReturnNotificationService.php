@@ -92,7 +92,7 @@ class ReturnNotificationService extends CI_Controller {
 
         $nrsParams = array(
             'returnNumberState' => \ReturnService\_Return\returnStateType::OPENED,
-            'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+            'lastChangeDateTime' => date('c'),
             'returnId' => $notifyOpenedRequest->returnTransaction->returnId,
         );
 
@@ -165,7 +165,7 @@ class ReturnNotificationService extends CI_Controller {
 
         $nrsParams = array(
             'returnNumberState' => \ReturnService\_Return\returnStateType::ACCEPTED,
-            'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+            'lastChangeDateTime' => date('c'),
             'returnId' => $returnId,
         );
 
@@ -173,7 +173,7 @@ class ReturnNotificationService extends CI_Controller {
 
         // Update Number state
         $portingNumberParams = array(
-            'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+            'pLastChangeDateTime' => date('c'),
             'numberState' => \ReturnService\_Return\returnStateType::ACCEPTED
         );
 
@@ -236,7 +236,7 @@ class ReturnNotificationService extends CI_Controller {
 
         $nrsParams = array(
             'returnNumberState' => \ReturnService\_Return\returnStateType::REJECTED,
-            'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+            'lastChangeDateTime' => date('c'),
             'returnId' => $returnId,
         );
 
@@ -258,7 +258,7 @@ class ReturnNotificationService extends CI_Controller {
             // Update return Number table
 
             $returnNumberParams = array(
-                'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                'pLastChangeDateTime' => date('c'),
                 'numberState' => provisionStateType::TERMINATED,
                 'terminationReason' => $notifyRejectedRequest->cause
             );

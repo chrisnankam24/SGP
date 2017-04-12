@@ -169,10 +169,10 @@ class RollbackNotificationService extends CI_Controller {
                 'smsType' => SMSType::OPR_ROLLBACK_STARTED,
                 'message' => $smsResponse['message'],
                 'msisdn' => $smsResponse['msisdn'],
-                'creationDateTime' => date('Y-m-d\TH:i:s'),
+                'creationDateTime' => date('c'),
                 'status' => smsState::SENT,
                 'attemptCount' => 1,
-                'sendDateTime' => date('Y-m-d\TH:i:s'),
+                'sendDateTime' => date('c'),
             );
 
         }else{
@@ -184,7 +184,7 @@ class RollbackNotificationService extends CI_Controller {
                 'smsType' => SMSType::OPR_ROLLBACK_STARTED,
                 'message' => $smsResponse['message'],
                 'msisdn' => $smsResponse['msisdn'],
-                'creationDateTime' => date('Y-m-d\TH:i:s'),
+                'creationDateTime' => date('c'),
                 'status' => smsState::PENDING,
                 'attemptCount' => 1,
             );
@@ -240,7 +240,7 @@ class RollbackNotificationService extends CI_Controller {
 
         // Update Number state
         $portingNumberParams = array(
-            'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+            'pLastChangeDateTime' => date('c'),
             'numberState' => \RollbackService\Rollback\rollbackStateType::ACCEPTED
         );
 
@@ -300,10 +300,10 @@ class RollbackNotificationService extends CI_Controller {
                 'smsType' => SMSType::OPD_ROLLBACK_ACCEPTED,
                 'message' => $smsResponse['message'],
                 'msisdn' => $smsResponse['msisdn'],
-                'creationDateTime' => date('Y-m-d\TH:i:s'),
+                'creationDateTime' => date('c'),
                 'status' => smsState::SENT,
                 'attemptCount' => 1,
-                'sendDateTime' => date('Y-m-d\TH:i:s'),
+                'sendDateTime' => date('c'),
             );
 
         }
@@ -316,7 +316,7 @@ class RollbackNotificationService extends CI_Controller {
                 'smsType' => SMSType::OPD_ROLLBACK_ACCEPTED,
                 'message' => $smsResponse['message'],
                 'msisdn' => $smsResponse['msisdn'],
-                'creationDateTime' => date('Y-m-d\TH:i:s'),
+                'creationDateTime' => date('c'),
                 'status' => smsState::PENDING,
                 'attemptCount' => 1,
             );
@@ -372,7 +372,7 @@ class RollbackNotificationService extends CI_Controller {
 
         // Update Number state
         $portingNumberParams = array(
-            'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+            'pLastChangeDateTime' => date('c'),
             'numberState' => \RollbackService\Rollback\rollbackStateType::ACCEPTED
         );
 
@@ -434,10 +434,10 @@ class RollbackNotificationService extends CI_Controller {
                 'smsType' => SMSType::OPD_ROLLBACK_ACCEPTED,
                 'message' => $smsResponse['message'],
                 'msisdn' => $smsResponse['msisdn'],
-                'creationDateTime' => date('Y-m-d\TH:i:s'),
+                'creationDateTime' => date('c'),
                 'status' => smsState::SENT,
                 'attemptCount' => 1,
-                'sendDateTime' => date('Y-m-d\TH:i:s'),
+                'sendDateTime' => date('c'),
             );
 
         }
@@ -450,7 +450,7 @@ class RollbackNotificationService extends CI_Controller {
                 'smsType' => SMSType::OPD_ROLLBACK_ACCEPTED,
                 'message' => $smsResponse['message'],
                 'msisdn' => $smsResponse['msisdn'],
-                'creationDateTime' => date('Y-m-d\TH:i:s'),
+                'creationDateTime' => date('c'),
                 'status' => smsState::PENDING,
                 'attemptCount' => 1,
             );
@@ -521,7 +521,7 @@ class RollbackNotificationService extends CI_Controller {
                 // Update Rollback Number table
 
                 $rollbackNumberParams = array(
-                    'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                    'pLastChangeDateTime' => date('c'),
                     'numberState' => \RollbackService\Rollback\rollbackStateType::MSISDN_IMPORT_CONFIRMED
                 );
 
@@ -657,7 +657,7 @@ class RollbackNotificationService extends CI_Controller {
         foreach ($rollbackNumbers as $rollbackNumber){
 
             $rollbackNumberParams = array(
-                'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                'pLastChangeDateTime' => date('c'),
                 'numberState' => provisionStateType::TERMINATED,
                 'terminationReason' => $notifyRejectedRequest->rejectionReason
             );
@@ -708,10 +708,10 @@ class RollbackNotificationService extends CI_Controller {
                 'smsType' => SMSType::OPD_ROLLBACK_REJECTED,
                 'message' => $smsResponse['message'],
                 'msisdn' => $smsResponse['msisdn'],
-                'creationDateTime' => date('Y-m-d\TH:i:s'),
+                'creationDateTime' => date('c'),
                 'status' => smsState::SENT,
                 'attemptCount' => 1,
-                'sendDateTime' => date('Y-m-d\TH:i:s'),
+                'sendDateTime' => date('c'),
             );
 
         }else{
@@ -723,7 +723,7 @@ class RollbackNotificationService extends CI_Controller {
                 'smsType' => SMSType::OPD_ROLLBACK_REJECTED,
                 'message' => $smsResponse['message'],
                 'msisdn' => $smsResponse['msisdn'],
-                'creationDateTime' => date('Y-m-d\TH:i:s'),
+                'creationDateTime' => date('c'),
                 'status' => smsState::PENDING,
                 'attemptCount' => 1,
             );
@@ -790,7 +790,7 @@ class RollbackNotificationService extends CI_Controller {
         foreach ($rollbackNumbers as $rollbackNumber){
 
             $rollbackNumberParams = array(
-                'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                'pLastChangeDateTime' => date('c'),
                 'numberState' => provisionStateType::TERMINATED,
                 'terminationReason' => $notifyAbandonedRequest->cause
             );
@@ -845,10 +845,10 @@ class RollbackNotificationService extends CI_Controller {
                 'smsType' => SMSType::OPR_ROLLBACK_ABANDONED,
                 'message' => $smsResponse['message'],
                 'msisdn' => $smsResponse['msisdn'],
-                'creationDateTime' => date('Y-m-d\TH:i:s'),
+                'creationDateTime' => date('c'),
                 'status' => smsState::SENT,
                 'attemptCount' => 1,
-                'sendDateTime' => date('Y-m-d\TH:i:s'),
+                'sendDateTime' => date('c'),
             );
 
         }else{
@@ -860,7 +860,7 @@ class RollbackNotificationService extends CI_Controller {
                 'smsType' => SMSType::OPR_ROLLBACK_ABANDONED,
                 'message' => $smsResponse['message'],
                 'msisdn' => $smsResponse['msisdn'],
-                'creationDateTime' => date('Y-m-d\TH:i:s'),
+                'creationDateTime' => date('c'),
                 'status' => smsState::PENDING,
                 'attemptCount' => 1,
             );

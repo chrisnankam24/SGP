@@ -40,6 +40,7 @@ class Rollbacksmsnotification_model extends CI_Model
      */
     function add_rollbacksmsnotification($params)
     {
+        $params = $this->reformatDates($params);
         $this->db->insert('rollbacksmsnotification',$params);
         return $this->db->insert_id();
     }
@@ -49,6 +50,7 @@ class Rollbacksmsnotification_model extends CI_Model
      */
     function update_rollbacksmsnotification($rollbackSmsNotification,$params)
     {
+        $params = $this->reformatDates($params);
         $this->db->where('rollbackSmsNotification',$rollbackSmsNotification);
         $response = $this->db->update('rollbacksmsnotification',$params);
         if($response)
@@ -76,4 +78,20 @@ class Rollbacksmsnotification_model extends CI_Model
             return "Error occuring while deleting rollbacksmsnotification";
         }
     }
+
+    private function reformatDates($params){
+
+        // Rollback SMS Notification
+        if(isset($params['creationDateTime'])){
+            $params['creationDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['creationDateTime']));
+        }
+        if(isset($params['sendDateTime'])){
+            $params['sendDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['sendDateTime']));
+        }
+
+        return $params;
+
+    }
+
+
 }

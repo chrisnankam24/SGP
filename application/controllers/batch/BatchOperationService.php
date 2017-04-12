@@ -149,7 +149,7 @@ class BatchOperationService extends CI_Controller {
 
                                 // Update process number in DB
                                 $portingNumberParams = array(
-                                    'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                                    'pLastChangeDateTime' => date('c'),
                                     'contractId' => $subscriberInfo['CONTRACT_ID'],
                                     'numberState' => \PortingService\Porting\portingStateType::APPROVED
                                 );
@@ -167,7 +167,7 @@ class BatchOperationService extends CI_Controller {
 
                                 // Terminate process number in DB
                                 $portingNumberParams = array(
-                                    'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                                    'pLastChangeDateTime' => date('c'),
                                     'numberState' => provisionStateType::TERMINATED,
                                     'terminationReason' => $portingDenialReason
                                 );
@@ -187,7 +187,7 @@ class BatchOperationService extends CI_Controller {
 
                             // Terminate process number in DB
                             $portingNumberParams = array(
-                                'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                                'pLastChangeDateTime' => date('c'),
                                 'numberState' => provisionStateType::TERMINATED,
                                 'terminationReason' => $portingDenialReason
                             );
@@ -408,10 +408,10 @@ class BatchOperationService extends CI_Controller {
                             'smsType' => SMSType::OPD_PORTING_INIT,
                             'message' => $smsResponse['message'],
                             'msisdn' => $smsResponse['msisdn'],
-                            'creationDateTime' => date('Y-m-d\TH:i:s'),
+                            'creationDateTime' => date('c'),
                             'status' => smsState::SENT,
                             'attemptCount' => 1,
-                            'sendDateTime' => date('Y-m-d\TH:i:s')
+                            'sendDateTime' => date('c')
                         );
 
                     }
@@ -423,7 +423,7 @@ class BatchOperationService extends CI_Controller {
                             'smsType' => SMSType::OPD_PORTING_INIT,
                             'message' => $smsResponse['message'],
                             'msisdn' => $smsResponse['msisdn'],
-                            'creationDateTime' => date('Y-m-d\TH:i:s'),
+                            'creationDateTime' => date('c'),
                             'status' => smsState::PENDING,
                             'attemptCount' => 1,
                         );
@@ -512,7 +512,7 @@ class BatchOperationService extends CI_Controller {
 
                     $portingParams = array(
                         'portingNotificationMailSendStatus' => smsState::SENT,
-                        'portingNotificationMailSendDateTime' =>  date('Y-m-d\TH:i:s')
+                        'portingNotificationMailSendDateTime' =>  date('c')
                     );
 
                     $this->Porting_model->update_porting($approvedPort['portingId'], $portingParams);
@@ -592,7 +592,7 @@ class BatchOperationService extends CI_Controller {
                             // Update process number state
 
                             $portingNumberParams = array(
-                                'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                                'pLastChangeDateTime' => date('c'),
                                 'numberState' => \PortingService\Porting\portingStateType::UPDATE_STATUS_CONFIRMED
                             );
 
@@ -666,7 +666,7 @@ class BatchOperationService extends CI_Controller {
                     // Insert into porting Evolution state table
 
                     $portingEvolutionParams = array(
-                        'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                        'lastChangeDateTime' => date('c'),
                         'portingState' => \PortingService\Porting\portingStateType::UPDATE_STATUS_CONFIRMED,
                         'isAutoReached' => false,
                         'portingId' => $portingId,
@@ -677,7 +677,7 @@ class BatchOperationService extends CI_Controller {
                     // Update Porting table
 
                     $portingParams = array(
-                        'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                        'lastChangeDateTime' => date('c'),
                         'portingState' => \PortingService\Porting\portingStateType::UPDATE_STATUS_CONFIRMED
                     );
 
@@ -737,7 +737,7 @@ class BatchOperationService extends CI_Controller {
                         // Update process number state
 
                         $portingNumberParams = array(
-                            'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                            'pLastChangeDateTime' => date('c'),
                             'numberState' => \PortingService\Porting\portingStateType::MSISDN_EXPORT_CONFIRMED
                         );
 
@@ -816,7 +816,7 @@ class BatchOperationService extends CI_Controller {
                 // Insert into porting Evolution state table
 
                 $portingEvolutionParams = array(
-                    'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                    'lastChangeDateTime' => date('c'),
                     'portingState' => \PortingService\Porting\portingStateType::MSISDN_EXPORT_CONFIRMED,
                     'isAutoReached' => false,
                     'portingId' => $portingId,
@@ -827,7 +827,7 @@ class BatchOperationService extends CI_Controller {
                 // Update Porting table
 
                 $portingParams = array(
-                    'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                    'lastChangeDateTime' => date('c'),
                     'portingState' => \PortingService\Porting\portingStateType::MSISDN_EXPORT_CONFIRMED
                 );
 
@@ -885,7 +885,7 @@ class BatchOperationService extends CI_Controller {
                         // Update process number state
 
                         $portingNumberParams = array(
-                            'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                            'pLastChangeDateTime' => date('c'),
                             'numberState' => \PortingService\Porting\portingStateType::COMPLETED
                         );
 
@@ -938,7 +938,7 @@ class BatchOperationService extends CI_Controller {
                     // Insert into porting Evolution state table
 
                     $portingEvolutionParams = array(
-                        'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                        'lastChangeDateTime' => date('c'),
                         'portingState' => \PortingService\Porting\portingStateType::COMPLETED,
                         'isAutoReached' => false,
                         'portingId' => $portingId,
@@ -949,7 +949,7 @@ class BatchOperationService extends CI_Controller {
                     // Update Porting table
 
                     $portingParams = array(
-                        'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                        'lastChangeDateTime' => date('c'),
                         'portingState' => \PortingService\Porting\portingStateType::COMPLETED
                     );
 
@@ -966,7 +966,7 @@ class BatchOperationService extends CI_Controller {
                     // Update Provisioning numbers states
 
                     $portingNumberParams = array(
-                        'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                        'pLastChangeDateTime' => date('c'),
                         'numberState' => \PortingService\Porting\portingStateType::COMPLETED
                     );
 
@@ -1049,7 +1049,7 @@ class BatchOperationService extends CI_Controller {
 
             $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'Checking porting time for ' . $portingId);
 
-            $currentDateTime = date('Y-m-d\TH:i:s');
+            $currentDateTime = date('c');
 
             $start_time = date('y-d-m H:i:s', strtotime($portingDateTime));
             $current_time = date('y-d-m H:i:s', strtotime($currentDateTime));
@@ -1086,7 +1086,7 @@ class BatchOperationService extends CI_Controller {
                             // Update process number state
 
                             $portingNumberParams = array(
-                                'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                                'pLastChangeDateTime' => date('c'),
                                 'numberState' => \PortingService\Porting\portingStateType::MSISDN_IMPORT_CONFIRMED
                             );
 
@@ -1166,7 +1166,7 @@ class BatchOperationService extends CI_Controller {
                     // Insert into porting Evolution state table
 
                     $portingEvolutionParams = array(
-                        'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                        'lastChangeDateTime' => date('c'),
                         'portingState' => \PortingService\Porting\portingStateType::MSISDN_IMPORT_CONFIRMED,
                         'isAutoReached' => false,
                         'portingId' => $portingId,
@@ -1177,7 +1177,7 @@ class BatchOperationService extends CI_Controller {
                     // Update Porting table
 
                     $portingParams = array(
-                        'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                        'lastChangeDateTime' => date('c'),
                         'portingState' => \PortingService\Porting\portingStateType::MSISDN_IMPORT_CONFIRMED
                     );
 
@@ -1240,7 +1240,7 @@ class BatchOperationService extends CI_Controller {
                         // Update process number state
 
                         $portingNumberParams = array(
-                            'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                            'pLastChangeDateTime' => date('c'),
                             'numberState' => \PortingService\Porting\portingStateType::MSISDN_CHANGE_IMPORT_CONFIRMED
                         );
 
@@ -1318,7 +1318,7 @@ class BatchOperationService extends CI_Controller {
                 // Insert into porting Evolution state table
 
                 $portingEvolutionParams = array(
-                    'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                    'lastChangeDateTime' => date('c'),
                     'portingState' => \PortingService\Porting\portingStateType::MSISDN_CHANGE_IMPORT_CONFIRMED,
                     'isAutoReached' => false,
                     'portingId' => $portingId,
@@ -1329,7 +1329,7 @@ class BatchOperationService extends CI_Controller {
                 // Update Porting table
 
                 $portingParams = array(
-                    'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                    'lastChangeDateTime' => date('c'),
                     'portingState' => \PortingService\Porting\portingStateType::MSISDN_CHANGE_IMPORT_CONFIRMED
                 );
 
@@ -1385,7 +1385,7 @@ class BatchOperationService extends CI_Controller {
                         // Update process number state
 
                         $portingNumberParams = array(
-                            'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                            'pLastChangeDateTime' => date('c'),
                             'numberState' => \PortingService\Porting\portingStateType::CONFIRMED
                         );
 
@@ -1431,7 +1431,7 @@ class BatchOperationService extends CI_Controller {
 
                     $this->fileLogAction('7006', 'BatchOperationService::portingOPR', 'KPSA_OPERATION Successful for ' . $portingId);
 
-                    $portingDateAndTime = date('Y-m-d\TH:i:s', strtotime('+5 minutes', strtotime(date('Y-m-d\TH:i:s'))));
+                    $portingDateAndTime = date('c', strtotime('+5 minutes', strtotime(date('c'))));
 
                     // Make Confirm Porting Operation
 
@@ -1448,7 +1448,7 @@ class BatchOperationService extends CI_Controller {
                         // Insert into porting Evolution state table
 
                         $portingEvolutionParams = array(
-                            'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                            'lastChangeDateTime' => date('c'),
                             'portingState' => \PortingService\Porting\portingStateType::CONFIRMED,
                             'isAutoReached' => false,
                             'portingId' => $portingId,
@@ -1459,7 +1459,7 @@ class BatchOperationService extends CI_Controller {
                         // Update Porting table
 
                         $portingParams = array(
-                            'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                            'lastChangeDateTime' => date('c'),
                             'portingState' => \PortingService\Porting\portingStateType::CONFIRMED
                         );
 
@@ -1504,7 +1504,7 @@ class BatchOperationService extends CI_Controller {
                     // Don't send request. Update porting state
 
                     $portingParams = array(
-                        'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                        'lastChangeDateTime' => date('c'),
                         'portingState' => \PortingService\Porting\portingStateType::CONFIRMED
                     );
 
@@ -1546,7 +1546,7 @@ class BatchOperationService extends CI_Controller {
                     // Insert into porting Evolution state table
 
                     $portingEvolutionParams = array(
-                        'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                        'lastChangeDateTime' => date('c'),
                         'portingState' => \PortingService\Porting\portingStateType::COMPLETED,
                         'isAutoReached' => false,
                         'portingId' => $portingId,
@@ -1557,7 +1557,7 @@ class BatchOperationService extends CI_Controller {
                     // Update Porting table
 
                     $portingParams = array(
-                        'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                        'lastChangeDateTime' => date('c'),
                         'portingState' => \PortingService\Porting\portingStateType::COMPLETED
                     );
 
@@ -1565,7 +1565,7 @@ class BatchOperationService extends CI_Controller {
 
                     // Update Number state
                     $portingNumberParams = array(
-                        'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                        'pLastChangeDateTime' => date('c'),
                         'numberState' => \PortingService\Porting\portingStateType::COMPLETED
                     );
 
@@ -1644,7 +1644,7 @@ class BatchOperationService extends CI_Controller {
 
                     $rollbackParams = array(
                         'rollbackNotificationMailSendStatus' => smsState::SENT,
-                        'rollbackNotificationMailSendDateTime' =>  date('Y-m-d\TH:i:s')
+                        'rollbackNotificationMailSendDateTime' =>  date('c')
                     );
 
                     $this->Rollback_model->update_rollback($openedRollback['rollbackId'], $rollbackParams);
@@ -1724,7 +1724,7 @@ class BatchOperationService extends CI_Controller {
                             // Update process number state
 
                             $portingNumberParams = array(
-                                'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                                'pLastChangeDateTime' => date('c'),
                                 'numberState' => \PortingService\Porting\portingStateType::UPDATE_STATUS_CONFIRMED
                             );
 
@@ -1801,7 +1801,7 @@ class BatchOperationService extends CI_Controller {
                     // Insert into Rollback Evolution state table
 
                     $rollbackEvolutionParams = array(
-                        'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                        'lastChangeDateTime' => date('c'),
                         'rollbackState' => \RollbackService\Rollback\rollbackStateType::UPDATE_STATUS_CONFIRMED,
                         'isAutoReached' => false,
                         'rollbackId' => $rollbackId,
@@ -1813,7 +1813,7 @@ class BatchOperationService extends CI_Controller {
                     // Update Rollback table
 
                     $rollbackParams = array(
-                        'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                        'lastChangeDateTime' => date('c'),
                         'rollbackState' => \RollbackService\Rollback\rollbackStateType::UPDATE_STATUS_CONFIRMED
                     );
 
@@ -1870,7 +1870,7 @@ class BatchOperationService extends CI_Controller {
                         // Update process number state
 
                         $portingNumberParams = array(
-                            'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                            'pLastChangeDateTime' => date('c'),
                             'numberState' => \PortingService\Porting\portingStateType::MSISDN_EXPORT_CONFIRMED
                         );
 
@@ -1951,7 +1951,7 @@ class BatchOperationService extends CI_Controller {
                 // Insert into Rollback Evolution state table
 
                 $rollbackEvolutionParams = array(
-                    'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                    'lastChangeDateTime' => date('c'),
                     'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_EXPORT_CONFIRMED,
                     'isAutoReached' => false,
                     'rollbackId' => $rollbackId,
@@ -1963,7 +1963,7 @@ class BatchOperationService extends CI_Controller {
                 // Update Rollback table
 
                 $rollbackParams = array(
-                    'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                    'lastChangeDateTime' => date('c'),
                     'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_EXPORT_CONFIRMED
                 );
 
@@ -2023,7 +2023,7 @@ class BatchOperationService extends CI_Controller {
                         // Update process number state
 
                         $portingNumberParams = array(
-                            'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                            'pLastChangeDateTime' => date('c'),
                             'numberState' => \PortingService\Porting\portingStateType::COMPLETED
                         );
 
@@ -2075,7 +2075,7 @@ class BatchOperationService extends CI_Controller {
                     // Insert into Rollback Evolution state table
 
                     $rollbackEvolutionParams = array(
-                        'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                        'lastChangeDateTime' => date('c'),
                         'rollbackState' => \RollbackService\Rollback\rollbackStateType::COMPLETED,
                         'isAutoReached' => false,
                         'rollbackId' => $rollbackId,
@@ -2086,7 +2086,7 @@ class BatchOperationService extends CI_Controller {
                     // Update Rollback table
 
                     $rollbackParams = array(
-                        'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                        'lastChangeDateTime' => date('c'),
                         'rollbackState' => \RollbackService\Rollback\rollbackStateType::COMPLETED
                     );
 
@@ -2103,7 +2103,7 @@ class BatchOperationService extends CI_Controller {
                     // Update Provisioning numbers states
 
                     $portingNumberParams = array(
-                        'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                        'pLastChangeDateTime' => date('c'),
                         'numberState' => \PortingService\Porting\portingStateType::COMPLETED
                     );
 
@@ -2186,7 +2186,7 @@ class BatchOperationService extends CI_Controller {
 
             $this->fileLogAction('7010', 'BatchOperationService::rollbackOPD', 'Verifying Rollback DateTime for ' . $rollbackId);
 
-            $currentDateTime = date('Y-m-d\TH:i:s');
+            $currentDateTime = date('c');
 
             $start_time = date('y-d-m H:i:s', strtotime($rollbackDateTime));
             $current_time = date('y-d-m H:i:s', strtotime($currentDateTime));
@@ -2220,7 +2220,7 @@ class BatchOperationService extends CI_Controller {
 
                             // Update process number state
                             $portingNumberParams = array(
-                                'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                                'pLastChangeDateTime' => date('c'),
                                 'numberState' => \PortingService\Porting\portingStateType::MSISDN_IMPORT_CONFIRMED
                             );
 
@@ -2301,7 +2301,7 @@ class BatchOperationService extends CI_Controller {
                     // Insert into rollback Evolution state table
 
                     $rollbackEvolutionParams = array(
-                        'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                        'lastChangeDateTime' => date('c'),
                         'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_IMPORT_CONFIRMED,
                         'isAutoReached' => false,
                         'rollbackId' => $rollbackId,
@@ -2312,7 +2312,7 @@ class BatchOperationService extends CI_Controller {
                     // Update Rollback table
 
                     $rollbackParams = array(
-                        'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                        'lastChangeDateTime' => date('c'),
                         'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_IMPORT_CONFIRMED
                     );
 
@@ -2378,7 +2378,7 @@ class BatchOperationService extends CI_Controller {
                         // Update process number state
 
                         $portingNumberParams = array(
-                            'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                            'pLastChangeDateTime' => date('c'),
                             'numberState' => \PortingService\Porting\portingStateType::MSISDN_CHANGE_IMPORT_CONFIRMED
                         );
 
@@ -2458,7 +2458,7 @@ class BatchOperationService extends CI_Controller {
                 // Insert into rollback Evolution state table
 
                 $rollbackEvolutionParams = array(
-                    'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                    'lastChangeDateTime' => date('c'),
                     'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_CHANGE_IMPORT_CONFIRMED,
                     'isAutoReached' => false,
                     'rollbackId' => $rollbackId,
@@ -2469,7 +2469,7 @@ class BatchOperationService extends CI_Controller {
                 // Update Rollback table
 
                 $rollbackParams = array(
-                    'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                    'lastChangeDateTime' => date('c'),
                     'rollbackState' => \RollbackService\Rollback\rollbackStateType::MSISDN_CHANGE_IMPORT_CONFIRMED
                 );
 
@@ -2529,7 +2529,7 @@ class BatchOperationService extends CI_Controller {
                         // Update process number state
 
                         $portingNumberParams = array(
-                            'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                            'pLastChangeDateTime' => date('c'),
                             'numberState' => \PortingService\Porting\portingStateType::CONFIRMED
                         );
 
@@ -2576,7 +2576,7 @@ class BatchOperationService extends CI_Controller {
 
                     $rollbackId = $msisdnChangeRollback['rollbackId'];
 
-                    $rollbackDateAndTime = date('Y-m-d\TH:i:s', strtotime('+5 minutes', strtotime(date('Y-m-d\TH:i:s'))));
+                    $rollbackDateAndTime = date('c', strtotime('+5 minutes', strtotime(date('c'))));
 
                     // Make Confirm Rollback Operation
 
@@ -2593,7 +2593,7 @@ class BatchOperationService extends CI_Controller {
                         // Insert into rollback Evolution state table
 
                         $rollbackEvolutionParams = array(
-                            'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                            'lastChangeDateTime' => date('c'),
                             'rollbackState' => \RollbackService\Rollback\rollbackStateType::CONFIRMED,
                             'isAutoReached' => false,
                             'rollbackId' => $rollbackId,
@@ -2604,7 +2604,7 @@ class BatchOperationService extends CI_Controller {
                         // Update rollback table
 
                         $rollbackParams = array(
-                            'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                            'lastChangeDateTime' => date('c'),
                             'rollbackState' => \RollbackService\Rollback\rollbackStateType::CONFIRMED
                         );
 
@@ -2654,7 +2654,7 @@ class BatchOperationService extends CI_Controller {
                     // Don't send request. Update rollback state
 
                     $rollbackParams = array(
-                        'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                        'lastChangeDateTime' => date('c'),
                         'rollbackState' => \RollbackService\Rollback\rollbackStateType::CONFIRMED
                     );
 
@@ -2696,7 +2696,7 @@ class BatchOperationService extends CI_Controller {
                     // Insert into Rollback Evolution state table
 
                     $rollbackEvolutionParams = array(
-                        'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                        'lastChangeDateTime' => date('c'),
                         'rollbackState' => \RollbackService\Rollback\rollbackStateType::COMPLETED,
                         'isAutoReached' => false,
                         'rollbackId' => $rollbackId,
@@ -2707,7 +2707,7 @@ class BatchOperationService extends CI_Controller {
                     // Update Rollback table
 
                     $rollbackParams = array(
-                        'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                        'lastChangeDateTime' => date('c'),
                         'rollbackState' => \RollbackService\Rollback\rollbackStateType::COMPLETED
                     );
 
@@ -2715,7 +2715,7 @@ class BatchOperationService extends CI_Controller {
 
                     // Update Number state
                     $portingNumberParams = array(
-                        'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                        'pLastChangeDateTime' => date('c'),
                         'numberState' => \PortingService\Porting\portingStateType::COMPLETED
                     );
 
@@ -2792,7 +2792,7 @@ class BatchOperationService extends CI_Controller {
 
                     $returnParams = array(
                         'returnNotificationMailSendStatus' => smsState::SENT,
-                        'returnNotificationMailSendDateTime' =>  date('Y-m-d\TH:i:s')
+                        'returnNotificationMailSendDateTime' =>  date('c')
                     );
 
                     $this->Numberreturn_model->update_numberreturn($openedReturn['returnId'], $returnParams);
@@ -2857,7 +2857,7 @@ class BatchOperationService extends CI_Controller {
                         // Update process number state
 
                         $portingNumberParams = array(
-                            'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                            'pLastChangeDateTime' => date('c'),
                             'numberState' => \ReturnService\_Return\returnStateType::MSISDN_EXPORT_CONFIRMED
                         );
 
@@ -2938,7 +2938,7 @@ class BatchOperationService extends CI_Controller {
                 // Insert into Return Evolution state table
 
                 $returnEvolutionParams = array(
-                    'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                    'lastChangeDateTime' => date('c'),
                     'returnNumberState' => \ReturnService\_Return\returnStateType::MSISDN_EXPORT_CONFIRMED,
                     'returnId' => $returnId,
                 );
@@ -3018,7 +3018,7 @@ class BatchOperationService extends CI_Controller {
                             // Update process number state
 
                             $portingNumberParams = array(
-                                'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                                'pLastChangeDateTime' => date('c'),
                                 'numberState' => \ReturnService\_Return\returnStateType::COMPLETED
                             );
 
@@ -3071,7 +3071,7 @@ class BatchOperationService extends CI_Controller {
                         // Insert into Return Evolution state table
 
                         $returnEvolutionParams = array(
-                            'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                            'lastChangeDateTime' => date('c'),
                             'returnNumberState' => \ReturnService\_Return\returnStateType::COMPLETED,
                             'returnId' => $returnId,
                         );
@@ -3098,7 +3098,7 @@ class BatchOperationService extends CI_Controller {
                         // Update provisioning numbers
 
                         $prParams = array(
-                            'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                            'pLastChangeDateTime' => date('c'),
                             'numberState' => \ProvisionService\ProvisionNotification\provisionStateType::COMPLETED
                         );
 
@@ -3193,7 +3193,7 @@ class BatchOperationService extends CI_Controller {
                         // Update process number state
 
                         $portingNumberParams = array(
-                            'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                            'pLastChangeDateTime' => date('c'),
                             'numberState' => \ReturnService\_Return\returnStateType::MSISDN_RETURN_CONFIRMED
                         );
 
@@ -3273,7 +3273,7 @@ class BatchOperationService extends CI_Controller {
                 // Insert into Return Evolution state table
 
                 $returnEvolutionParams = array(
-                    'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                    'lastChangeDateTime' => date('c'),
                     'returnNumberState' => \ReturnService\_Return\returnStateType::MSISDN_RETURN_CONFIRMED,
                     'returnId' => $returnId,
                 );
@@ -3346,7 +3346,7 @@ class BatchOperationService extends CI_Controller {
                             // Update process number state
 
                             $portingNumberParams = array(
-                                'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                                'pLastChangeDateTime' => date('c'),
                                 'numberState' => \ReturnService\_Return\returnStateType::COMPLETED
                             );
 
@@ -3398,7 +3398,7 @@ class BatchOperationService extends CI_Controller {
                         // Insert into Return Evolution state table
 
                         $returnEvolutionParams = array(
-                            'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                            'lastChangeDateTime' => date('c'),
                             'returnNumberState' => \ReturnService\_Return\returnStateType::COMPLETED,
                             'returnId' => $returnId,
                         );
@@ -3424,7 +3424,7 @@ class BatchOperationService extends CI_Controller {
                         // Update provisioning numbers
 
                         $prParams = array(
-                            'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                            'pLastChangeDateTime' => date('c'),
                             'numberState' => \ProvisionService\ProvisionNotification\provisionStateType::COMPLETED
                         );
 
@@ -3531,7 +3531,7 @@ class BatchOperationService extends CI_Controller {
                         // Update process number state
 
                         $portingNumberParams = array(
-                            'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                            'pLastChangeDateTime' => date('c'),
                             'numberState' => \PortingService\Porting\portingStateType::COMPLETED
                         );
 
@@ -3603,7 +3603,7 @@ class BatchOperationService extends CI_Controller {
                             'cadbNumber' => '',
                             'problem' => 'NB: This is a provisioning problem',
                             'reporterNetworkId' => '',
-                            'submissionDateTime' => date('Y-m-d\TH:i:s'),
+                            'submissionDateTime' => date('c'),
                             'processType' => $processType
                         );
 
@@ -3657,7 +3657,7 @@ class BatchOperationService extends CI_Controller {
 
                 $errorParams = array(
                     'errorNotificationMailSendStatus' => smsState::SENT,
-                    'errorNotificationMailSendDateTime' =>  date('Y-m-d\TH:i:s')
+                    'errorNotificationMailSendDateTime' =>  date('c')
                 );
 
                 $this->Error_model->update_error($errorReport['errorReportId'], $errorParams);
@@ -3677,7 +3677,7 @@ class BatchOperationService extends CI_Controller {
      */
     public function CADBFileSynchronizer(){
 
-        $prevDay = date('Y-m-d', strtotime('-1 days', strtotime(date('Y-m-d\TH:i:s'))));
+        $prevDay = date('Y-m-d', strtotime('-1 days', strtotime(date('c'))));
 
         $this->synchronizeDateWithCADB($prevDay);
 
@@ -3719,7 +3719,7 @@ class BatchOperationService extends CI_Controller {
                                 'cadbNumber' => $isdn,
                                 'problem' => 'NB: This is a CADB Synchronization problem',
                                 'reporterNetworkId' => '',
-                                'submissionDateTime' => date('Y-m-d\TH:i:s'),
+                                'submissionDateTime' => date('c'),
                                 'processType' => 'CADB Synchronization'
                             );
 
@@ -3732,7 +3732,7 @@ class BatchOperationService extends CI_Controller {
                                 'cadbNumber' => $isdn,
                                 'problem' => 'NB: This is a CADB Synchronization problem',
                                 'reporterNetworkId' => '',
-                                'submissionDateTime' => date('Y-m-d\TH:i:s'),
+                                'submissionDateTime' => date('c'),
                                 'processType' => 'CADB Synchronization'
                             );
 
@@ -3753,7 +3753,7 @@ class BatchOperationService extends CI_Controller {
                         'cadbNumber' => '',
                         'problem' => 'NB: This is a CADB Synchronization problem',
                         'reporterNetworkId' => '',
-                        'submissionDateTime' => date('Y-m-d\TH:i:s'),
+                        'submissionDateTime' => date('c'),
                         'processType' => 'CADB Synchronization'
                     );
 
@@ -3769,7 +3769,7 @@ class BatchOperationService extends CI_Controller {
                     'cadbNumber' => '',
                     'problem' => 'NB: This is a CADB Synchronization problem',
                     'reporterNetworkId' => '',
-                    'submissionDateTime' => date('Y-m-d\TH:i:s'),
+                    'submissionDateTime' => date('c'),
                     'processType' => 'CADB Synchronization'
                 );
 
@@ -3783,7 +3783,7 @@ class BatchOperationService extends CI_Controller {
                 'cadbNumber' => '',
                 'problem' => 'NB: This is a CADB Synchronization problem',
                 'reporterNetworkId' => '',
-                'submissionDateTime' => date('Y-m-d\TH:i:s'),
+                'submissionDateTime' => date('c'),
                 'processType' => 'CADB Synchronization'
             );
 
@@ -4035,7 +4035,7 @@ class BatchOperationService extends CI_Controller {
                 $smsNotificationparams = array(
                     'status' => smsState::SENT,
                     'attemptCount' => $portingMessage['attemptCount'] + 1,
-                    'sendDateTime' => date('Y-m-d\TH:i:s')
+                    'sendDateTime' => date('c')
                 );
 
             }else{
@@ -4083,7 +4083,7 @@ class BatchOperationService extends CI_Controller {
                 $smsNotificationparams = array(
                     'status' => smsState::SENT,
                     'attemptCount' => $rollbackMessage['attemptCount'] + 1,
-                    'sendDateTime' => date('Y-m-d\TH:i:s')
+                    'sendDateTime' => date('c')
                 );
 
             }else{
@@ -4140,7 +4140,7 @@ class BatchOperationService extends CI_Controller {
                 $smsNotificationparams = array(
                     'status' => smsState::SENT,
                     'attemptCount' => $ussdMessage['attemptCount'] + 1,
-                    'sendDateTime' => date('Y-m-d\TH:i:s')
+                    'sendDateTime' => date('c')
                 );
 
             }else{

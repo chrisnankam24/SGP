@@ -538,8 +538,8 @@ class RollbackOperationService {
 
             else{
 
-                $donorSubmissionDateTime = date('Y-m-d\TH:i:s');
-                $rollbackDateTime = date('Y-m-d\TH:i:s', strtotime('+2 hours', strtotime(date('Y-m-d\TH:i:s'))));
+                $donorSubmissionDateTime = date('c');
+                $rollbackDateTime = date('c', strtotime('+2 hours', strtotime(date('c'))));
 
                 $portingDetails = $this->Porting_model->get_porting($originalPortingId);
 
@@ -581,7 +581,7 @@ class RollbackOperationService {
                                 'lastChangeDateTime' => $openResponse->rollbackTransaction->lastChangeDateTime,
                                 'rollbackState' => \RollbackService\Rollback\rollbackStateType::OPENED,
                                 'rollbackNotificationMailSendStatus' => smsState::CLOSED,
-                                'rollbackNotificationMailSendDateTime' => date('Y-m-d\TH:i:s')
+                                'rollbackNotificationMailSendDateTime' => date('c')
                             );
 
                             $this->Rollback_model->add_rollback($rollbackParams);
@@ -678,7 +678,7 @@ class RollbackOperationService {
                                     $submissionParams = array(
                                         'originalPortingId' => $originalPortingId,
                                         'rollbackId' => '',
-                                        'donorSubmissionDateTime' => date('Y-m-d\TH:i:s'),
+                                        'donorSubmissionDateTime' => date('c'),
                                         'rollbackState' => 'NA'
                                     );
 
@@ -756,7 +756,7 @@ class RollbackOperationService {
 
                     // Update Number state
                     $portingNumberParams = array(
-                        'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                        'pLastChangeDateTime' => date('c'),
                         'numberState' => \RollbackService\Rollback\rollbackStateType::ACCEPTED
                     );
 
@@ -904,7 +904,7 @@ class RollbackOperationService {
 
                         // Update Number state
                         $portingNumberParams = array(
-                            'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                            'pLastChangeDateTime' => date('c'),
                             'numberState' => provisionStateType::TERMINATED,
                             'terminationReason' => $cause
                         );

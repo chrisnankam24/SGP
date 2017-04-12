@@ -120,7 +120,7 @@ class PortingOperationService  {
                 }
 
                 //recipientSubmissionDateTime
-                $request->recipientSubmissionDateTime = date('Y-m-d\TH:i:s');
+                $request->recipientSubmissionDateTime = date('c');
 
                 // recipient PortingDateTime
                 $request->portingDateTime = $portingDateTime;
@@ -824,7 +824,7 @@ class PortingOperationService  {
 
         //$portingDateTime = getRecipientPortingDateTime();
         $portingDateTime = date_create($portingDateTime);
-        $portingDateTime = date_format($portingDateTime, 'Y-m-d\TH:i:s');
+        $portingDateTime = date_format($portingDateTime, 'c');
 
         $orderResponse = $this->order($donorOperator, $portingDateTime, $portingMsisdn, $rio, $subscriberInfo);
 
@@ -853,7 +853,7 @@ class PortingOperationService  {
                 'language' => $language,
                 'contactNumber' => $orderResponse->portingTransaction->subscriberInfo->contactNumber,
                 'portingNotificationMailSendStatus' => smsState::CLOSED,
-                'portingNotificationMailSendDateTime' => date('Y-m-d\TH:i:s'),
+                'portingNotificationMailSendDateTime' => date('c'),
                 'source' => $source
             );
 
@@ -974,10 +974,10 @@ class PortingOperationService  {
                     'portingId' => '',
                     'recipientNetworkId' => '',
                     'donorNetworkId' => '',
-                    'recipientSubmissionDateTime' => date('Y-m-d\TH:i:s'),
+                    'recipientSubmissionDateTime' => date('c'),
                     'rio' =>  '',
                     'msisdn' =>  [$portingMsisdn],
-                    'lastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                    'lastChangeDateTime' => date('c'),
                     'portingState' => 'NONE'
                 );
 
@@ -1079,10 +1079,10 @@ class PortingOperationService  {
                             'smsType' => SMSType::OPD_PORTING_REMINDER,
                             'message' => $smsResponse['message'],
                             'msisdn' => $smsResponse['msisdn'],
-                            'creationDateTime' => date('Y-m-d\TH:i:s'),
+                            'creationDateTime' => date('c'),
                             'status' => smsState::SENT,
                             'attemptCount' => 1,
-                            'sendDateTime' => date('Y-m-d\TH:i:s')
+                            'sendDateTime' => date('c')
                         );
 
                     }else{
@@ -1092,7 +1092,7 @@ class PortingOperationService  {
                             'smsType' => SMSType::OPD_PORTING_REMINDER,
                             'message' => $smsResponse['message'],
                             'msisdn' => $smsResponse['msisdn'],
-                            'creationDateTime' => date('Y-m-d\TH:i:s'),
+                            'creationDateTime' => date('c'),
                             'status' => smsState::PENDING,
                             'attemptCount' => 1,
                         );
@@ -1102,7 +1102,7 @@ class PortingOperationService  {
 
                     // Update Number state
                     $portingNumberParams = array(
-                        'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                        'pLastChangeDateTime' => date('c'),
                         'numberState' => \PortingService\Porting\portingStateType::ACCEPTED
                     );
 
@@ -1253,7 +1253,7 @@ class PortingOperationService  {
                             // Update Porting Number table
 
                             $portingNumberParams = array(
-                                'pLastChangeDateTime' => date('Y-m-d\TH:i:s'),
+                                'pLastChangeDateTime' => date('c'),
                                 'numberState' => provisionStateType::TERMINATED,
                                 'terminationReason' => $rejectionReason
                             );

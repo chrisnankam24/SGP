@@ -95,6 +95,7 @@ class Numberreturn_model extends CI_Model
      */
     function add_numberreturn($params)
     {
+        $params = $this->reformatDates($params);
         $this->db->insert('numberreturn',$params);
         return $this->db->insert_id();
     }
@@ -104,6 +105,7 @@ class Numberreturn_model extends CI_Model
      */
     function update_numberreturn($returnId,$params)
     {
+        $params = $this->reformatDates($params);
         $this->db->where('returnId',$returnId);
         $response = $this->db->update('numberreturn',$params);
         if($response)
@@ -153,5 +155,20 @@ class Numberreturn_model extends CI_Model
 
         return $response;
     }
+
+    private function reformatDates($params){
+
+        // Return
+        if(isset($params['openDateTime'])){
+            $params['openDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['openDateTime']));
+        }
+        if(isset($params['returnNotificationMailSendDateTime'])){
+            $params['returnNotificationMailSendDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['returnNotificationMailSendDateTime']));
+        }
+
+        return $params;
+
+    }
+
 
 }

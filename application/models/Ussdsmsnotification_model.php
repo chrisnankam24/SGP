@@ -42,6 +42,8 @@ class ussdsmsnotification_model extends CI_Model
     function add_ussdsmsnotification($params)
     {
 
+        $params = $this->reformatDates($params);
+
         $this->db->insert('ussdsmsnotification',$params);
         return $this->db->insert_id();
 
@@ -52,6 +54,8 @@ class ussdsmsnotification_model extends CI_Model
      */
     function update_ussdsmsnotification($ussdsmsnotificationId,$params)
     {
+        $params = $this->reformatDates($params);
+
         $this->db->where('ussdsmsnotificationId',$ussdsmsnotificationId);
         $response = $this->db->update('ussdsmsnotification',$params);
         if($response)
@@ -78,5 +82,18 @@ class ussdsmsnotification_model extends CI_Model
         {
             return "Error occuring while deleting ussdsmsnotification";
         }
+    }
+
+    private function reformatDates($params){
+
+        // USSD Notification
+        if(isset($params['creationDateTime'])){
+            $params['creationDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['creationDateTime']));
+        }
+        if(isset($params['sendDateTime'])){
+            $params['sendDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['sendDateTime']));
+        }
+
+        return $params;
     }
 }

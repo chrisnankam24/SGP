@@ -85,11 +85,11 @@ class SVI extends CI_Controller {
 
             $smsNotificationparams = array(
                 'message' => $rioWithInfo['rio'],
-                'creationDateTime' => date('Y-m-d\TH:i:s'),
+                'creationDateTime' => date('c'),
                 'status' => smsState::SENT,
                 'msisdn' => '237' . $msisdn,
                 'attemptCount' => 1,
-                'sendDateTime' => date('Y-m-d\TH:i:s'),
+                'sendDateTime' => date('c'),
                 'source' => rioSource::IVR
             );
 

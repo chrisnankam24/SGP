@@ -93,7 +93,13 @@ class Porting extends CI_Controller
 
                 $activationDate = $numberDetails['ACTIVATION_DATE'];
 
-                $diff = getDiff($activationDate, date('d-M-y'));
+                if($activationDate != null){
+
+                    $diff = getDiff($activationDate, date('d-M-y'));
+
+                }else{
+                    $diff = null;
+                }
 
                 if($subscriberType == '0' && $numberDetails['ID_PIECE'] != trim($physicalPersonIdNumber)){
 
@@ -105,7 +111,7 @@ class Porting extends CI_Controller
                     $response['success'] = false;
                     $response['message'] = 'Temporal number does not belong to subscriber';
 
-                }elseif($diff->y > 0 || $diff->m > 0 || $diff->d > $this->Config_model->get_config('TMP_NUM_MAX_ACTIVATION_DAYS')){
+                }elseif($diff != null && ($diff->y > 0 || $diff->m > 0 || $diff->d > $this->Config_model->get_config('TMP_NUM_MAX_ACTIVATION_DAYS'))){
 
                     $response['success'] = false;
                     $response['message'] = 'Number activated more than ' .
@@ -437,7 +443,13 @@ class Porting extends CI_Controller
 
                             $activationDate = $numberDetails['ACTIVATION_DATE'];
 
-                            $diff = getDiff($activationDate, date('d-M-y'));
+                            if($activationDate != null){
+
+                                $diff = getDiff($activationDate, date('d-M-y'));
+
+                            }else{
+                                $diff = null;
+                            }
 
                             if($subscriberType == '1' && $numberDetails['NUM_REGISTRE'] != trim($legalPersonTin)){
 
@@ -445,7 +457,7 @@ class Porting extends CI_Controller
                                 $response['message'] = 'Temporal number does not belong to subscriber';
                                 $tempResponse['portingMSISDN'] = $portingMSISDN;
 
-                            }elseif($diff->y > 0 || $diff->m > 0 || $diff->d > $TMP_NUM_MAX_ACTIVATION_DAYS){
+                            }elseif($diff != null && ($diff->y > 0 || $diff->m > 0 || $diff->d > $TMP_NUM_MAX_ACTIVATION_DAYS)){
 
                                 $response['success'] = false;
                                 $response['message'] = 'Number activated more than ' . $TMP_NUM_MAX_ACTIVATION_DAYS . ' days ago';
@@ -699,6 +711,7 @@ class Porting extends CI_Controller
             $responseData['nom'] = $data['NOM'];
             $responseData['prenom'] = $data['PRENOM'];
             $responseData['id_piece_num'] = $data['ID_PIECE'];
+            $responseData['date_activation'] = $data['ACTIVATION_DATE'];
             $responseData['id_piece'] = null;
 
             $responseData['ste'] = $data['STE'];

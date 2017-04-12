@@ -32,6 +32,7 @@ class log_model extends CI_Model
      */
     function add_log($params)
     {
+        $params = $this->reformatDates($params);
         $this->db->insert('log',$params);
         return $this->db->insert_id();
     }
@@ -41,6 +42,7 @@ class log_model extends CI_Model
      */
     function update_log($logId,$params)
     {
+        $params = $this->reformatDates($params);
         $this->db->where('logId',$logId);
         $response = $this->db->update('log',$params);
         if($response)
@@ -68,4 +70,16 @@ class log_model extends CI_Model
             return "Error occuring while deleting log";
         }
     }
+
+    private function reformatDates($params){
+
+        // Log
+        if(isset($params['actionDateTime'])){
+            $params['actionDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['actionDateTime']));
+        }
+
+        return $params;
+
+    }
+
 }

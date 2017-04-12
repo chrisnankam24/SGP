@@ -355,14 +355,14 @@ function isAuthorized(){
 
         }else{
             // Not Authorized
-            http_response_code(401);
-            throw new ldbAdministrationServiceFault('Incorrect Token');
+            //http_response_code(401);
+            //throw new ldbAdministrationServiceFault('Incorrect Token');
         }
 
     }else{
         // Not Authorized
-        http_response_code(401);
-        throw new ldbAdministrationServiceFault('No Token Found');
+        //http_response_code(401);
+        //throw new ldbAdministrationServiceFault('No Token Found');
 
     }
 

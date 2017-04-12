@@ -32,6 +32,7 @@ class Numberreturnstateevolution_model extends CI_Model
      */
     function add_numberreturnstateevolution($params)
     {
+        $params = $this->reformatDates($params);
         $this->db->insert('numberreturnstateevolution',$params);
         return $this->db->insert_id();
     }
@@ -41,6 +42,7 @@ class Numberreturnstateevolution_model extends CI_Model
      */
     function update_numberreturnstateevolution($numberReturnStateEvolutionId,$params)
     {
+        $params = $this->reformatDates($params);
         $this->db->where('numberReturnStateEvolutionId',$numberReturnStateEvolutionId);
         $response = $this->db->update('numberreturnstateevolution',$params);
         if($response)
@@ -68,4 +70,16 @@ class Numberreturnstateevolution_model extends CI_Model
             return "Error occuring while deleting numberreturnstateevolution";
         }
     }
+
+    private function reformatDates($params){
+
+        // Number Return State Evolutions
+        if(isset($params['lastChangeDateTime'])){
+            $params['lastChangeDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['lastChangeDateTime']));
+        }
+
+        return $params;
+
+    }
+
 }

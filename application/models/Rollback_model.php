@@ -168,6 +168,7 @@ class Rollback_model extends CI_Model
      */
     function add_rollback($params)
     {
+        $params = $this->reformatDates($params);
         $this->db->insert('rollback',$params);
         return $this->db->insert_id();
     }
@@ -177,6 +178,7 @@ class Rollback_model extends CI_Model
      */
     function update_rollback($rollbackId,$params)
     {
+        $params = $this->reformatDates($params);
         $this->db->where('rollbackId',$rollbackId);
         $response = $this->db->update('rollback',$params);
         if($response)
@@ -226,4 +228,28 @@ class Rollback_model extends CI_Model
 
         return $response;
     }
+
+    private function reformatDates($params){
+
+        // Rollback
+        if(isset($params['donorSubmissionDateTime'])){
+            $params['donorSubmissionDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['donorSubmissionDateTime']));
+        }
+        if(isset($params['rollbackDateTime'])){
+            $params['rollbackDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['rollbackDateTime']));
+        }
+        if(isset($params['cadbOpenDateTime'])){
+            $params['cadbOpenDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['cadbOpenDateTime']));
+        }
+        if(isset($params['lastChangeDateTime'])){
+            $params['lastChangeDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['lastChangeDateTime']));
+        }
+        if(isset($params['rollbackNotificationMailSendDateTime'])){
+            $params['rollbackNotificationMailSendDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['rollbackNotificationMailSendDateTime']));
+        }
+
+        return $params;
+
+    }
+
 }

@@ -40,6 +40,7 @@ class ProcessNumber_model extends CI_Model
      */
     function add_processnumber($params)
     {
+        $params = $this->reformatDates($params);
         $this->db->insert('processnumber',$params);
         return $this->db->insert_id();
     }
@@ -49,6 +50,7 @@ class ProcessNumber_model extends CI_Model
      */
     function update_processnumber($processId, $msisdn, $params)
     {
+        $params = $this->reformatDates($params);
         $this->db->where(array('processId' => $processId, 'msisdn' => $msisdn));
         $response = $this->db->update('processnumber',$params);
         if($response)
@@ -66,6 +68,7 @@ class ProcessNumber_model extends CI_Model
      */
     function update_provisionnumber($provisionId, $msisdn, $params)
     {
+        $params = $this->reformatDates($params);
         $this->db->where(array('processId' => $provisionId, 'msisdn' => $msisdn));
         $response = $this->db->update('provisionnumber',$params);
         if($response)
@@ -83,6 +86,7 @@ class ProcessNumber_model extends CI_Model
      */
     function update_processnumber_all($processId, $params)
     {
+        $params = $this->reformatDates($params);
         $this->db->where(array('processId' => $processId));
         $response = $this->db->update('processnumber',$params);
         if($response)
@@ -100,6 +104,8 @@ class ProcessNumber_model extends CI_Model
      */
     function update_provisionnumber_all($provisionId, $params)
     {
+
+        $params = $this->reformatDates($params);
         $this->db->where(array('processId' => $provisionId));
         $response = $this->db->update('provisionnumber',$params);
         if($response)
@@ -127,4 +133,16 @@ class ProcessNumber_model extends CI_Model
             return "Error occuring while deleting processnumber";
         }
     }
+
+    private function reformatDates($params){
+
+        // Process Number
+        if(isset($params['pLastChangeDateTime'])){
+            $params['pLastChangeDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['pLastChangeDateTime']));
+        }
+
+        return $params;
+
+    }
+
 }

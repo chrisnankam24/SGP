@@ -40,6 +40,7 @@ class Rollbackstateevolution_model extends CI_Model
      */
     function add_rollbackstateevolution($params)
     {
+        $params = $this->reformatDates($params);
         $this->db->insert('rollbackstateevolution',$params);
         return $this->db->insert_id();
     }
@@ -49,6 +50,7 @@ class Rollbackstateevolution_model extends CI_Model
      */
     function update_rollbackstateevolution($rollbackStatevolutionId,$params)
     {
+        $params = $this->reformatDates($params);
         $this->db->where('rollbackStatevolutionId',$rollbackStatevolutionId);
         $response = $this->db->update('rollbackstateevolution',$params);
         if($response)
@@ -76,4 +78,16 @@ class Rollbackstateevolution_model extends CI_Model
             return "Error occuring while deleting rollbackstateevolution";
         }
     }
+
+    private function reformatDates($params){
+
+        // Rollback State Evolution
+        if(isset($params['lastChangeDateTime'])){
+            $params['lastChangeDateTime'] = date('Y-m-d\TH:i:s', strtotime($params['lastChangeDateTime']));
+        }
+
+        return $params;
+
+    }
+
 }
