@@ -526,9 +526,15 @@ class RollbackOperationService {
 
             $activationDate = $numberDetails['ACTIVATION_DATE'];
 
-            $diff = getDiff($activationDate, date('d-M-y'));
+            if($activationDate != null){
 
-            if($diff->y > 0 || $diff->m > 0 || $diff->d > $this->Config_model->get_config('TMP_NUM_MAX_ACTIVATION_DAYS')){
+                $diff = getDiff($activationDate, date('d-M-y'));
+
+            }else{
+                $diff = null;
+            }
+
+            if($diff != null && ($diff->y > 0 || $diff->m > 0 || $diff->d > $this->Config_model->get_config('TMP_NUM_MAX_ACTIVATION_DAYS'))){
 
                 $response['success'] = false;
                 $response['message'] = 'Number activated more than ' .

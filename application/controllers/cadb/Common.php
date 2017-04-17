@@ -155,8 +155,8 @@ class languageParams{
 }
 
 class EmailParams{
-    const TO = 'DSI.Software_Factory@orange.com';
-    //const TO = 'christian.nankam@orange.com';
+    //const TO = 'DSI.Software_Factory@orange.com';
+    const TO = 'christian.nankam@orange.com';
     const NOTIF_TO = 'DSI.Software_Factory@orange.com';
     const FROM = '';
     const CC = '';
